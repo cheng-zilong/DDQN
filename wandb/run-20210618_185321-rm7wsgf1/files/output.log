@@ -1,0 +1,30 @@
+(Collecting Data) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_steps= 207 total_steps=    208 loss=0.0000 eps=1.0000 fps=47.35
+(Collecting Data) ep=     2 ep_reward_last=3.00 ep_reward_avg=2.50 ep_steps= 260 total_steps=    468 loss=0.0000 eps=1.0000 fps=452.99
+(Collecting Data) ep=     3 ep_reward_last=3.00 ep_reward_avg=2.67 ep_steps= 232 total_steps=    700 loss=0.0000 eps=1.0000 fps=395.58
+(Collecting Data) ep=     4 ep_reward_last=0.00 ep_reward_avg=2.00 ep_steps= 113 total_steps=    813 loss=0.0000 eps=1.0000 fps=422.31
+(Collecting Data) ep=     5 ep_reward_last=1.00 ep_reward_avg=1.80 ep_steps= 141 total_steps=    954 loss=0.0000 eps=1.0000 fps=433.07
+(Training Agent) ep=     6 ep_reward_last=0.00 ep_reward_avg=1.50 ep_steps= 115 total_steps=   1069 loss=0.1246 eps=0.9999 fps=26.65
+(Training Agent) ep=     7 ep_reward_last=0.00 ep_reward_avg=1.29 ep_steps= 111 total_steps=   1180 loss=0.0087 eps=0.9998 fps=160.57
+(Training Agent) ep=     8 ep_reward_last=3.00 ep_reward_avg=1.50 ep_steps= 239 total_steps=   1419 loss=0.0149 eps=0.9996 fps=165.52
+Process ActorAsync-2:
+Traceback (most recent call last):
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/multiprocessing/process.py", line 297, in _bootstrap
+    self.run()
+  File "/home/chengzilong/DDQN/ActorAsync.py", line 54, in run
+    cache.append(self.eps_greedy_step(self.eps))
+  File "/home/chengzilong/DDQN/ActorAsync.py", line 61, in eps_greedy_step
+    action = self._network.act(self.state)
+  File "/home/chengzilong/DDQN/Network.py", line 148, in act
+    action = torch.argmax((self.forward(state) * self.atoms).sum(-1), dim=-1).cpu().numpy()[0]
+  File "/home/chengzilong/DDQN/Network.py", line 137, in forward
+    x = self.features(x / 255.0)
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/site-packages/torch/nn/modules/module.py", line 889, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/site-packages/torch/nn/modules/container.py", line 119, in forward
+    input = module(input)
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/site-packages/torch/nn/modules/module.py", line 889, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/site-packages/torch/nn/modules/conv.py", line 399, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/site-packages/torch/nn/modules/conv.py", line 396, in _conv_forward
+    self.padding, self.dilation, self.groups)

@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/chengzilong/DDQN/test2.py", line 201, in <module>
+    **vars(args)
+  File "/home/chengzilong/DDQN/test2.py", line 129, in __init__
+    super().__init__(env, network, optimizer, *arg, **args)
+  File "/home/chengzilong/DDQN/test2.py", line 25, in __init__
+    self.replay_buffer = ReplayBufferAsync(args['buffer_size'], args['batch_size'], cache_size=5)
+TypeError: __init__() missing 1 required positional argument: 'seed'

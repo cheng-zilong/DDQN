@@ -1,0 +1,12 @@
+Process ReplayBufferAsync-2:
+Traceback (most recent call last):
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/multiprocessing/process.py", line 297, in _bootstrap
+    self.run()
+  File "/home/chengzilong/DDQN/ReplayBufferAsync.py", line 37, in run
+    op, data = self.__worker_pipe.recv()
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/multiprocessing/connection.py", line 407, in _recv_bytes
+    buf = self._recv(4)
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)

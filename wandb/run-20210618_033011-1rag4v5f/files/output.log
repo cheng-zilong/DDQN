@@ -1,0 +1,5 @@
+(Collecting Data) ep=     0 ep_reward_last=2.00 ep_reward_avg=2.00 ep_steps= 207 total_steps=    208 loss=0.0000 eps=1.0000 fps=534.96
+(Collecting Data) ep=     1 ep_reward_last=1.00 ep_reward_avg=1.50 ep_steps= 159 total_steps=    367 loss=0.0000 eps=1.0000 fps=509.30
+(Collecting Data) ep=     2 ep_reward_last=2.00 ep_reward_avg=1.67 ep_steps= 188 total_steps=    555 loss=0.0000 eps=1.0000 fps=511.06
+(Collecting Data) ep=     3 ep_reward_last=2.00 ep_reward_avg=1.75 ep_steps= 186 total_steps=    741 loss=0.0000 eps=1.0000 fps=511.96
+(Collecting Data) ep=     4 ep_reward_last=3.00 ep_reward_avg=2.00 ep_steps= 238 total_steps=    979 loss=0.0000 eps=1.0000 fps=521.03

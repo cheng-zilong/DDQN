@@ -1,0 +1,39 @@
+Process ReplayBufferAsync-2:
+Traceback (most recent call last):
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/multiprocessing/process.py", line 297, in _bootstrap
+    self.run()
+  File "/home/chengzilong/DDQN/ReplayBufferAsync2.py", line 41, in run
+    op, data = self.__worker_pipe.recv()
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/multiprocessing/connection.py", line 407, in _recv_bytes
+    buf = self._recv(4)
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/runpy.py", line 193, in _run_module_as_main
+    "__main__", mod_spec)
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/runpy.py", line 85, in _run_code
+    exec(code, run_globals)
+  File "/home/chengzilong/.vscode-server/extensions/ms-python.python-2021.6.944021595/pythonFiles/lib/python/debugpy/__main__.py", line 45, in <module>
+    cli.main()
+  File "/home/chengzilong/.vscode-server/extensions/ms-python.python-2021.6.944021595/pythonFiles/lib/python/debugpy/../debugpy/server/cli.py", line 444, in main
+    run()
+  File "/home/chengzilong/.vscode-server/extensions/ms-python.python-2021.6.944021595/pythonFiles/lib/python/debugpy/../debugpy/server/cli.py", line 285, in run_file
+    runpy.run_path(target_as_str, run_name=compat.force_str("__main__"))
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/runpy.py", line 263, in run_path
+    pkg_name=pkg_name, script_name=fname)
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/runpy.py", line 96, in _run_module_code
+    mod_name, mod_spec, pkg_name, script_name)
+  File "/home/chengzilong/anaconda3/envs/myenv/lib/python3.7/runpy.py", line 85, in _run_code
+    exec(code, run_globals)
+  File "/home/chengzilong/DDQN/test.py", line 198, in <module>
+    **vars(args)
+  File "/home/chengzilong/DDQN/test.py", line 124, in __init__
+    super().__init__(env, network, optimizer, *arg, **args)
+  File "/home/chengzilong/DDQN/test.py", line 36, in __init__
+    self.current_model = netowrk(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
+  File "/home/chengzilong/DDQN/Network.py", line 134, in __init__
+    self.atoms = torch.linspace(self.Vmin, self.Vmax, self.num_atoms).cuda()
+KeyboardInterrupt

@@ -1,0 +1,30 @@
+WARNING:tensorflow:
+The TensorFlow contrib module will not be included in TensorFlow 2.0.
+For more information, please see:
+  * https://github.com/tensorflow/community/blob/master/rfcs/20180907-contrib-sunset.md
+  * https://github.com/tensorflow/addons
+  * https://github.com/tensorflow/io (for I/O related ops)
+If you depend on functionality not listed there, please file an issue.
+WARNING:tensorflow:
+The TensorFlow contrib module will not be included in TensorFlow 2.0.
+For more information, please see:
+  * https://github.com/tensorflow/community/blob/master/rfcs/20180907-contrib-sunset.md
+  * https://github.com/tensorflow/addons
+  * https://github.com/tensorflow/io (for I/O related ops)
+If you depend on functionality not listed there, please file an issue.
+(Collecting Data) ep=     1 ep_reward_last=3.00 ep_reward_avg=3.00 ep_steps= 235 total_steps=    236 loss=0.0000 eps=1.0000 fps=57.58
+(Collecting Data) ep=     2 ep_reward_last=2.00 ep_reward_avg=2.50 ep_steps= 187 total_steps=    423 loss=0.0000 eps=1.0000 fps=445.29
+(Collecting Data) ep=     3 ep_reward_last=0.00 ep_reward_avg=1.67 ep_steps= 115 total_steps=    538 loss=0.0000 eps=1.0000 fps=422.35
+(Collecting Data) ep=     4 ep_reward_last=1.00 ep_reward_avg=1.50 ep_steps= 161 total_steps=    699 loss=0.0000 eps=1.0000 fps=426.21
+(Collecting Data) ep=     5 ep_reward_last=1.00 ep_reward_avg=1.40 ep_steps= 161 total_steps=    860 loss=0.0000 eps=1.0000 fps=449.24
+(Collecting Data) ep=     6 ep_reward_last=0.00 ep_reward_avg=1.17 ep_steps= 115 total_steps=    975 loss=0.0000 eps=1.0000 fps=426.01
+(Training Agent) ep=     7 ep_reward_last=0.00 ep_reward_avg=1.00 ep_steps= 111 total_steps=   1086 loss=0.2262 eps=0.9999 fps=24.93
+(Training Agent) ep=     8 ep_reward_last=0.00 ep_reward_avg=0.88 ep_steps= 113 total_steps=   1199 loss=0.1094 eps=0.9998 fps=184.95
+(Training Agent) ep=     9 ep_reward_last=3.00 ep_reward_avg=1.11 ep_steps= 219 total_steps=   1418 loss=0.1047 eps=0.9996 fps=189.73
+(Training Agent) ep=    10 ep_reward_last=0.00 ep_reward_avg=1.00 ep_steps= 113 total_steps=   1531 loss=0.0182 eps=0.9995 fps=176.14
+(Training Agent) ep=    11 ep_reward_last=2.00 ep_reward_avg=0.90 ep_steps= 188 total_steps=   1719 loss=0.1115 eps=0.9993 fps=178.27
+(Training Agent) ep=    12 ep_reward_last=2.00 ep_reward_avg=0.90 ep_steps= 207 total_steps=   1926 loss=0.0116 eps=0.9991 fps=124.89
+(Training Agent) ep=    13 ep_reward_last=0.00 ep_reward_avg=0.90 ep_steps= 115 total_steps=   2041 loss=0.0106 eps=0.9990 fps=184.41
+(Training Agent) ep=    14 ep_reward_last=0.00 ep_reward_avg=0.80 ep_steps= 115 total_steps=   2156 loss=0.1092 eps=0.9989 fps=193.14
+(Training Agent) ep=    15 ep_reward_last=3.00 ep_reward_avg=1.00 ep_steps= 241 total_steps=   2397 loss=0.1918 eps=0.9986 fps=192.74
+(Training Agent) ep=    16 ep_reward_last=3.00 ep_reward_avg=1.30 ep_steps= 234 total_steps=   2631 loss=0.1085 eps=0.9984 fps=189.18

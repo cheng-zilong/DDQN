@@ -1,0 +1,473 @@
+Collecting Data......
+(Collecting) ep=     1 total_frame=      1 fps=0.00
+(Collecting) ep=     1 total_frame=     11 fps=0.00
+(Collecting) ep=     1 total_frame=     21 fps=0.00
+(Collecting) ep=     2 total_frame=     31 fps=451.96
+(Collecting) ep=     2 total_frame=     41 fps=451.96
+(Collecting) ep=     2 total_frame=     51 fps=451.96
+(Collecting) ep=     2 total_frame=     61 fps=451.96
+(Collecting) ep=     2 total_frame=     71 fps=451.96
+(Collecting) ep=     2 total_frame=     81 fps=451.96
+(Collecting) ep=     2 total_frame=     91 fps=451.96
+(Collecting) ep=     3 total_frame=    101 fps=676.23
+(Collecting) ep=     3 total_frame=    111 fps=676.23
+(Collecting) ep=     4 total_frame=    121 fps=643.26
+(Collecting) ep=     4 total_frame=    131 fps=643.26
+(Collecting) ep=     5 total_frame=    141 fps=659.74
+(Collecting) ep=     5 total_frame=    151 fps=659.74
+(Collecting) ep=     6 total_frame=    161 fps=472.49
+(Collecting) ep=     6 total_frame=    171 fps=472.49
+(Collecting) ep=     6 total_frame=    181 fps=472.49
+(Collecting) ep=     7 total_frame=    191 fps=651.03
+(Collecting) ep=     7 total_frame=    201 fps=651.03
+(Collecting) ep=     8 total_frame=    211 fps=660.10
+(Collecting) ep=     8 total_frame=    221 fps=660.10
+(Collecting) ep=     9 total_frame=    231 fps=443.27
+(Collecting) ep=     9 total_frame=    241 fps=443.27
+(Collecting) ep=     9 total_frame=    251 fps=443.27
+(Collecting) ep=    10 total_frame=    261 fps=650.64
+(Collecting) ep=    10 total_frame=    271 fps=650.64
+(Collecting) ep=    11 total_frame=    281 fps=515.84
+(Collecting) ep=    11 total_frame=    291 fps=515.84
+(Collecting) ep=    11 total_frame=    301 fps=515.84
+(Collecting) ep=    11 total_frame=    311 fps=515.84
+(Collecting) ep=    11 total_frame=    321 fps=515.84
+(Collecting) ep=    12 total_frame=    331 fps=681.81
+(Collecting) ep=    12 total_frame=    341 fps=681.81
+(Collecting) ep=    13 total_frame=    351 fps=652.31
+(Collecting) ep=    13 total_frame=    361 fps=652.31
+(Collecting) ep=    13 total_frame=    371 fps=652.31
+(Collecting) ep=    14 total_frame=    381 fps=641.24
+(Collecting) ep=    14 total_frame=    391 fps=641.24
+(Collecting) ep=    15 total_frame=    401 fps=645.27
+(Collecting) ep=    15 total_frame=    411 fps=645.27
+(Collecting) ep=    16 total_frame=    421 fps=469.64
+(Collecting) ep=    16 total_frame=    431 fps=469.64
+(Collecting) ep=    16 total_frame=    441 fps=469.64
+(Collecting) ep=    16 total_frame=    451 fps=469.64
+(Collecting) ep=    16 total_frame=    461 fps=469.64
+(Collecting) ep=    16 total_frame=    471 fps=469.64
+(Collecting) ep=    16 total_frame=    481 fps=469.64
+(Collecting) ep=    17 total_frame=    491 fps=693.43
+(Collecting) ep=    17 total_frame=    501 fps=693.43
+(Collecting) ep=    17 total_frame=    511 fps=693.43
+(Collecting) ep=    17 total_frame=    521 fps=693.43
+(Collecting) ep=    17 total_frame=    531 fps=693.43
+(Collecting) ep=    18 total_frame=    541 fps=520.62
+(Collecting) ep=    18 total_frame=    551 fps=520.62
+(Collecting) ep=    18 total_frame=    561 fps=520.62
+(Collecting) ep=    18 total_frame=    571 fps=520.62
+(Collecting) ep=    18 total_frame=    581 fps=520.62
+(Collecting) ep=    18 total_frame=    591 fps=520.62
+(Collecting) ep=    18 total_frame=    601 fps=520.62
+(Collecting) ep=    18 total_frame=    611 fps=520.62
+(Collecting) ep=    18 total_frame=    621 fps=520.62
+(Collecting) ep=    18 total_frame=    631 fps=520.62
+(Collecting) ep=    18 total_frame=    641 fps=520.62
+(Collecting) ep=    18 total_frame=    651 fps=520.62
+(Collecting) ep=    19 total_frame=    661 fps=695.96
+(Collecting) ep=    19 total_frame=    671 fps=695.96
+(Collecting) ep=    19 total_frame=    681 fps=695.96
+(Collecting) ep=    20 total_frame=    691 fps=646.35
+(Collecting) ep=    20 total_frame=    701 fps=646.35
+(Collecting) ep=    21 total_frame=    711 fps=506.80
+(Collecting) ep=    21 total_frame=    721 fps=506.80
+(Collecting) ep=    21 total_frame=    731 fps=506.80
+(Collecting) ep=    21 total_frame=    741 fps=506.80
+(Collecting) ep=    21 total_frame=    751 fps=506.80
+(Collecting) ep=    21 total_frame=    761 fps=506.80
+(Collecting) ep=    21 total_frame=    771 fps=506.80
+(Collecting) ep=    21 total_frame=    781 fps=506.80
+(Collecting) ep=    21 total_frame=    791 fps=506.80
+(Collecting) ep=    21 total_frame=    801 fps=506.80
+(Collecting) ep=    21 total_frame=    811 fps=506.80
+(Collecting) ep=    21 total_frame=    821 fps=506.80
+(Collecting) ep=    22 total_frame=    831 fps=705.29
+(Collecting) ep=    22 total_frame=    841 fps=705.29
+(Collecting) ep=    23 total_frame=    851 fps=627.82
+(Collecting) ep=    23 total_frame=    861 fps=627.82
+(Collecting) ep=    24 total_frame=    871 fps=436.93
+(Collecting) ep=    24 total_frame=    881 fps=436.93
+(Collecting) ep=    25 total_frame=    891 fps=634.32
+(Collecting) ep=    25 total_frame=    901 fps=634.32
+(Collecting) ep=    25 total_frame=    911 fps=634.32
+(Collecting) ep=    26 total_frame=    921 fps=471.81
+(Collecting) ep=    26 total_frame=    931 fps=471.81
+(Collecting) ep=    27 total_frame=    941 fps=630.89
+(Collecting) ep=    27 total_frame=    951 fps=630.89
+(Collecting) ep=    28 total_frame=    961 fps=601.59
+(Collecting) ep=    28 total_frame=    971 fps=601.59
+(Collecting) ep=    29 total_frame=    981 fps=604.59
+(Collecting) ep=    29 total_frame=    991 fps=604.59
+Training......
+(Training) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     10 loss=0.0000 eps=1.0000 fps=0.00
+(Training) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     20 loss=0.0000 eps=1.0000 fps=0.00
+(Training) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     30 loss=0.0000 eps=1.0000 fps=0.00
+(Training) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     40 loss=0.0000 eps=1.0000 fps=0.00
+(Training) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     50 loss=0.0000 eps=1.0000 fps=0.00
+(Training) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     60 loss=0.0000 eps=0.9999 fps=0.00
+(Training) ep=     1 ep_reward_last=1.00 ep_reward_avg=1.00 ep_frame=  66 total_fram=     70 loss=0.0000 eps=0.9999 fps=376.97
+(Training) ep=     1 ep_reward_last=1.00 ep_reward_avg=1.00 ep_frame=  66 total_fram=     80 loss=0.0000 eps=0.9999 fps=376.97
+(Training) ep=     2 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=     90 loss=0.0000 eps=0.9999 fps=383.24
+(Training) ep=     2 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    100 loss=0.0000 eps=0.9999 fps=383.24
+(Training) ep=     2 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    110 loss=0.0000 eps=0.9999 fps=383.24
+(Training) ep=     3 ep_reward_last=0.00 ep_reward_avg=0.33 ep_frame=  23 total_fram=    120 loss=0.0000 eps=0.9999 fps=290.88
+(Training) ep=     3 ep_reward_last=0.00 ep_reward_avg=0.33 ep_frame=  23 total_fram=    130 loss=0.0000 eps=0.9999 fps=290.88
+(Training) ep=     4 ep_reward_last=0.00 ep_reward_avg=0.25 ep_frame=  21 total_fram=    140 loss=0.0000 eps=0.9999 fps=376.15
+(Training) ep=     4 ep_reward_last=0.00 ep_reward_avg=0.25 ep_frame=  21 total_fram=    150 loss=0.0000 eps=0.9999 fps=376.15
+(Training) ep=     4 ep_reward_last=0.00 ep_reward_avg=0.25 ep_frame=  21 total_fram=    160 loss=0.0000 eps=0.9998 fps=376.15
+(Training) ep=     4 ep_reward_last=0.00 ep_reward_avg=0.25 ep_frame=  21 total_fram=    170 loss=0.0000 eps=0.9998 fps=376.15
+(Training) ep=     4 ep_reward_last=0.00 ep_reward_avg=0.25 ep_frame=  21 total_fram=    180 loss=0.0000 eps=0.9998 fps=376.15
+(Training) ep=     5 ep_reward_last=1.00 ep_reward_avg=0.40 ep_frame=  51 total_fram=    190 loss=0.0000 eps=0.9998 fps=373.22
+(Training) ep=     5 ep_reward_last=1.00 ep_reward_avg=0.40 ep_frame=  51 total_fram=    200 loss=0.0000 eps=0.9998 fps=373.22
+(Training) ep=     5 ep_reward_last=1.00 ep_reward_avg=0.40 ep_frame=  51 total_fram=    210 loss=0.0000 eps=0.9998 fps=373.22
+(Training) ep=     5 ep_reward_last=1.00 ep_reward_avg=0.40 ep_frame=  51 total_fram=    220 loss=0.0000 eps=0.9998 fps=373.22
+(Training) ep=     5 ep_reward_last=1.00 ep_reward_avg=0.40 ep_frame=  51 total_fram=    230 loss=0.0000 eps=0.9998 fps=373.22
+(Training) ep=     5 ep_reward_last=1.00 ep_reward_avg=0.40 ep_frame=  51 total_fram=    240 loss=0.0000 eps=0.9998 fps=373.22
+(Training) ep=     5 ep_reward_last=1.00 ep_reward_avg=0.40 ep_frame=  51 total_fram=    250 loss=0.0000 eps=0.9998 fps=373.22
+(Training) ep=     6 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  69 total_fram=    260 loss=0.0000 eps=0.9997 fps=327.47
+(Training) ep=     6 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  69 total_fram=    270 loss=0.0000 eps=0.9997 fps=327.47
+(Training) ep=     7 ep_reward_last=0.00 ep_reward_avg=0.43 ep_frame=  23 total_fram=    280 loss=0.0000 eps=0.9997 fps=254.05
+(Training) ep=     7 ep_reward_last=0.00 ep_reward_avg=0.43 ep_frame=  23 total_fram=    290 loss=0.0000 eps=0.9997 fps=254.05
+(Training) ep=     8 ep_reward_last=0.00 ep_reward_avg=0.38 ep_frame=  23 total_fram=    300 loss=0.0000 eps=0.9997 fps=291.40
+(Training) ep=     8 ep_reward_last=0.00 ep_reward_avg=0.38 ep_frame=  23 total_fram=    310 loss=0.0000 eps=0.9997 fps=291.40
+(Training) ep=     8 ep_reward_last=0.00 ep_reward_avg=0.38 ep_frame=  23 total_fram=    320 loss=0.0000 eps=0.9997 fps=291.40
+(Training) ep=     9 ep_reward_last=0.00 ep_reward_avg=0.33 ep_frame=  23 total_fram=    330 loss=0.0000 eps=0.9997 fps=288.68
+(Training) ep=     9 ep_reward_last=0.00 ep_reward_avg=0.33 ep_frame=  23 total_fram=    340 loss=0.0000 eps=0.9997 fps=288.68
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    350 loss=0.0000 eps=0.9997 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    360 loss=0.0000 eps=0.9996 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    370 loss=0.0000 eps=0.9996 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    380 loss=0.0000 eps=0.9996 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    390 loss=0.0000 eps=0.9996 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    400 loss=0.0000 eps=0.9996 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    410 loss=0.0000 eps=0.9996 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    420 loss=0.0000 eps=0.9996 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    430 loss=0.0000 eps=0.9996 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    440 loss=0.0000 eps=0.9996 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    450 loss=0.0000 eps=0.9996 fps=309.62
+(Training) ep=    10 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  21 total_fram=    460 loss=0.0000 eps=0.9995 fps=309.62
+(Training) ep=    11 ep_reward_last=2.00 ep_reward_avg=0.40 ep_frame= 121 total_fram=    470 loss=0.0000 eps=0.9995 fps=329.59
+(Training) ep=    11 ep_reward_last=2.00 ep_reward_avg=0.40 ep_frame= 121 total_fram=    480 loss=0.0000 eps=0.9995 fps=329.59
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    490 loss=0.0000 eps=0.9995 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    500 loss=0.0000 eps=0.9995 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    510 loss=0.0000 eps=0.9995 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    520 loss=0.0000 eps=0.9995 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    530 loss=0.0000 eps=0.9995 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    540 loss=0.0000 eps=0.9995 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    550 loss=0.0000 eps=0.9995 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    560 loss=0.0000 eps=0.9994 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    570 loss=0.0000 eps=0.9994 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    580 loss=0.0000 eps=0.9994 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    590 loss=0.0000 eps=0.9994 fps=378.43
+(Training) ep=    12 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=    600 loss=0.0000 eps=0.9994 fps=378.43
+(Training) ep=    13 ep_reward_last=2.00 ep_reward_avg=0.60 ep_frame= 117 total_fram=    610 loss=0.0000 eps=0.9994 fps=395.20
+(Training) ep=    13 ep_reward_last=2.00 ep_reward_avg=0.60 ep_frame= 117 total_fram=    620 loss=0.0000 eps=0.9994 fps=395.20
+(Training) ep=    14 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=    630 loss=0.0000 eps=0.9994 fps=286.99
+(Training) ep=    14 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=    640 loss=0.0000 eps=0.9994 fps=286.99
+(Training) ep=    15 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    650 loss=0.0000 eps=0.9994 fps=380.61
+(Training) ep=    15 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    660 loss=0.0000 eps=0.9993 fps=380.61
+(Training) ep=    15 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    670 loss=0.0000 eps=0.9993 fps=380.61
+(Training) ep=    15 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    680 loss=0.0000 eps=0.9993 fps=380.61
+(Training) ep=    15 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    690 loss=0.0000 eps=0.9993 fps=380.61
+(Training) ep=    15 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    700 loss=0.0000 eps=0.9993 fps=380.61
+(Training) ep=    16 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  51 total_fram=    710 loss=0.0000 eps=0.9993 fps=363.27
+(Training) ep=    16 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  51 total_fram=    720 loss=0.0000 eps=0.9993 fps=363.27
+(Training) ep=    17 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    730 loss=0.0000 eps=0.9993 fps=380.52
+(Training) ep=    17 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    740 loss=0.0000 eps=0.9993 fps=380.52
+(Training) ep=    17 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    750 loss=0.0000 eps=0.9993 fps=380.52
+(Training) ep=    17 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    760 loss=0.0000 eps=0.9992 fps=380.52
+(Training) ep=    17 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    770 loss=0.0000 eps=0.9992 fps=380.52
+(Training) ep=    17 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    780 loss=0.0000 eps=0.9992 fps=380.52
+(Training) ep=    17 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    790 loss=0.0000 eps=0.9992 fps=380.52
+(Training) ep=    18 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  69 total_fram=    800 loss=0.0000 eps=0.9992 fps=393.57
+(Training) ep=    18 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  69 total_fram=    810 loss=0.0000 eps=0.9992 fps=393.57
+(Training) ep=    19 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  21 total_fram=    820 loss=0.0000 eps=0.9992 fps=235.64
+(Training) ep=    19 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  21 total_fram=    830 loss=0.0000 eps=0.9992 fps=235.64
+(Training) ep=    19 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  21 total_fram=    840 loss=0.0000 eps=0.9992 fps=235.64
+(Training) ep=    19 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  21 total_fram=    850 loss=0.0000 eps=0.9992 fps=235.64
+(Training) ep=    19 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  21 total_fram=    860 loss=0.0000 eps=0.9991 fps=235.64
+(Training) ep=    19 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  21 total_fram=    870 loss=0.0000 eps=0.9991 fps=235.64
+(Training) ep=    19 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  21 total_fram=    880 loss=0.0000 eps=0.9991 fps=235.64
+(Training) ep=    20 ep_reward_last=1.00 ep_reward_avg=0.70 ep_frame=  72 total_fram=    890 loss=0.0000 eps=0.9991 fps=308.84
+(Training) ep=    20 ep_reward_last=1.00 ep_reward_avg=0.70 ep_frame=  72 total_fram=    900 loss=0.0000 eps=0.9991 fps=308.84
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    910 loss=0.0000 eps=0.9991 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    920 loss=0.0000 eps=0.9991 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    930 loss=0.0000 eps=0.9991 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    940 loss=0.0000 eps=0.9991 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    950 loss=0.0000 eps=0.9991 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    960 loss=0.0000 eps=0.9990 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    970 loss=0.0000 eps=0.9990 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    980 loss=0.0000 eps=0.9990 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=    990 loss=0.0000 eps=0.9990 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   1000 loss=0.0000 eps=0.9990 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   1010 loss=0.0000 eps=0.9990 fps=308.68
+(Training) ep=    21 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   1020 loss=0.0000 eps=0.9990 fps=308.68
+(Training) ep=    22 ep_reward_last=2.00 ep_reward_avg=0.70 ep_frame= 119 total_fram=   1030 loss=0.0000 eps=0.9990 fps=367.67
+(Training) ep=    22 ep_reward_last=2.00 ep_reward_avg=0.70 ep_frame= 119 total_fram=   1040 loss=0.0000 eps=0.9990 fps=367.67
+(Training) ep=    22 ep_reward_last=2.00 ep_reward_avg=0.70 ep_frame= 119 total_fram=   1050 loss=0.0000 eps=0.9990 fps=367.67
+(Training) ep=    23 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   1060 loss=0.0000 eps=0.9990 fps=367.50
+(Training) ep=    23 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   1070 loss=0.0000 eps=0.9989 fps=367.50
+(Training) ep=    24 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   1080 loss=0.0000 eps=0.9989 fps=374.44
+(Training) ep=    24 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   1090 loss=0.0000 eps=0.9989 fps=374.44
+(Training) ep=    25 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   1100 loss=0.0000 eps=0.9989 fps=374.57
+(Training) ep=    25 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   1110 loss=0.0000 eps=0.9989 fps=374.57
+(Training) ep=    26 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   1120 loss=0.0000 eps=0.9989 fps=286.28
+(Training) ep=    26 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   1130 loss=0.0000 eps=0.9989 fps=286.28
+(Training) ep=    26 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   1140 loss=0.0000 eps=0.9989 fps=286.28
+(Training) ep=    27 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   1150 loss=0.0000 eps=0.9989 fps=201.95
+(Training) ep=    27 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   1160 loss=0.0000 eps=0.9989 fps=201.95
+(Training) ep=    28 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  23 total_fram=   1170 loss=0.0000 eps=0.9988 fps=372.25
+(Training) ep=    28 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  23 total_fram=   1180 loss=0.0000 eps=0.9988 fps=372.25
+(Training) ep=    29 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  23 total_fram=   1190 loss=0.0000 eps=0.9988 fps=294.74
+(Training) ep=    29 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  23 total_fram=   1200 loss=0.0000 eps=0.9988 fps=294.74
+(Training) ep=    29 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  23 total_fram=   1210 loss=0.0000 eps=0.9988 fps=294.74
+(Training) ep=    30 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  23 total_fram=   1220 loss=0.0000 eps=0.9988 fps=270.91
+(Training) ep=    30 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  23 total_fram=   1230 loss=0.0000 eps=0.9988 fps=270.91
+(Training) ep=    31 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  23 total_fram=   1240 loss=0.0000 eps=0.9988 fps=274.82
+(Training) ep=    31 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  23 total_fram=   1250 loss=0.0000 eps=0.9988 fps=274.82
+(Training) ep=    32 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1260 loss=0.0000 eps=0.9988 fps=375.21
+(Training) ep=    32 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1270 loss=0.0000 eps=0.9987 fps=375.21
+(Training) ep=    32 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1280 loss=0.0000 eps=0.9987 fps=375.21
+(Training) ep=    33 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1290 loss=0.0000 eps=0.9987 fps=291.36
+(Training) ep=    33 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1300 loss=0.0000 eps=0.9987 fps=291.36
+(Training) ep=    34 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1310 loss=0.0000 eps=0.9987 fps=260.41
+(Training) ep=    34 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1320 loss=0.0000 eps=0.9987 fps=260.41
+(Training) ep=    35 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1330 loss=0.0000 eps=0.9987 fps=305.75
+(Training) ep=    35 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1340 loss=0.0000 eps=0.9987 fps=305.75
+(Training) ep=    36 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1350 loss=0.0000 eps=0.9987 fps=313.68
+(Training) ep=    36 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1360 loss=0.0000 eps=0.9987 fps=313.68
+(Training) ep=    36 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1370 loss=0.0000 eps=0.9986 fps=313.68
+(Training) ep=    37 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1380 loss=0.0000 eps=0.9986 fps=364.76
+(Training) ep=    37 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1390 loss=0.0000 eps=0.9986 fps=364.76
+(Training) ep=    38 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  21 total_fram=   1400 loss=0.0000 eps=0.9986 fps=373.27
+(Training) ep=    38 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  21 total_fram=   1410 loss=0.0000 eps=0.9986 fps=373.27
+(Training) ep=    39 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1420 loss=0.0000 eps=0.9986 fps=372.89
+(Training) ep=    39 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  23 total_fram=   1430 loss=0.0000 eps=0.9986 fps=372.89
+(Training) ep=    40 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  21 total_fram=   1440 loss=0.0000 eps=0.9986 fps=366.77
+(Training) ep=    40 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  21 total_fram=   1450 loss=0.0000 eps=0.9986 fps=366.77
+(Training) ep=    40 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  21 total_fram=   1460 loss=0.0000 eps=0.9986 fps=366.77
+(Training) ep=    40 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  21 total_fram=   1470 loss=0.0000 eps=0.9985 fps=366.77
+(Training) ep=    40 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  21 total_fram=   1480 loss=0.0000 eps=0.9985 fps=366.77
+(Training) ep=    40 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  21 total_fram=   1490 loss=0.0000 eps=0.9985 fps=366.77
+(Training) ep=    40 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=  21 total_fram=   1500 loss=0.0000 eps=0.9985 fps=366.77
+(Training) ep=    41 ep_reward_last=1.00 ep_reward_avg=0.10 ep_frame=  68 total_fram=   1510 loss=0.0000 eps=0.9985 fps=325.86
+(Training) ep=    41 ep_reward_last=1.00 ep_reward_avg=0.10 ep_frame=  68 total_fram=   1520 loss=0.0000 eps=0.9985 fps=325.86
+(Training) ep=    42 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1530 loss=0.0000 eps=0.9985 fps=376.14
+(Training) ep=    42 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1540 loss=0.0000 eps=0.9985 fps=376.14
+(Training) ep=    42 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1550 loss=0.0000 eps=0.9985 fps=376.14
+(Training) ep=    43 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1560 loss=0.0000 eps=0.9985 fps=369.62
+(Training) ep=    43 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1570 loss=0.0000 eps=0.9984 fps=369.62
+(Training) ep=    44 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  21 total_fram=   1580 loss=0.0000 eps=0.9984 fps=371.00
+(Training) ep=    44 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  21 total_fram=   1590 loss=0.0000 eps=0.9984 fps=371.00
+(Training) ep=    45 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1600 loss=0.0000 eps=0.9984 fps=356.58
+(Training) ep=    45 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1610 loss=0.0000 eps=0.9984 fps=356.58
+(Training) ep=    45 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1620 loss=0.0000 eps=0.9984 fps=356.58
+(Training) ep=    45 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1630 loss=0.0000 eps=0.9984 fps=356.58
+(Training) ep=    45 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1640 loss=0.0000 eps=0.9984 fps=356.58
+(Training) ep=    45 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1650 loss=0.0000 eps=0.9984 fps=356.58
+(Training) ep=    45 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1660 loss=0.0000 eps=0.9984 fps=356.58
+(Training) ep=    46 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  70 total_fram=   1670 loss=0.0000 eps=0.9983 fps=284.90
+(Training) ep=    46 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  70 total_fram=   1680 loss=0.0000 eps=0.9983 fps=284.90
+(Training) ep=    47 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  23 total_fram=   1690 loss=0.0000 eps=0.9983 fps=341.39
+(Training) ep=    47 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  23 total_fram=   1700 loss=0.0000 eps=0.9983 fps=341.39
+(Training) ep=    48 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  21 total_fram=   1710 loss=0.0000 eps=0.9983 fps=366.48
+(Training) ep=    48 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  21 total_fram=   1720 loss=0.0000 eps=0.9983 fps=366.48
+(Training) ep=    48 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  21 total_fram=   1730 loss=0.0000 eps=0.9983 fps=366.48
+(Training) ep=    49 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  23 total_fram=   1740 loss=0.0000 eps=0.9983 fps=361.98
+(Training) ep=    49 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  23 total_fram=   1750 loss=0.0000 eps=0.9983 fps=361.98
+(Training) ep=    50 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  21 total_fram=   1760 loss=0.0000 eps=0.9983 fps=367.50
+(Training) ep=    50 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  21 total_fram=   1770 loss=0.0000 eps=0.9982 fps=367.50
+(Training) ep=    51 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1780 loss=0.0000 eps=0.9982 fps=219.72
+(Training) ep=    51 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1790 loss=0.0000 eps=0.9982 fps=219.72
+(Training) ep=    52 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1800 loss=0.0000 eps=0.9982 fps=275.66
+(Training) ep=    52 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1810 loss=0.0000 eps=0.9982 fps=275.66
+(Training) ep=    52 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1820 loss=0.0000 eps=0.9982 fps=275.66
+(Training) ep=    53 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1830 loss=0.0000 eps=0.9982 fps=343.77
+(Training) ep=    53 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1840 loss=0.0000 eps=0.9982 fps=343.77
+(Training) ep=    53 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1850 loss=0.0000 eps=0.9982 fps=343.77
+(Training) ep=    53 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1860 loss=0.0000 eps=0.9982 fps=343.77
+(Training) ep=    53 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1870 loss=0.0000 eps=0.9981 fps=343.77
+(Training) ep=    53 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1880 loss=0.0000 eps=0.9981 fps=343.77
+(Training) ep=    53 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   1890 loss=0.0000 eps=0.9981 fps=343.77
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   1900 loss=0.0000 eps=0.9981 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   1910 loss=0.0000 eps=0.9981 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   1920 loss=0.0000 eps=0.9981 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   1930 loss=0.0000 eps=0.9981 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   1940 loss=0.0000 eps=0.9981 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   1950 loss=0.0000 eps=0.9981 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   1960 loss=0.0000 eps=0.9981 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   1970 loss=0.0000 eps=0.9980 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   1980 loss=0.0000 eps=0.9980 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   1990 loss=0.0000 eps=0.9980 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2000 loss=0.0000 eps=0.9980 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2010 loss=0.0000 eps=0.9980 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2020 loss=0.0000 eps=0.9980 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2030 loss=0.0000 eps=0.9980 fps=377.40
+(Training) ep=    54 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2040 loss=0.0000 eps=0.9980 fps=377.40
+(Training) ep=    55 ep_reward_last=4.00 ep_reward_avg=0.60 ep_frame= 155 total_fram=   2050 loss=0.0000 eps=0.9980 fps=369.25
+(Training) ep=    55 ep_reward_last=4.00 ep_reward_avg=0.60 ep_frame= 155 total_fram=   2060 loss=0.0000 eps=0.9980 fps=369.25
+(Training) ep=    55 ep_reward_last=4.00 ep_reward_avg=0.60 ep_frame= 155 total_fram=   2070 loss=0.0000 eps=0.9980 fps=369.25
+(Training) ep=    56 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2080 loss=0.0000 eps=0.9979 fps=289.99
+(Training) ep=    56 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2090 loss=0.0000 eps=0.9979 fps=289.99
+(Training) ep=    57 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2100 loss=0.0000 eps=0.9979 fps=361.03
+(Training) ep=    57 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2110 loss=0.0000 eps=0.9979 fps=361.03
+(Training) ep=    58 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2120 loss=0.0000 eps=0.9979 fps=369.60
+(Training) ep=    58 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2130 loss=0.0000 eps=0.9979 fps=369.60
+(Training) ep=    58 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2140 loss=0.0000 eps=0.9979 fps=369.60
+(Training) ep=    59 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2150 loss=0.0000 eps=0.9979 fps=369.66
+(Training) ep=    59 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2160 loss=0.0000 eps=0.9979 fps=369.66
+(Training) ep=    60 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2170 loss=0.0000 eps=0.9979 fps=267.09
+(Training) ep=    60 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2180 loss=0.0000 eps=0.9978 fps=267.09
+(Training) ep=    60 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2190 loss=0.0000 eps=0.9978 fps=267.09
+(Training) ep=    60 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2200 loss=0.0000 eps=0.9978 fps=267.09
+(Training) ep=    60 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2210 loss=0.0000 eps=0.9978 fps=267.09
+(Training) ep=    60 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2220 loss=0.0000 eps=0.9978 fps=267.09
+(Training) ep=    60 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2230 loss=0.0000 eps=0.9978 fps=267.09
+(Training) ep=    61 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  67 total_fram=   2240 loss=0.0000 eps=0.9978 fps=358.64
+(Training) ep=    61 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  67 total_fram=   2250 loss=0.0000 eps=0.9978 fps=358.64
+(Training) ep=    62 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=   2260 loss=0.0000 eps=0.9978 fps=371.78
+(Training) ep=    62 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=   2270 loss=0.0000 eps=0.9978 fps=371.78
+(Training) ep=    63 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  21 total_fram=   2280 loss=0.0000 eps=0.9977 fps=369.54
+(Training) ep=    63 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  21 total_fram=   2290 loss=0.0000 eps=0.9977 fps=369.54
+(Training) ep=    64 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2300 loss=0.0000 eps=0.9977 fps=372.00
+(Training) ep=    64 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2310 loss=0.0000 eps=0.9977 fps=372.00
+(Training) ep=    64 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   2320 loss=0.0000 eps=0.9977 fps=372.00
+(Training) ep=    65 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   2330 loss=0.0000 eps=0.9977 fps=364.87
+(Training) ep=    65 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   2340 loss=0.0000 eps=0.9977 fps=364.87
+(Training) ep=    66 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   2350 loss=0.0000 eps=0.9977 fps=252.29
+(Training) ep=    66 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   2360 loss=0.0000 eps=0.9977 fps=252.29
+(Training) ep=    66 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   2370 loss=0.0000 eps=0.9977 fps=252.29
+(Training) ep=    66 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   2380 loss=0.0000 eps=0.9976 fps=252.29
+(Training) ep=    66 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   2390 loss=0.0000 eps=0.9976 fps=252.29
+(Training) ep=    67 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  51 total_fram=   2400 loss=0.0000 eps=0.9976 fps=378.16
+(Training) ep=    67 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  51 total_fram=   2410 loss=0.0000 eps=0.9976 fps=378.16
+(Training) ep=    67 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  51 total_fram=   2420 loss=0.0000 eps=0.9976 fps=378.16
+(Training) ep=    67 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  51 total_fram=   2430 loss=0.0000 eps=0.9976 fps=378.16
+(Training) ep=    67 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  51 total_fram=   2440 loss=0.0000 eps=0.9976 fps=378.16
+(Training) ep=    67 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  51 total_fram=   2450 loss=0.0000 eps=0.9976 fps=378.16
+(Training) ep=    67 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  51 total_fram=   2460 loss=0.0000 eps=0.9976 fps=378.16
+(Training) ep=    67 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  51 total_fram=   2470 loss=0.0000 eps=0.9976 fps=378.16
+(Training) ep=    67 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  51 total_fram=   2480 loss=0.0000 eps=0.9975 fps=378.16
+(Training) ep=    67 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  51 total_fram=   2490 loss=0.0000 eps=0.9975 fps=378.16
+(Training) ep=    68 ep_reward_last=2.00 ep_reward_avg=0.40 ep_frame= 100 total_fram=   2500 loss=0.0000 eps=0.9975 fps=324.17
+(Training) ep=    68 ep_reward_last=2.00 ep_reward_avg=0.40 ep_frame= 100 total_fram=   2510 loss=0.0000 eps=0.9975 fps=324.17
+(Training) ep=    69 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2520 loss=0.0000 eps=0.9975 fps=240.22
+(Training) ep=    69 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2530 loss=0.0000 eps=0.9975 fps=240.22
+(Training) ep=    69 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2540 loss=0.0000 eps=0.9975 fps=240.22
+(Training) ep=    70 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2550 loss=0.0000 eps=0.9975 fps=281.70
+(Training) ep=    70 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2560 loss=0.0000 eps=0.9975 fps=281.70
+(Training) ep=    70 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2570 loss=0.0000 eps=0.9975 fps=281.70
+(Training) ep=    70 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2580 loss=0.0000 eps=0.9974 fps=281.70
+(Training) ep=    70 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2590 loss=0.0000 eps=0.9974 fps=281.70
+(Training) ep=    70 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2600 loss=0.0000 eps=0.9974 fps=281.70
+(Training) ep=    70 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2610 loss=0.0000 eps=0.9974 fps=281.70
+(Training) ep=    71 ep_reward_last=1.00 ep_reward_avg=0.40 ep_frame=  71 total_fram=   2620 loss=0.0000 eps=0.9974 fps=344.32
+(Training) ep=    71 ep_reward_last=1.00 ep_reward_avg=0.40 ep_frame=  71 total_fram=   2630 loss=0.0000 eps=0.9974 fps=344.32
+(Training) ep=    72 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2640 loss=0.0000 eps=0.9974 fps=368.23
+(Training) ep=    72 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2650 loss=0.0000 eps=0.9974 fps=368.23
+(Training) ep=    73 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2660 loss=0.0000 eps=0.9974 fps=336.13
+(Training) ep=    73 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2670 loss=0.0000 eps=0.9974 fps=336.13
+(Training) ep=    73 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2680 loss=0.0000 eps=0.9973 fps=336.13
+(Training) ep=    74 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2690 loss=0.0000 eps=0.9973 fps=279.15
+(Training) ep=    74 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2700 loss=0.0000 eps=0.9973 fps=279.15
+(Training) ep=    75 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2710 loss=0.0000 eps=0.9973 fps=371.05
+(Training) ep=    75 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   2720 loss=0.0000 eps=0.9973 fps=371.05
+(Training) ep=    76 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  21 total_fram=   2730 loss=0.0000 eps=0.9973 fps=302.77
+(Training) ep=    76 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  21 total_fram=   2740 loss=0.0000 eps=0.9973 fps=302.77
+(Training) ep=    77 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  23 total_fram=   2750 loss=0.0000 eps=0.9973 fps=345.31
+(Training) ep=    77 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  23 total_fram=   2760 loss=0.0000 eps=0.9973 fps=345.31
+(Training) ep=    77 ep_reward_last=0.00 ep_reward_avg=0.30 ep_frame=  23 total_fram=   2770 loss=0.0000 eps=0.9973 fps=345.31
+(Training) ep=    78 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   2780 loss=0.0000 eps=0.9972 fps=338.28
+(Training) ep=    78 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  23 total_fram=   2790 loss=0.0000 eps=0.9972 fps=338.28
+(Training) ep=    79 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  21 total_fram=   2800 loss=0.0000 eps=0.9972 fps=341.55
+(Training) ep=    79 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  21 total_fram=   2810 loss=0.0000 eps=0.9972 fps=341.55
+(Training) ep=    79 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  21 total_fram=   2820 loss=0.0000 eps=0.9972 fps=341.55
+(Training) ep=    79 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  21 total_fram=   2830 loss=0.0000 eps=0.9972 fps=341.55
+(Training) ep=    79 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  21 total_fram=   2840 loss=0.0000 eps=0.9972 fps=341.55
+(Training) ep=    79 ep_reward_last=0.00 ep_reward_avg=0.10 ep_frame=  21 total_fram=   2850 loss=0.0000 eps=0.9972 fps=341.55
+(Training) ep=    80 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  68 total_fram=   2860 loss=0.0000 eps=0.9972 fps=344.62
+(Training) ep=    80 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  68 total_fram=   2870 loss=0.0000 eps=0.9972 fps=344.62
+(Training) ep=    80 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  68 total_fram=   2880 loss=0.0000 eps=0.9971 fps=344.62
+(Training) ep=    80 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  68 total_fram=   2890 loss=0.0000 eps=0.9971 fps=344.62
+(Training) ep=    80 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  68 total_fram=   2900 loss=0.0000 eps=0.9971 fps=344.62
+(Training) ep=    80 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  68 total_fram=   2910 loss=0.0000 eps=0.9971 fps=344.62
+(Training) ep=    80 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  68 total_fram=   2920 loss=0.0000 eps=0.9971 fps=344.62
+(Training) ep=    80 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  68 total_fram=   2930 loss=0.0000 eps=0.9971 fps=344.62
+(Training) ep=    81 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2940 loss=0.0000 eps=0.9971 fps=348.72
+(Training) ep=    81 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2950 loss=0.0000 eps=0.9971 fps=348.72
+(Training) ep=    81 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2960 loss=0.0000 eps=0.9971 fps=348.72
+(Training) ep=    81 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2970 loss=0.0000 eps=0.9971 fps=348.72
+(Training) ep=    81 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2980 loss=0.0000 eps=0.9970 fps=348.72
+(Training) ep=    81 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   2990 loss=0.0000 eps=0.9970 fps=348.72
+(Training) ep=    81 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   3000 loss=0.0000 eps=0.9970 fps=348.72
+(Training) ep=    81 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   3010 loss=0.0000 eps=0.9970 fps=348.72
+(Training) ep=    81 ep_reward_last=1.00 ep_reward_avg=0.20 ep_frame=  71 total_fram=   3020 loss=0.0000 eps=0.9970 fps=348.72
+(Training) ep=    82 ep_reward_last=2.00 ep_reward_avg=0.40 ep_frame=  98 total_fram=   3030 loss=0.0000 eps=0.9970 fps=353.40
+(Training) ep=    82 ep_reward_last=2.00 ep_reward_avg=0.40 ep_frame=  98 total_fram=   3040 loss=0.0000 eps=0.9970 fps=353.40
+(Training) ep=    83 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  21 total_fram=   3050 loss=0.0000 eps=0.9970 fps=333.94
+(Training) ep=    83 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  21 total_fram=   3060 loss=0.0000 eps=0.9970 fps=333.94
+(Training) ep=    83 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  21 total_fram=   3070 loss=0.0000 eps=0.9970 fps=333.94
+(Training) ep=    83 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  21 total_fram=   3080 loss=0.0000 eps=0.9970 fps=333.94
+(Training) ep=    83 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  21 total_fram=   3090 loss=0.0000 eps=0.9969 fps=333.94
+(Training) ep=    83 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  21 total_fram=   3100 loss=0.0000 eps=0.9969 fps=333.94
+(Training) ep=    83 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  21 total_fram=   3110 loss=0.0000 eps=0.9969 fps=333.94
+(Training) ep=    83 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  21 total_fram=   3120 loss=0.0000 eps=0.9969 fps=333.94
+(Training) ep=    84 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  71 total_fram=   3130 loss=0.0000 eps=0.9969 fps=369.25
+(Training) ep=    84 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  71 total_fram=   3140 loss=0.0000 eps=0.9969 fps=369.25
+(Training) ep=    84 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  71 total_fram=   3150 loss=0.0000 eps=0.9969 fps=369.25
+(Training) ep=    84 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  71 total_fram=   3160 loss=0.0000 eps=0.9969 fps=369.25
+(Training) ep=    84 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  71 total_fram=   3170 loss=0.0000 eps=0.9969 fps=369.25
+(Training) ep=    84 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  71 total_fram=   3180 loss=0.0000 eps=0.9969 fps=369.25
+(Training) ep=    84 ep_reward_last=1.00 ep_reward_avg=0.50 ep_frame=  71 total_fram=   3190 loss=0.0000 eps=0.9968 fps=369.25
+(Training) ep=    85 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  72 total_fram=   3200 loss=0.0000 eps=0.9968 fps=305.09
+(Training) ep=    85 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  72 total_fram=   3210 loss=0.0000 eps=0.9968 fps=305.09
+(Training) ep=    85 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  72 total_fram=   3220 loss=0.0000 eps=0.9968 fps=305.09
+(Training) ep=    85 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  72 total_fram=   3230 loss=0.0000 eps=0.9968 fps=305.09
+(Training) ep=    85 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  72 total_fram=   3240 loss=0.0000 eps=0.9968 fps=305.09
+(Training) ep=    85 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  72 total_fram=   3250 loss=0.0000 eps=0.9968 fps=305.09
+(Training) ep=    85 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  72 total_fram=   3260 loss=0.0000 eps=0.9968 fps=305.09
+(Training) ep=    86 ep_reward_last=1.00 ep_reward_avg=0.70 ep_frame=  74 total_fram=   3270 loss=0.0000 eps=0.9968 fps=348.73
+(Training) ep=    86 ep_reward_last=1.00 ep_reward_avg=0.70 ep_frame=  74 total_fram=   3280 loss=0.0000 eps=0.9968 fps=348.73
+(Training) ep=    87 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  23 total_fram=   3290 loss=0.0000 eps=0.9967 fps=367.35
+(Training) ep=    87 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  23 total_fram=   3300 loss=0.0000 eps=0.9967 fps=367.35
+(Training) ep=    87 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  23 total_fram=   3310 loss=0.0000 eps=0.9967 fps=367.35
+(Training) ep=    87 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  23 total_fram=   3320 loss=0.0000 eps=0.9967 fps=367.35
+(Training) ep=    87 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  23 total_fram=   3330 loss=0.0000 eps=0.9967 fps=367.35
+(Training) ep=    87 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  23 total_fram=   3340 loss=0.0000 eps=0.9967 fps=367.35
+(Training) ep=    87 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  23 total_fram=   3350 loss=0.0000 eps=0.9967 fps=367.35
+(Training) ep=    87 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  23 total_fram=   3360 loss=0.0000 eps=0.9967 fps=367.35
+(Training) ep=    87 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  23 total_fram=   3370 loss=0.0000 eps=0.9967 fps=367.35
+(Training) ep=    87 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  23 total_fram=   3380 loss=0.0000 eps=0.9967 fps=367.35
+(Training) ep=    88 ep_reward_last=2.00 ep_reward_avg=0.90 ep_frame=  96 total_fram=   3390 loss=0.0000 eps=0.9966 fps=213.49
+(Training) ep=    88 ep_reward_last=2.00 ep_reward_avg=0.90 ep_frame=  96 total_fram=   3400 loss=0.0000 eps=0.9966 fps=213.49
+(Training) ep=    89 ep_reward_last=0.00 ep_reward_avg=0.90 ep_frame=  23 total_fram=   3410 loss=0.0000 eps=0.9966 fps=363.19
+(Training) ep=    89 ep_reward_last=0.00 ep_reward_avg=0.90 ep_frame=  23 total_fram=   3420 loss=0.0000 eps=0.9966 fps=363.19
+(Training) ep=    89 ep_reward_last=0.00 ep_reward_avg=0.90 ep_frame=  23 total_fram=   3430 loss=0.0000 eps=0.9966 fps=363.19
+(Training) ep=    90 ep_reward_last=0.00 ep_reward_avg=0.80 ep_frame=  23 total_fram=   3440 loss=0.0000 eps=0.9966 fps=361.64
+(Training) ep=    90 ep_reward_last=0.00 ep_reward_avg=0.80 ep_frame=  23 total_fram=   3450 loss=0.0000 eps=0.9966 fps=361.64
+(Training) ep=    91 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  21 total_fram=   3460 loss=0.0000 eps=0.9966 fps=305.72
+(Training) ep=    91 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  21 total_fram=   3470 loss=0.0000 eps=0.9966 fps=305.72
+(Training) ep=    91 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  21 total_fram=   3480 loss=0.0000 eps=0.9966 fps=305.72
+(Training) ep=    91 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  21 total_fram=   3490 loss=0.0000 eps=0.9965 fps=305.72
+(Training) ep=    91 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  21 total_fram=   3500 loss=0.0000 eps=0.9965 fps=305.72
+(Training) ep=    91 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  21 total_fram=   3510 loss=0.0000 eps=0.9965 fps=305.72
+(Training) ep=    91 ep_reward_last=0.00 ep_reward_avg=0.70 ep_frame=  21 total_fram=   3520 loss=0.0000 eps=0.9965 fps=305.72
+(Training) ep=    92 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  70 total_fram=   3530 loss=0.0000 eps=0.9965 fps=377.21
+(Training) ep=    92 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  70 total_fram=   3540 loss=0.0000 eps=0.9965 fps=377.21
+(Training) ep=    93 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=   3550 loss=0.0000 eps=0.9965 fps=368.95
+(Training) ep=    93 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=   3560 loss=0.0000 eps=0.9965 fps=368.95
+(Training) ep=    93 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=   3570 loss=0.0000 eps=0.9965 fps=368.95
+(Training) ep=    93 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=   3580 loss=0.0000 eps=0.9965 fps=368.95
+(Training) ep=    93 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=   3590 loss=0.0000 eps=0.9964 fps=368.95
+(Training) ep=    93 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=   3600 loss=0.0000 eps=0.9964 fps=368.95
+(Training) ep=    93 ep_reward_last=0.00 ep_reward_avg=0.60 ep_frame=  23 total_fram=   3610 loss=0.0000 eps=0.9964 fps=368.95
+(Training) ep=    94 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  72 total_fram=   3620 loss=0.0000 eps=0.9964 fps=338.79
+(Training) ep=    94 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  72 total_fram=   3630 loss=0.0000 eps=0.9964 fps=338.79
+(Training) ep=    94 ep_reward_last=1.00 ep_reward_avg=0.60 ep_frame=  72 total_fram=   3640 loss=0.0000 eps=0.9964 fps=338.79
+(Training) ep=    95 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   3650 loss=0.0000 eps=0.9964 fps=357.28
+(Training) ep=    95 ep_reward_last=0.00 ep_reward_avg=0.50 ep_frame=  23 total_fram=   3660 loss=0.0000 eps=0.9964 fps=357.28
+(Training) ep=    96 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   3670 loss=0.0000 eps=0.9964 fps=301.53
+(Training) ep=    96 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   3680 loss=0.0000 eps=0.9964 fps=301.53
+(Training) ep=    97 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   3690 loss=0.0000 eps=0.9963 fps=352.85
+(Training) ep=    97 ep_reward_last=0.00 ep_reward_avg=0.40 ep_frame=  23 total_fram=   3700 loss=0.0000 eps=0.9963 fps=352.85
+(Training) ep=    98 ep_reward_last=0.00 ep_reward_avg=0.20 ep_frame=  23 total_fram=   3710 loss=0.0000 eps=0.9963 fps=348.83

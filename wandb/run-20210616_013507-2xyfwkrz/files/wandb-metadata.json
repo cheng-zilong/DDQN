@@ -1,0 +1,21 @@
+{
+    "os": "Linux-5.8.0-55-generic-x86_64-with-debian-bullseye-sid",
+    "python": "3.7.10",
+    "heartbeatAt": "2021-06-15T17:35:09.687887",
+    "startedAt": "2021-06-15T17:35:07.371897",
+    "docker": null,
+    "gpu": "GeForce RTX 2080 SUPER",
+    "gpu_count": 1,
+    "cpu_count": 56,
+    "cuda": null,
+    "args": [
+        "--seed",
+        "5"
+    ],
+    "state": "running",
+    "program": "test.py",
+    "codePath": "test.py",
+    "host": "mal-server",
+    "username": "chengzilong",
+    "executable": "/home/chengzilong/anaconda3/envs/myenv/bin/python"
+}

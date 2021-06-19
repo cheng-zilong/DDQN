@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "test.py", line 425, in <module>
+    v_max = args.v_max).learn()
+  File "test.py", line 295, in learn
+    self.collect()
+AttributeError: 'CatDQN' object has no attribute 'collect'

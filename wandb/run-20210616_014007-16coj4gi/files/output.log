@@ -1,0 +1,68 @@
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     10 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     20 loss=0.0000 eps=1.0000 fps=0.00
+lalala
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     30 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     40 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     50 loss=0.0000 eps=1.0000 fps=0.00
+lalala
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     60 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     70 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     80 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=     90 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    100 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    110 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    120 loss=0.0000 eps=1.0000 fps=0.00
+lalala
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    130 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    140 loss=0.0000 eps=1.0000 fps=0.00
+lalala
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    150 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    160 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    170 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    180 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    190 loss=0.0000 eps=1.0000 fps=0.00
+(Collecting) ep=     0 ep_reward_last=0.00 ep_reward_avg=0.00 ep_frame=   0 total_fram=    200 loss=0.0000 eps=1.0000 fps=0.00
+lalala
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    210 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    220 loss=0.0000 eps=1.0000 fps=6.91
+lalala
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    230 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    240 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    250 loss=0.0000 eps=1.0000 fps=6.91
+lalala
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    260 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    270 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    280 loss=0.0000 eps=1.0000 fps=6.91
+lalala
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    290 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    300 loss=0.0000 eps=1.0000 fps=6.91
+lalala
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    310 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    320 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    330 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    340 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    350 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    360 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    370 loss=0.0000 eps=1.0000 fps=6.91
+(Collecting) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_frame= 204 total_fram=    380 loss=0.0000 eps=1.0000 fps=6.91
+lalala
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    390 loss=0.0000 eps=1.0000 fps=9.02
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    400 loss=0.0000 eps=1.0000 fps=9.02
+lalala
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    410 loss=0.0000 eps=1.0000 fps=9.02
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    420 loss=0.0000 eps=1.0000 fps=9.02
+lalala
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    430 loss=0.0000 eps=1.0000 fps=9.02
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    440 loss=0.0000 eps=1.0000 fps=9.02
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    450 loss=0.0000 eps=1.0000 fps=9.02
+lalala
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    460 loss=0.0000 eps=1.0000 fps=9.02
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    470 loss=0.0000 eps=1.0000 fps=9.02
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    480 loss=0.0000 eps=1.0000 fps=9.02
+lalala
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    490 loss=0.0000 eps=1.0000 fps=9.02
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    500 loss=0.0000 eps=1.0000 fps=9.02
+(Collecting) ep=     2 ep_reward_last=1.00 ep_reward_avg=1.50 ep_frame= 176 total_fram=    510 loss=0.0000 eps=1.0000 fps=9.02
+lalala
+(Collecting) ep=     3 ep_reward_last=0.00 ep_reward_avg=1.00 ep_frame= 137 total_fram=    520 loss=0.0000 eps=1.0000 fps=14.90
+(Collecting) ep=     3 ep_reward_last=0.00 ep_reward_avg=1.00 ep_frame= 137 total_fram=    530 loss=0.0000 eps=1.0000 fps=14.90

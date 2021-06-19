@@ -1,0 +1,73 @@
+2021-06-19 13:17:52,573 INFO    MainThread:695773 [internal.py:wandb_internal():91] W&B internal server running at pid: 695773, started at: 2021-06-19 13:17:52.572805
+2021-06-19 13:17:52,575 DEBUG   HandlerThread:695773 [handler.py:handle_request():124] handle_request: check_version
+2021-06-19 13:17:52,576 INFO    WriterThread:695773 [datastore.py:open_for_write():80] open: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/run-hr2oshnn.wandb
+2021-06-19 13:17:52,580 DEBUG   SenderThread:695773 [sender.py:send():179] send: header
+2021-06-19 13:17:52,580 DEBUG   SenderThread:695773 [sender.py:send_request():193] send_request: check_version
+2021-06-19 13:17:52,638 DEBUG   SenderThread:695773 [sender.py:send():179] send: run
+2021-06-19 13:17:52,644 DEBUG   SenderThread:695773 [git.py:repo():33] git repository is invalid
+2021-06-19 13:17:52,914 INFO    SenderThread:695773 [dir_watcher.py:__init__():168] watching files in: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files
+2021-06-19 13:17:52,914 INFO    SenderThread:695773 [sender.py:_start_run_threads():707] run started: hr2oshnn with start time 1624079871
+2021-06-19 13:17:52,914 DEBUG   SenderThread:695773 [sender.py:send():179] send: summary
+2021-06-19 13:17:52,915 INFO    SenderThread:695773 [sender.py:_save_file():829] saving file wandb-summary.json with policy end
+2021-06-19 13:17:52,917 DEBUG   HandlerThread:695773 [handler.py:handle_request():124] handle_request: run_start
+2021-06-19 13:17:53,924 INFO    Thread-8  :695773 [dir_watcher.py:_on_file_created():216] file/dir created: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/wandb-summary.json
+2021-06-19 13:17:54,121 DEBUG   HandlerThread:695773 [meta.py:__init__():39] meta init
+2021-06-19 13:17:54,122 DEBUG   HandlerThread:695773 [meta.py:__init__():53] meta init done
+2021-06-19 13:17:54,122 DEBUG   HandlerThread:695773 [meta.py:probe():210] probe
+2021-06-19 13:17:54,128 DEBUG   HandlerThread:695773 [git.py:repo():33] git repository is invalid
+2021-06-19 13:17:54,128 DEBUG   HandlerThread:695773 [meta.py:_save_pip():57] save pip
+2021-06-19 13:17:54,129 DEBUG   HandlerThread:695773 [meta.py:_save_pip():71] save pip done
+2021-06-19 13:17:54,129 DEBUG   HandlerThread:695773 [meta.py:_save_conda():78] save conda
+2021-06-19 13:17:54,922 INFO    Thread-8  :695773 [dir_watcher.py:_on_file_created():216] file/dir created: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/conda-environment.yaml
+2021-06-19 13:17:54,923 INFO    Thread-8  :695773 [dir_watcher.py:_on_file_created():216] file/dir created: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/requirements.txt
+2021-06-19 13:17:58,578 DEBUG   HandlerThread:695773 [meta.py:_save_conda():86] save conda done
+2021-06-19 13:17:58,578 DEBUG   HandlerThread:695773 [meta.py:probe():252] probe done
+2021-06-19 13:17:58,584 DEBUG   HandlerThread:695773 [handler.py:handle_request():124] handle_request: stop_status
+2021-06-19 13:17:58,585 DEBUG   SenderThread:695773 [sender.py:send_request():193] send_request: stop_status
+2021-06-19 13:17:58,827 DEBUG   SenderThread:695773 [sender.py:send():179] send: files
+2021-06-19 13:17:58,828 INFO    SenderThread:695773 [sender.py:_save_file():829] saving file wandb-metadata.json with policy now
+2021-06-19 13:17:58,924 INFO    Thread-8  :695773 [dir_watcher.py:_on_file_modified():229] file/dir modified: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/conda-environment.yaml
+2021-06-19 13:17:58,924 INFO    Thread-8  :695773 [dir_watcher.py:_on_file_created():216] file/dir created: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/wandb-metadata.json
+2021-06-19 13:17:58,925 INFO    Thread-8  :695773 [dir_watcher.py:_on_file_created():216] file/dir created: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/output.log
+2021-06-19 13:17:59,439 INFO    Thread-11 :695773 [upload_job.py:push():133] Uploaded file /tmp/tmp4f0xpogywandb/39rptmip-wandb-metadata.json
+2021-06-19 13:18:06,407 DEBUG   SenderThread:695773 [sender.py:send():179] send: history
+2021-06-19 13:18:06,408 DEBUG   SenderThread:695773 [sender.py:send():179] send: summary
+2021-06-19 13:18:06,411 INFO    SenderThread:695773 [sender.py:_save_file():829] saving file wandb-summary.json with policy end
+2021-06-19 13:18:06,871 DEBUG   SenderThread:695773 [sender.py:send():179] send: history
+2021-06-19 13:18:06,871 DEBUG   SenderThread:695773 [sender.py:send():179] send: summary
+2021-06-19 13:18:06,872 INFO    SenderThread:695773 [sender.py:_save_file():829] saving file wandb-summary.json with policy end
+2021-06-19 13:18:06,927 INFO    Thread-8  :695773 [dir_watcher.py:_on_file_modified():229] file/dir modified: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/wandb-summary.json
+2021-06-19 13:18:07,082 DEBUG   SenderThread:695773 [sender.py:send():179] send: history
+2021-06-19 13:18:07,082 DEBUG   SenderThread:695773 [sender.py:send():179] send: summary
+2021-06-19 13:18:07,083 INFO    SenderThread:695773 [sender.py:_save_file():829] saving file wandb-summary.json with policy end
+2021-06-19 13:18:07,399 DEBUG   SenderThread:695773 [sender.py:send():179] send: history
+2021-06-19 13:18:07,400 DEBUG   SenderThread:695773 [sender.py:send():179] send: summary
+2021-06-19 13:18:07,400 INFO    SenderThread:695773 [sender.py:_save_file():829] saving file wandb-summary.json with policy end
+2021-06-19 13:18:07,928 INFO    Thread-8  :695773 [dir_watcher.py:_on_file_modified():229] file/dir modified: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/wandb-summary.json
+2021-06-19 13:18:08,928 INFO    Thread-8  :695773 [dir_watcher.py:_on_file_modified():229] file/dir modified: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/output.log
+2021-06-19 13:18:09,790 WARNING MainThread:695773 [internal.py:wandb_internal():147] Internal process interrupt: 1
+2021-06-19 13:18:09,796 DEBUG   SenderThread:695773 [sender.py:send():179] send: history
+2021-06-19 13:18:09,796 DEBUG   SenderThread:695773 [sender.py:send():179] send: summary
+2021-06-19 13:18:09,801 INFO    SenderThread:695773 [sender.py:_save_file():829] saving file wandb-summary.json with policy end
+2021-06-19 13:18:09,929 INFO    Thread-8  :695773 [dir_watcher.py:_on_file_modified():229] file/dir modified: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/wandb-summary.json
+2021-06-19 13:18:10,226 WARNING MainThread:695773 [internal.py:wandb_internal():147] Internal process interrupt: 2
+2021-06-19 13:18:10,226 ERROR   MainThread:695773 [internal.py:wandb_internal():150] Internal process interrupted.
+2021-06-19 13:18:10,797 INFO    HandlerThread:695773 [handler.py:finish():638] shutting down handler
+2021-06-19 13:18:10,801 INFO    WriterThread:695773 [datastore.py:close():288] close: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/run-hr2oshnn.wandb
+2021-06-19 13:18:10,801 INFO    SenderThread:695773 [sender.py:finish():933] shutting down sender
+2021-06-19 13:18:10,801 INFO    SenderThread:695773 [dir_watcher.py:finish():282] shutting down directory watcher
+2021-06-19 13:18:10,930 INFO    SenderThread:695773 [dir_watcher.py:finish():312] scan: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files
+2021-06-19 13:18:10,930 INFO    SenderThread:695773 [dir_watcher.py:finish():318] scan save: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/wandb-metadata.json wandb-metadata.json
+2021-06-19 13:18:10,930 INFO    SenderThread:695773 [dir_watcher.py:finish():318] scan save: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/output.log output.log
+2021-06-19 13:18:10,931 INFO    SenderThread:695773 [dir_watcher.py:finish():318] scan save: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/conda-environment.yaml conda-environment.yaml
+2021-06-19 13:18:10,931 INFO    SenderThread:695773 [dir_watcher.py:finish():318] scan save: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/config.yaml config.yaml
+2021-06-19 13:18:10,939 INFO    SenderThread:695773 [dir_watcher.py:finish():318] scan save: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/wandb-summary.json wandb-summary.json
+2021-06-19 13:18:10,940 INFO    SenderThread:695773 [dir_watcher.py:finish():318] scan save: /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/requirements.txt requirements.txt
+2021-06-19 13:18:10,947 INFO    SenderThread:695773 [file_pusher.py:finish():176] shutting down file pusher
+2021-06-19 13:18:10,948 INFO    SenderThread:695773 [file_pusher.py:join():181] waiting for file pusher
+2021-06-19 13:18:12,362 INFO    Thread-13 :695773 [upload_job.py:push():133] Uploaded file /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/conda-environment.yaml
+2021-06-19 13:18:12,370 INFO    Thread-14 :695773 [upload_job.py:push():133] Uploaded file /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/config.yaml
+2021-06-19 13:18:12,373 INFO    Thread-12 :695773 [upload_job.py:push():133] Uploaded file /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/output.log
+2021-06-19 13:18:12,375 INFO    Thread-16 :695773 [upload_job.py:push():133] Uploaded file /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/requirements.txt
+2021-06-19 13:18:12,379 INFO    Thread-15 :695773 [upload_job.py:push():133] Uploaded file /home/chengzilong/DDQN/wandb/run-20210619_131751-hr2oshnn/files/wandb-summary.json
+2021-06-19 13:18:13,172 INFO    MainThread:695773 [internal.py:handle_exit():78] Internal process exited

@@ -1,0 +1,12 @@
+2021-06-17 16:14:22,693 INFO    MainThread:2242861 [internal.py:wandb_internal():91] W&B internal server running at pid: 2242861, started at: 2021-06-17 16:14:22.693483
+2021-06-17 16:14:22,703 DEBUG   HandlerThread:2242861 [handler.py:handle_request():124] handle_request: run_start
+2021-06-17 16:14:22,705 INFO    WriterThread:2242861 [datastore.py:open_for_write():80] open: /home/chengzilong/DDQN/wandb/offline-run-20210617_161420-1xfo7r7e/run-1xfo7r7e.wandb
+2021-06-17 16:14:24,833 DEBUG   HandlerThread:2242861 [meta.py:__init__():39] meta init
+2021-06-17 16:14:24,834 DEBUG   HandlerThread:2242861 [meta.py:__init__():53] meta init done
+2021-06-17 16:14:24,834 DEBUG   HandlerThread:2242861 [meta.py:probe():210] probe
+2021-06-17 16:14:24,840 DEBUG   HandlerThread:2242861 [git.py:repo():33] git repository is invalid
+2021-06-17 16:14:24,841 DEBUG   HandlerThread:2242861 [meta.py:_save_pip():57] save pip
+2021-06-17 16:14:24,842 DEBUG   HandlerThread:2242861 [meta.py:_save_pip():71] save pip done
+2021-06-17 16:14:24,842 DEBUG   HandlerThread:2242861 [meta.py:_save_conda():78] save conda
+2021-06-17 16:14:29,019 DEBUG   HandlerThread:2242861 [meta.py:_save_conda():86] save conda done
+2021-06-17 16:14:29,019 DEBUG   HandlerThread:2242861 [meta.py:probe():252] probe done

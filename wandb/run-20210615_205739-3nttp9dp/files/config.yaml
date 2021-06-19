@@ -1,0 +1,72 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.10.32
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.7.10
+    t:
+      1:
+      - 1
+      - 3
+      4: 3.7.10
+      5: 0.10.32
+      8:
+      - 5
+batch_size:
+  desc: null
+  value: 32
+buffer_size:
+  desc: null
+  value: 1000000
+env:
+  desc: null
+  value: BreakoutNoFrameskip-v4
+eps_decay_steps:
+  desc: null
+  value: 1000000
+eps_end:
+  desc: null
+  value: 0.01
+eps_start:
+  desc: null
+  value: 1
+gamma:
+  desc: null
+  value: 0.99
+gradient_clip:
+  desc: null
+  value: 0.5
+lr:
+  desc: null
+  value: 0.00025
+num_atoms:
+  desc: null
+  value: 51
+opt_eps:
+  desc: null
+  value: 0.0003125
+seed:
+  desc: null
+  value: 456
+start_updating:
+  desc: null
+  value: 50000
+total_steps:
+  desc: null
+  value: 10000000
+train_freq:
+  desc: null
+  value: 4
+update_target_freq:
+  desc: null
+  value: 10000
+v_max:
+  desc: null
+  value: 10.0
+v_min:
+  desc: null
+  value: -10.0

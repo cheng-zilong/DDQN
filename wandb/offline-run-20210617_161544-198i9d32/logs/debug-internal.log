@@ -1,0 +1,17 @@
+2021-06-17 16:15:46,124 INFO    MainThread:2246954 [internal.py:wandb_internal():91] W&B internal server running at pid: 2246954, started at: 2021-06-17 16:15:46.123647
+2021-06-17 16:15:46,131 DEBUG   HandlerThread:2246954 [handler.py:handle_request():124] handle_request: run_start
+2021-06-17 16:15:46,133 INFO    WriterThread:2246954 [datastore.py:open_for_write():80] open: /home/chengzilong/DDQN/wandb/offline-run-20210617_161544-198i9d32/run-198i9d32.wandb
+2021-06-17 16:15:48,405 DEBUG   HandlerThread:2246954 [meta.py:__init__():39] meta init
+2021-06-17 16:15:48,405 DEBUG   HandlerThread:2246954 [meta.py:__init__():53] meta init done
+2021-06-17 16:15:48,406 DEBUG   HandlerThread:2246954 [meta.py:probe():210] probe
+2021-06-17 16:15:48,413 DEBUG   HandlerThread:2246954 [git.py:repo():33] git repository is invalid
+2021-06-17 16:15:48,413 DEBUG   HandlerThread:2246954 [meta.py:_save_pip():57] save pip
+2021-06-17 16:15:48,414 DEBUG   HandlerThread:2246954 [meta.py:_save_pip():71] save pip done
+2021-06-17 16:15:48,415 DEBUG   HandlerThread:2246954 [meta.py:_save_conda():78] save conda
+2021-06-17 16:15:52,662 DEBUG   HandlerThread:2246954 [meta.py:_save_conda():86] save conda done
+2021-06-17 16:15:52,663 DEBUG   HandlerThread:2246954 [meta.py:probe():252] probe done
+2021-06-17 16:15:53,247 WARNING MainThread:2246954 [internal.py:wandb_internal():147] Internal process interrupt: 1
+2021-06-17 16:15:53,458 WARNING MainThread:2246954 [internal.py:wandb_internal():147] Internal process interrupt: 2
+2021-06-17 16:15:53,458 ERROR   MainThread:2246954 [internal.py:wandb_internal():150] Internal process interrupted.
+2021-06-17 16:15:53,677 INFO    WriterThread:2246954 [datastore.py:close():288] close: /home/chengzilong/DDQN/wandb/offline-run-20210617_161544-198i9d32/run-198i9d32.wandb
+2021-06-17 16:15:53,678 INFO    HandlerThread:2246954 [handler.py:finish():638] shutting down handler

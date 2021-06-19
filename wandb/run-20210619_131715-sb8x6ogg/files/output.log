@@ -1,0 +1,13 @@
+(Collecting Data) ep=     1 ep_reward_last=2.00 ep_reward_avg=2.00 ep_steps= 207 total_steps=    208 loss=0.0000 eps=1.0000 fps=50.91
+(Collecting Data) ep=     2 ep_reward_last=3.00 ep_reward_avg=2.50 ep_steps= 260 total_steps=    468 loss=0.0000 eps=1.0000 fps=526.67
+(Collecting Data) ep=     3 ep_reward_last=3.00 ep_reward_avg=2.67 ep_steps= 232 total_steps=    700 loss=0.0000 eps=1.0000 fps=523.65
+(Collecting Data) ep=     4 ep_reward_last=0.00 ep_reward_avg=2.00 ep_steps= 113 total_steps=    813 loss=0.0000 eps=1.0000 fps=478.57
+(Collecting Data) ep=     5 ep_reward_last=1.00 ep_reward_avg=1.80 ep_steps= 141 total_steps=    954 loss=0.0000 eps=1.0000 fps=491.53
+(Training Agent) ep=     6 ep_reward_last=0.00 ep_reward_avg=1.50 ep_steps= 115 total_steps=   1069 loss=0.0000 eps=0.9999 fps=26.36
+(Training Agent) ep=     7 ep_reward_last=0.00 ep_reward_avg=1.29 ep_steps= 111 total_steps=   1180 loss=0.0000 eps=0.9998 fps=231.19
+(Training Agent) ep=     8 ep_reward_last=3.00 ep_reward_avg=1.50 ep_steps= 239 total_steps=   1419 loss=0.0000 eps=0.9996 fps=280.38
+(Training Agent) ep=     9 ep_reward_last=5.00 ep_reward_avg=1.89 ep_steps= 338 total_steps=   1757 loss=0.0000 eps=0.9993 fps=194.68
+(Training Agent) ep=    10 ep_reward_last=0.00 ep_reward_avg=1.70 ep_steps= 111 total_steps=   1868 loss=0.0000 eps=0.9991 fps=256.76
+(Training Agent) ep=    11 ep_reward_last=0.00 ep_reward_avg=1.50 ep_steps= 113 total_steps=   1981 loss=0.0000 eps=0.9990 fps=251.81
+(Training Agent) ep=    12 ep_reward_last=0.00 ep_reward_avg=1.20 ep_steps= 113 total_steps=   2094 loss=0.0000 eps=0.9989 fps=249.25
+(Training Agent) ep=    13 ep_reward_last=0.00 ep_reward_avg=0.90 ep_steps= 115 total_steps=   2209 loss=0.0000 eps=0.9988 fps=262.74

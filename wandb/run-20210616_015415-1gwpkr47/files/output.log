@@ -1,0 +1,2 @@
+(Collecting) ep=     0 ep_reward_last=1.00 ep_reward_avg=1.00 ep_frame= 179 total_fram=    179 loss=0.0000 eps=1.0000 fps=578.23
+(Collecting) ep=     1 ep_reward_last=3.00 ep_reward_avg=2.00 ep_frame= 247 total_fram=    426 loss=0.0000 eps=1.0000 fps=548.13

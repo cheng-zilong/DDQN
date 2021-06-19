@@ -1,0 +1,40 @@
+2021-06-15 14:56:53,820 INFO    MainThread:3129916 [internal.py:wandb_internal():91] W&B internal server running at pid: 3129916, started at: 2021-06-15 14:56:53.819656
+2021-06-15 14:56:53,831 INFO    WriterThread:3129916 [datastore.py:open_for_write():80] open: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/run-1kar6j9g.wandb
+2021-06-15 14:56:53,832 DEBUG   HandlerThread:3129916 [handler.py:handle_request():124] handle_request: check_version
+2021-06-15 14:56:53,838 DEBUG   SenderThread:3129916 [sender.py:send():179] send: header
+2021-06-15 14:56:53,838 DEBUG   SenderThread:3129916 [sender.py:send_request():193] send_request: check_version
+2021-06-15 14:56:53,913 DEBUG   SenderThread:3129916 [sender.py:send():179] send: run
+2021-06-15 14:56:53,935 DEBUG   SenderThread:3129916 [git.py:repo():33] git repository is invalid
+2021-06-15 14:56:54,261 DEBUG   HandlerThread:3129916 [handler.py:handle_request():124] handle_request: run_start
+2021-06-15 14:56:54,264 INFO    SenderThread:3129916 [dir_watcher.py:__init__():168] watching files in: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/files
+2021-06-15 14:56:54,264 INFO    SenderThread:3129916 [sender.py:_start_run_threads():707] run started: 1kar6j9g with start time 1623740212
+2021-06-15 14:56:54,264 DEBUG   SenderThread:3129916 [sender.py:send():179] send: summary
+2021-06-15 14:56:54,265 INFO    SenderThread:3129916 [sender.py:_save_file():829] saving file wandb-summary.json with policy end
+2021-06-15 14:56:55,294 INFO    Thread-14 :3129916 [dir_watcher.py:_on_file_created():216] file/dir created: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/files/wandb-summary.json
+2021-06-15 14:56:56,555 DEBUG   HandlerThread:3129916 [meta.py:__init__():39] meta init
+2021-06-15 14:56:56,555 DEBUG   HandlerThread:3129916 [meta.py:__init__():53] meta init done
+2021-06-15 14:56:56,555 DEBUG   HandlerThread:3129916 [meta.py:probe():210] probe
+2021-06-15 14:56:56,562 DEBUG   HandlerThread:3129916 [git.py:repo():33] git repository is invalid
+2021-06-15 14:56:56,562 DEBUG   HandlerThread:3129916 [meta.py:_save_pip():57] save pip
+2021-06-15 14:56:56,564 DEBUG   HandlerThread:3129916 [meta.py:_save_pip():71] save pip done
+2021-06-15 14:56:56,565 DEBUG   HandlerThread:3129916 [meta.py:_save_conda():78] save conda
+2021-06-15 14:56:57,283 INFO    Thread-14 :3129916 [dir_watcher.py:_on_file_created():216] file/dir created: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/files/conda-environment.yaml
+2021-06-15 14:56:57,284 INFO    Thread-14 :3129916 [dir_watcher.py:_on_file_created():216] file/dir created: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/files/requirements.txt
+2021-06-15 14:56:59,284 INFO    Thread-14 :3129916 [dir_watcher.py:_on_file_created():216] file/dir created: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/files/output.log
+2021-06-15 14:57:00,722 DEBUG   HandlerThread:3129916 [meta.py:_save_conda():86] save conda done
+2021-06-15 14:57:00,723 DEBUG   HandlerThread:3129916 [meta.py:probe():252] probe done
+2021-06-15 14:57:00,732 DEBUG   HandlerThread:3129916 [handler.py:handle_request():124] handle_request: stop_status
+2021-06-15 14:57:00,734 DEBUG   SenderThread:3129916 [sender.py:send_request():193] send_request: stop_status
+2021-06-15 14:57:00,992 DEBUG   SenderThread:3129916 [sender.py:send():179] send: files
+2021-06-15 14:57:00,992 INFO    SenderThread:3129916 [sender.py:_save_file():829] saving file wandb-metadata.json with policy now
+2021-06-15 14:57:01,287 INFO    Thread-14 :3129916 [dir_watcher.py:_on_file_modified():229] file/dir modified: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/files/conda-environment.yaml
+2021-06-15 14:57:01,288 INFO    Thread-14 :3129916 [dir_watcher.py:_on_file_created():216] file/dir created: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/files/wandb-metadata.json
+2021-06-15 14:57:01,684 INFO    Thread-17 :3129916 [upload_job.py:push():133] Uploaded file /tmp/tmpcgr8pfozwandb/3gdyrue5-wandb-metadata.json
+2021-06-15 14:57:04,289 INFO    Thread-14 :3129916 [dir_watcher.py:_on_file_modified():229] file/dir modified: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/files/output.log
+2021-06-15 14:57:06,291 INFO    Thread-14 :3129916 [dir_watcher.py:_on_file_modified():229] file/dir modified: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/files/output.log
+2021-06-15 14:57:08,293 INFO    Thread-14 :3129916 [dir_watcher.py:_on_file_modified():229] file/dir modified: /home/chengzilong/DDQN/wandb/run-20210615_145652-1kar6j9g/files/output.log
+2021-06-15 14:57:15,995 DEBUG   HandlerThread:3129916 [handler.py:handle_request():124] handle_request: stop_status
+2021-06-15 14:57:15,996 DEBUG   SenderThread:3129916 [sender.py:send_request():193] send_request: stop_status
+2021-06-15 14:57:25,254 DEBUG   SenderThread:3129916 [sender.py:send():179] send: stats
+2021-06-15 14:57:31,241 DEBUG   HandlerThread:3129916 [handler.py:handle_request():124] handle_request: stop_status
+2021-06-15 14:57:31,243 DEBUG   SenderThread:3129916 [sender.py:send_request():193] send_request: stop_status
