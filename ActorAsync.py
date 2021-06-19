@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import torch.multiprocessing as mp
 from collections import deque
-import random 
+import random
 
 class ActorAsync(mp.Process):
     STEP = 0

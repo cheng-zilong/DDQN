@@ -252,12 +252,17 @@ def wrap_pytorch(env):
 
 
 class OriginalReturnWrapper(gym.Wrapper):
+    '''
+    change reward from float64 to float
+    output total reward
+    '''
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
         self.total_rewards = 0
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
+        reward = float(reward)
         self.total_rewards += reward
         if done:
             info['episodic_return'] = self.total_rewards
