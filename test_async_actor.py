@@ -14,7 +14,7 @@ from Config import get_default_parser
 import wandb
 import numpy as np
 import time
-from wrapper import make_atari, wrap_deepmind, wrap_pytorch, OriginalReturnWrapper
+from wrapper import make_env
 from statistics import mean
 from ReplayBufferAsync import ReplayBufferAsync
 import copy 
@@ -150,6 +150,7 @@ class CatDQN(DQN):
         # return torch.tensor(0)
 
 if __name__ == '__main__':
+    
     parser = get_default_parser()
     parser.set_defaults(seed=4) 
     parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
@@ -165,12 +166,7 @@ if __name__ == '__main__':
     torch.cuda.manual_seed(args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
-    env    = make_atari(args.env_name)
-    env    = OriginalReturnWrapper(env)
-    env    = wrap_deepmind(env, frame_stack=True)
-    env    = wrap_pytorch(env)
-    env.seed(args.seed)
-    env.action_space.np_random.seed(args.seed)
+    env    = make_env(args.env_name, args.seed)
     wandb.init(name='CatCnnDQN(' + args.env_name + ')_' + str(args.seed), project="C51", config=args)
     CatDQN(
         env=env, 
