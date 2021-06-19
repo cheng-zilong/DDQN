@@ -37,7 +37,6 @@ class ReplayBufferAsync(mp.Process):
         self.cache_size = cache_size
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.is_init_cache = False
-        self.current_cache_size = self.cache_size # output pointer 0 when initilize the cache
         self.out_pointer = 1 # output pointer 0 when initialize, 1 when first output
         self.in_pointer = 0 # update pointer 0 when first update
         self.seed = seed
@@ -60,33 +59,31 @@ class ReplayBufferAsync(mp.Process):
                 if not self.is_init_cache:
                     self.is_init_cache=True
                     state, action, reward, next_state, done = replay_buffer.sample(self.batch_size)
-                    state_share = torch.zeros((self.cache_size, *state.shape), dtype=torch.tensor(state).dtype, device=torch.device(0)).share_memory_()
-                    action_share = torch.zeros((self.cache_size, *action.shape), dtype=torch.tensor(action).dtype, device=torch.device(0)).share_memory_()
-                    reward_share = torch.zeros((self.cache_size, *reward.shape), dtype=torch.tensor(reward).dtype, device=torch.device(0)).share_memory_()
-                    next_state_share = torch.zeros((self.cache_size, *next_state.shape), dtype=torch.tensor(next_state).dtype, device=torch.device(0)).share_memory_()
-                    done_share = torch.zeros((self.cache_size, *done.shape), dtype=torch.tensor(done).dtype, device=torch.device(0)).share_memory_()
+                    state_share = torch.zeros((self.cache_size, *state.shape), dtype=torch.float, device=torch.device(0)).share_memory_()
+                    action_share = torch.zeros((self.cache_size, *action.shape), dtype=torch.int64, device=torch.device(0)).share_memory_()
+                    reward_share = torch.zeros((self.cache_size, *reward.shape), dtype=torch.float, device=torch.device(0)).share_memory_()
+                    next_state_share = torch.zeros((self.cache_size, *next_state.shape), dtype=torch.float, device=torch.device(0)).share_memory_()
+                    done_share = torch.zeros((self.cache_size, *done.shape), dtype=torch.bool, device=torch.device(0)).share_memory_()
                     for i in range(0, self.cache_size): # no need update 0
                         state, action, reward, next_state, done = replay_buffer.sample(self.batch_size)
-                        state_share[i] = torch.tensor(state, device=torch.device(0))
-                        action_share[i] = torch.tensor(action, device=torch.device(0))
-                        reward_share[i] = torch.tensor(reward, device=torch.device(0))
-                        next_state_share[i] = torch.tensor(next_state, device=torch.device(0))
-                        done_share[i] = torch.tensor(done, device=torch.device(0))
+                        state_share[i] = torch.tensor(state, dtype=torch.float, device=torch.device(0))
+                        action_share[i] = torch.tensor(action, dtype=torch.int64, device=torch.device(0))
+                        reward_share[i] = torch.tensor(reward, dtype=torch.float, device=torch.device(0))
+                        next_state_share[i] = torch.tensor(next_state, dtype=torch.float, device=torch.device(0))
+                        done_share[i] = torch.tensor(done, dtype=torch.bool, device=torch.device(0))
                     memory_share_list = [state_share, action_share, reward_share, next_state_share, done_share]
                     self.__worker_pipe.send([True, memory_share_list]) # the first one denoteing construction of share memory
                 else:
                     self.__worker_pipe.send([False, self.out_pointer])
-                    self.current_cache_size-=1
                     self.out_pointer = (self.out_pointer + 1)%self.cache_size
 
                     state, action, reward, next_state, done = replay_buffer.sample(self.batch_size)
-                    state_share[self.in_pointer] = torch.tensor(state, device=torch.device(0))
-                    action_share[self.in_pointer] = torch.tensor(action, device=torch.device(0))
-                    reward_share[self.in_pointer] = torch.tensor(reward, device=torch.device(0))
-                    next_state_share[self.in_pointer] = torch.tensor(next_state, device=torch.device(0))
-                    done_share[self.in_pointer] = torch.tensor(done, device=torch.device(0))
+                    state_share[self.in_pointer] = torch.tensor(state, dtype=torch.float, device=torch.device(0))
+                    action_share[self.in_pointer] = torch.tensor(action, dtype=torch.int64, device=torch.device(0))
+                    reward_share[self.in_pointer] = torch.tensor(reward, dtype=torch.float, device=torch.device(0))
+                    next_state_share[self.in_pointer] = torch.tensor(next_state, dtype=torch.float, device=torch.device(0))
+                    done_share[self.in_pointer] = torch.tensor(done, dtype=torch.bool, device=torch.device(0))
                     self.in_pointer = (self.in_pointer + 1) % self.cache_size
-                    self.current_cache_size+=1
 
             elif op == self.CLOSE:
                 self.__worker_pipe.close()

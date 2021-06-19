@@ -10,7 +10,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-wandb/
+
 build/
 runs/
 develop-eggs/
@@ -139,3 +139,5 @@ dmypy.json
 sphnix/
 logs/
 .vscode/ 
+/wandb
+save_mode/*

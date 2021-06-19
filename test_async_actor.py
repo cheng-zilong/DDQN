@@ -131,14 +131,14 @@ class CatDQN(DQN):
         loss = (target_prob * target_prob.add(1e-5).log() - target_prob * log_prob).sum(-1).mean()
 
         #### for debug pruposes
-        if torch.isnan(loss):
-            print('.....')
-        self._last_state = state
-        self._last_action = action
-        self._last_reward = reward
-        self._last_next_state = next_state
-        self._last_done = done
-        self._last_model_para =  copy.deepcopy(self.current_model.state_dict())
+        # if torch.isnan(loss):
+        #     print('.....')
+        # self._last_state = state
+        # self._last_action = action
+        # self._last_reward = reward
+        # self._last_next_state = next_state
+        # self._last_done = done
+        # self._last_model_para =  copy.deepcopy(self.current_model.state_dict())
 
         self.optimizer.zero_grad()
         loss.backward()

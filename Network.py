@@ -12,11 +12,11 @@ class LinearQNetwork(nn.Module):
     def __init__(self, input_shape, num_actions):
         super(LinearQNetwork, self).__init__()
         self.layers = nn.Sequential(
-            nn.Linear(input_shape[0], 128),
+            layer_init(nn.Linear(input_shape[0], 128)),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            layer_init(nn.Linear(128, 128)),
             nn.ReLU(),
-            nn.Linear(128, num_actions)
+            layer_init(nn.Linear(128, num_actions))
         )
         
     def forward(self, x):
@@ -34,18 +34,18 @@ class CnnQNetwork(nn.Module):
         super(CnnQNetwork, self).__init__()
         self.input_shape = input_shape
         self.features = nn.Sequential(
-            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+            layer_init(nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4)),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=4, stride=2),
+            layer_init(nn.Conv2d(32, 64, kernel_size=4, stride=2)),
             nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            layer_init(nn.Conv2d(64, 64, kernel_size=3, stride=1)),
             nn.ReLU()
         )
         
         self.fc = nn.Sequential(
-            nn.Linear(self.feature_size(), 512),
+            layer_init(nn.Linear(self.feature_size(), 512)),
             nn.ReLU(),
-            nn.Linear(512, num_actions)
+            layer_init(nn.Linear(512, num_actions))
         )
         
     def forward(self, x):
@@ -74,13 +74,13 @@ class CatLinearQNetwork(nn.Module):
         self.Vmin         = args['v_min']
         self.Vmax         = args['v_max']
         self.layers = nn.Sequential(
-            nn.Linear(input_shape[0], 128),
+            layer_init(nn.Linear(input_shape[0], 128)),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            layer_init(nn.Linear(128, 128)),
             nn.ReLU(),
-            nn.Linear(128, 512),
+            layer_init(nn.Linear(128, 512)),
             nn.ReLU(),
-            nn.Linear(512, num_actions * self.num_atoms)
+            layer_init(nn.Linear(512, num_actions * self.num_atoms))
         )
 
     def forward(self, x):

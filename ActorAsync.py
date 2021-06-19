@@ -14,7 +14,6 @@ class ActorAsync(mp.Process):
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.env = env
         self.is_init_cache = False
-        self.cache_size = 2
         self.eps = 1
         self.lock = lock
         self.steps_no = steps_no
@@ -25,7 +24,6 @@ class ActorAsync(mp.Process):
         torch.cuda.manual_seed(self.seed)
         random.seed(self.seed)
         np.random.seed(self.seed)
-        cache = deque([], maxlen=self.cache_size)
 
         while True:
             op, data = self.__worker_pipe.recv()
@@ -35,11 +33,10 @@ class ActorAsync(mp.Process):
                     self.is_init_cache = True
                     self.state = self.env.reset()
                     self.__worker_pipe.send(self.eps_greedy_step(eps))
-                    for _ in range(self.cache_size):
-                        cache.append(self.eps_greedy_step(eps))
+                    self.cache = self.eps_greedy_step(eps)
                 else:
-                    self.__worker_pipe.send(cache.popleft())
-                    cache.append(self.eps_greedy_step(eps))
+                    self.__worker_pipe.send(self.cache)
+                    self.cache = self.eps_greedy_step(eps)
 
             elif op == self.EXIT:
                 self.__worker_pipe.close()
