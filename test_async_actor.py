@@ -20,6 +20,7 @@ from ReplayBufferAsync import ReplayBufferAsync
 import copy 
 import torch.multiprocessing as mp
 from ActorAsync import ActorAsync
+from datetime import datetime
 
 class DQN:
     def __init__(self, env, netowrk, optimizer, *arg, **args):
@@ -32,12 +33,13 @@ class DQN:
         self.eps_decay_steps = args['eps_decay_steps']
         self.total_steps = args['total_steps']
         self.start_training_steps = args['start_training_steps']
-        self.update_target_freq = args['update_target_freq']
+        self.update_target_steps = args['update_target_steps']
         self.train_freq = args['train_freq']
         self.seed = args['seed']
+        self.save_model_steps = args['save_model_steps']
 
         self.lock = mp.Lock()
-        self.actor = ActorAsync(self.env, seed=self.seed, lock=self.lock)
+        self.actor = ActorAsync(self.env, steps_no=self.train_freq, seed=self.seed, lock=self.lock)
         self.replay_buffer = ReplayBufferAsync(args['buffer_size'], args['batch_size'], cache_size=2, seed = self.seed)
         self.current_model = netowrk(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
         self.current_model.share_memory()
@@ -56,37 +58,42 @@ class DQN:
         loss  = torch.tensor(0) 
         tic   = time.time()
         fps   = 0
-        for steps_idx in range(1, self.total_steps + 1):
+        now = datetime.now()
+        for steps_idx in range(1, self.total_steps + 1, self.train_freq):
             eps = self.obtain_eps(steps_idx-self.start_training_steps) if steps_idx > self.start_training_steps else 1
-            state, action, reward, next_state, done, info = self.actor.step(eps)
-            self.replay_buffer.add(state, action, reward, next_state, done)
+            data = self.actor.step(eps)
+            for idx, (state, action, reward, next_state, done, info) in enumerate(data):
+                self.replay_buffer.add(state, action, reward, next_state, done)
+                if info['episodic_return'] is not None:
+                    episodic_steps = steps_idx + idx - last_steps_idx
+                    ep_reward_10_list.append(info['episodic_return'])
+                    toc = time.time()
+                    fps = episodic_steps / (toc-tic)
+                    tic = time.time()
+                    ep_reward_10_list_mean = 0 if len(ep_reward_10_list) == 0 else mean(ep_reward_10_list)
 
-            if info['episodic_return'] is not None:
-                episodic_steps = steps_idx-last_steps_idx
-                ep_reward_10_list.append(info['episodic_return'])
-                toc = time.time()
-                fps = episodic_steps/(toc-tic)
-                tic = time.time()
-                ep_reward_10_list_mean = 0 if len(ep_reward_10_list) == 0 else mean(ep_reward_10_list)
+                    wandb.log({'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'loss': loss, 'eps': eps, 'fps': fps}, step=steps_idx)
+                    print('(Training Agent)', end =" ") if steps_idx > self.start_training_steps else print('(Collecting Data)', end =" ")
+                    print('ep=%6d ep_reward_last=%.2f ep_reward_avg=%.2f ep_steps=%4d total_steps=%7d loss=%.4f eps=%.4f fps=%.2f '%
+                            (ep_idx, info['episodic_return'], ep_reward_10_list_mean, episodic_steps, steps_idx, loss.item(), eps, fps))
+                    ep_idx += 1
+                    last_steps_idx = steps_idx + idx
 
-                wandb.log({'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'loss': loss, 'eps': eps, 'fps': fps}, step=steps_idx)
-                print('(Training Agent)', end =" ") if steps_idx > self.start_training_steps else print('(Collecting Data)', end =" ")
-                print('ep=%6d ep_reward_last=%.2f ep_reward_avg=%.2f ep_steps=%4d total_steps=%7d loss=%.4f eps=%.4f fps=%.2f '%
-                        (ep_idx, info['episodic_return'], ep_reward_10_list_mean, episodic_steps, steps_idx, loss.item(), eps, fps))
-                ep_idx += 1
-                last_steps_idx = steps_idx
-            if steps_idx > self.start_training_steps and steps_idx % self.train_freq == 0:
+            if steps_idx > self.start_training_steps:
                 loss = self.compute_td_loss()
-                pass
-            if steps_idx / self.train_freq % self.update_target_freq == 0:
+
+            if steps_idx % self.update_target_steps == 1:
                 self.update_target() 
+
+            if steps_idx % self.save_model_steps == 1:
+                torch.save(self.current_model.state_dict(), 'save_model/' + self.__class__.__name__ + '(' + self.env.unwrapped.spec.id + ')_' + str(self.seed) + '_' + now.strftime("%Y%m%d-%H%M%S") + '.pt')
                 
     def test(self):
         pass
 
     def learn(self):
         self.train()
-        torch.save(self.current_model.state_dict(), self.__class__.__name__ + '(' + self.env.unwrapped.spec.id + ')_' + str(self.seed) + '.pt')
+        
         
     def obtain_eps(self, steps_idx):
         eps = self.eps_end + (self.eps_start - self.eps_end) * (1 - min(steps_idx,self.eps_decay_steps) / self.eps_decay_steps)
@@ -120,37 +127,36 @@ class CatDQN(DQN):
         target_prob = target_prob.sum(-1)
 
         log_prob = self.current_model(state).log()
-        # log_prob = log_prob[self.torch_range, action, :]
-        # loss = (target_prob * target_prob.add(1e-5).log() - target_prob * log_prob).sum(-1).mean()
+        log_prob = log_prob[self.torch_range, action, :]
+        loss = (target_prob * target_prob.add(1e-5).log() - target_prob * log_prob).sum(-1).mean()
 
-        # #### for debug pruposes
-        # if torch.isnan(loss):
-        #     print('.....')
-        # self._last_state = state
-        # self._last_action = action
-        # self._last_reward = reward
-        # self._last_next_state = next_state
-        # self._last_done = done
-        # self._last_model_para =  copy.deepcopy(self.current_model.state_dict())
+        #### for debug pruposes
+        if torch.isnan(loss):
+            print('.....')
+        self._last_state = state
+        self._last_action = action
+        self._last_reward = reward
+        self._last_next_state = next_state
+        self._last_done = done
+        self._last_model_para =  copy.deepcopy(self.current_model.state_dict())
 
-        # self.optimizer.zero_grad()
-        # loss.backward()
-        # nn.utils.clip_grad_norm_(self.current_model.parameters(), self.gradient_clip)
-        # with self.lock:
-        #     self.optimizer.step()
+        self.optimizer.zero_grad()
+        loss.backward()
+        nn.utils.clip_grad_norm_(self.current_model.parameters(), self.gradient_clip)
+        with self.lock:
+            self.optimizer.step()
 
-        # return loss
-        return torch.tensor(0)
+        return loss
+        # return torch.tensor(0)
 
 if __name__ == '__main__':
     parser = get_default_parser()
     parser.set_defaults(seed=4) 
     parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
     parser.set_defaults(total_steps = int(1e7))
-    parser.set_defaults(start_training_steps=1000)
+    parser.set_defaults(start_training_steps=50000)
     # parser.set_defaults(start_training_steps=1000)
     parser.set_defaults(train_freq=4)
-    parser.set_defaults(update_target_freq=10000)
     parser.add_argument('--num_atoms', type=int, default=51)
     parser.add_argument('--v_min', type=float, default=-10.)
     parser.add_argument('--v_max', type=float, default=10.)

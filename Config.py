@@ -16,5 +16,6 @@ def get_default_parser():
     parser.add_argument('--total_steps', type=int, default=int(1e7))
     parser.add_argument('--start_training_steps', type=int, default=50000)
     parser.add_argument('--train_freq', type=int, default=4)
-    parser.add_argument('--update_target_freq', type=int, default=10000)
+    parser.add_argument('--update_target_steps', type=int, default=40000)
+    parser.add_argument('--save_model_steps', type=int, default=int(1e6))
     return parser
