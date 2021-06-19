@@ -1,3 +1,0 @@
-2021-06-17 16:14:09,620 INFO    MainThread:2242077 [internal.py:wandb_internal():91] W&B internal server running at pid: 2242077, started at: 2021-06-17 16:14:09.619974
-2021-06-17 16:14:09,634 INFO    WriterThread:2242077 [datastore.py:open_for_write():80] open: /home/chengzilong/DDQN/wandb/offline-run-20210617_161407-1kyo7sb4/run-1kyo7sb4.wandb
-2021-06-17 16:14:09,635 DEBUG   HandlerThread:2242077 [handler.py:handle_request():124] handle_request: run_start
