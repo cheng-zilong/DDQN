@@ -47,7 +47,6 @@ class DQN:
         self.current_model.share_memory()
         self.target_model  = netowrk(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
         self.optimizer = optimizer(self.current_model.parameters())
-        self.actor.set_network(self.current_model)
         self.update_target()
 
     def update_target(self):
@@ -59,6 +58,7 @@ class DQN:
         loss  = torch.tensor(0) 
         tic   = time.time()
         now = datetime.now()
+        self.actor.set_network(self.current_model)
         for steps_idx in range(1, self.total_steps + 1, self.train_freq):
             eps = self.obtain_eps(steps_idx-self.start_training_steps) if steps_idx > self.start_training_steps else 1
             data = self.actor.step(eps)
@@ -95,21 +95,24 @@ class DQN:
         ep_idx = 1
         ep_reward_10_list = deque(maxlen=10)
         tic   = time.time()
+        last_steps_idx = 1
         for steps_idx in range(1, self.total_steps + 1):
             action = self.current_model.act(state)
-            state, _, _, info = self.env.step(action)
+            state, _, done, info = self.env.step(action)
             self.env.render()
-            if info['episodic_return'] is not None:
-                episodic_steps = steps_idx - last_steps_idx
-                toc = time.time()
-                fps = episodic_steps / (toc-tic)
-                tic = time.time()
-                ep_idx+=1
-                ep_reward_10_list.append(info['episodic_return'])
-                ep_reward_10_list_mean = mean(ep_reward_10_list)
-                print('ep=%6d ep_reward_last=%.2f ep_reward_avg=%.2f ep_steps=%4d total_steps=%7d fps=%.2f '%
-                            (ep_idx, info['episodic_return'], ep_reward_10_list_mean, episodic_steps, steps_idx, fps))
-                last_steps_idx = steps_idx
+            if done:
+                state = self.env.reset()
+                if info['episodic_return'] is not None:
+                    episodic_steps = steps_idx - last_steps_idx
+                    toc = time.time()
+                    fps = episodic_steps / (toc-tic)
+                    tic = time.time()
+                    ep_idx+=1
+                    ep_reward_10_list.append(info['episodic_return'])
+                    ep_reward_10_list_mean = mean(ep_reward_10_list)
+                    print('ep=%6d ep_reward_last=%.2f ep_reward_avg=%.2f ep_steps=%4d total_steps=%7d fps=%.2f '%
+                                (ep_idx, info['episodic_return'], ep_reward_10_list_mean, episodic_steps, steps_idx, fps))
+                    last_steps_idx = steps_idx
 
     def learn(self):
         self.train()
