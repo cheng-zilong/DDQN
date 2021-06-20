@@ -140,4 +140,4 @@ sphnix/
 logs/
 .vscode/ 
 /wandb
-save_mode/*
+save_model/*
