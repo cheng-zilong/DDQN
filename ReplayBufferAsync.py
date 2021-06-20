@@ -4,6 +4,7 @@ import numpy as np
 import torch.multiprocessing as mp
 from collections import deque
 import random
+from wrapper import LazyFrames
 
 from baselines.deepq.replay_buffer import ReplayBuffer
 
@@ -16,10 +17,11 @@ class ReplayBufferAsync(mp.Process):
     SAMPLE = 1
     CLOSE = 2
 
-    def __init__(self, buffer_size, batch_size, seed):
+    def __init__(self, buffer_size, batch_size, seed, stack_frames):
         mp.Process.__init__(self)
         self.buffer_size = buffer_size
         self.batch_size = batch_size
+        self.stack_frames = stack_frames
         self.cache_size = 2
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.is_init_cache = False
@@ -36,11 +38,20 @@ class ReplayBufferAsync(mp.Process):
 
         replay_buffer = ReplayBuffer(self.buffer_size)
         memory_share_list = []
-        
+        frames = deque([], maxlen=self.stack_frames)
         while True:
             op, data = self.__worker_pipe.recv()
             if op == self.ADD:
-                replay_buffer.add(*data)
+                action, obs, reward, done = data
+                if action is None: #if reset
+                    for _ in range(self.stack_frames):
+                        frames.append(obs)
+                    self.last_frames = LazyFrames(list(frames))
+                else:
+                    frames.append(obs)
+                    replay_buffer.add(self.last_frames, action, reward, LazyFrames(list(frames)), done)
+                    self.last_frames = LazyFrames(list(frames))
+
             elif op == self.SAMPLE:
                 if not self.is_init_cache:
                     self.is_init_cache=True
@@ -77,8 +88,11 @@ class ReplayBufferAsync(mp.Process):
             else:
                 raise Exception('Unknown command')
 
-    def add(self, state, action, reward, next_state, done):
-        data = (state, action, reward, next_state, done)
+    def add(self, action, obs, reward, done):
+        '''
+        if action is none, it is the reset frame
+        '''
+        data = (action, obs, reward, done)
         self.__pipe.send([self.ADD, data])
 
     def sample(self):

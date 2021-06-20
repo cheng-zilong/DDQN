@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.autograd as autograd 
+import torch.nn.functional as F
 
 def layer_init(layer, w_scale=1.0):
     nn.init.orthogonal_(layer.weight.data)
@@ -85,7 +86,7 @@ class CatLinearQNetwork(nn.Module):
 
     def forward(self, x):
         x = self.layers(x)
-        x = torch.nn.functional.softmax(x.view(-1, self.num_atoms)).view(-1, self.num_actions, self.num_atoms)
+        x = F.softmax(x.view(-1, self.num_atoms)).view(-1, self.num_actions, self.num_atoms)
         return x
     
     def act(self, state):
@@ -127,7 +128,14 @@ class CatCnnQNetwork(nn.Module):
         x = self.features(x / 255.0)
         x = x.view(x.size(0), -1)
         x = self.fc(x).view(-1, self.num_actions, self.num_atoms)
-        prob = torch.nn.functional.softmax(x, dim=-1)
+        prob = F.softmax(x, dim=-1)
+        return prob
+
+    def forward_log(self, x):
+        x = self.features(x / 255.0)
+        x = x.view(x.size(0), -1)
+        x = self.fc(x).view(-1, self.num_actions, self.num_atoms)
+        prob = F.log_softmax(x, dim=-1)
         return prob
 
     def feature_size(self):

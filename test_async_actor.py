@@ -40,7 +40,7 @@ class DQN:
 
         self.lock = mp.Lock()
         self.actor = ActorAsync(self.env, steps_no=self.train_freq, seed=self.seed, lock=self.lock)
-        self.replay_buffer = ReplayBufferAsync(args['buffer_size'], args['batch_size'], seed = self.seed)
+        self.replay_buffer = ReplayBufferAsync(args['buffer_size'], args['batch_size'], seed = self.seed, stack_frames=self.env.observation_space.shape[0])
         self.current_model = netowrk(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
         self.current_model.share_memory()
         self.target_model  = netowrk(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
@@ -54,7 +54,6 @@ class DQN:
     def train(self):
         last_steps_idx, ep_idx = 1, 1
         ep_reward_10_list = deque(maxlen=10)
-        state = self.env.reset()
         loss  = torch.tensor(0) 
         tic   = time.time()
         fps   = 0
@@ -62,9 +61,9 @@ class DQN:
         for steps_idx in range(1, self.total_steps + 1, self.train_freq):
             eps = self.obtain_eps(steps_idx-self.start_training_steps) if steps_idx > self.start_training_steps else 1
             data = self.actor.step(eps)
-            for idx, (state, action, reward, next_state, done, info) in enumerate(data):
-                self.replay_buffer.add(state, action, reward, next_state, done)
-                if info['episodic_return'] is not None:
+            for idx, (action, obs, reward, done, info) in enumerate(data):
+                self.replay_buffer.add(action, obs[None,-1], reward, done)
+                if info is not None and info['episodic_return'] is not None:
                     episodic_steps = steps_idx + idx - last_steps_idx
                     ep_reward_10_list.append(info['episodic_return'])
                     toc = time.time()
@@ -85,7 +84,7 @@ class DQN:
             if steps_idx % self.update_target_steps == 1:
                 self.update_target() 
 
-            if steps_idx % self.save_model_steps == 1:
+            if steps_idx % self.save_model_steps == 1 and steps_idx != 1:
                 torch.save(self.current_model.state_dict(), 'save_model/' + self.__class__.__name__ + '(' + self.env.unwrapped.spec.id + ')_' + str(self.seed) + '_' + now.strftime("%Y%m%d-%H%M%S") + '.pt')
                 
     def test(self):
@@ -126,19 +125,9 @@ class CatDQN(DQN):
         target_prob = (1 - (atoms_target - self.atoms.view(1, -1, 1)).abs() / self.delta_z).clamp(0, 1) * prob_next.unsqueeze(1)
         target_prob = target_prob.sum(-1)
 
-        log_prob = self.current_model(state).log()
+        log_prob = self.current_model.forward_log(state)
         log_prob = log_prob[self.torch_range, action, :]
         loss = (target_prob * target_prob.add(1e-5).log() - target_prob * log_prob).sum(-1).mean()
-
-        #### for debug pruposes
-        # if torch.isnan(loss):
-        #     print('.....')
-        # self._last_state = state
-        # self._last_action = action
-        # self._last_reward = reward
-        # self._last_next_state = next_state
-        # self._last_done = done
-        # self._last_model_para =  copy.deepcopy(self.current_model.state_dict())
 
         self.optimizer.zero_grad()
         loss.backward()
