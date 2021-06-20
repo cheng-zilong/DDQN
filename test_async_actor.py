@@ -40,7 +40,7 @@ class DQN:
 
         self.lock = mp.Lock()
         self.actor = ActorAsync(self.env, steps_no=self.train_freq, seed=self.seed, lock=self.lock)
-        self.replay_buffer = ReplayBufferAsync(args['buffer_size'], args['batch_size'], cache_size=2, seed = self.seed)
+        self.replay_buffer = ReplayBufferAsync(args['buffer_size'], args['batch_size'], seed = self.seed)
         self.current_model = netowrk(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
         self.current_model.share_memory()
         self.target_model  = netowrk(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
@@ -147,10 +147,8 @@ class CatDQN(DQN):
             self.optimizer.step()
 
         return loss
-        # return torch.tensor(0)
 
 if __name__ == '__main__':
-    
     parser = get_default_parser()
     parser.set_defaults(seed=4) 
     parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
@@ -166,7 +164,7 @@ if __name__ == '__main__':
     torch.cuda.manual_seed(args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
-    env    = make_env(args.env_name, args.seed)
+    env    = make_env(args.env_name, seed = args.seed)
     wandb.init(name='CatCnnDQN(' + args.env_name + ')_' + str(args.seed), project="C51", config=args)
     CatDQN(
         env=env, 

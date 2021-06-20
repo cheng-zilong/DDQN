@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import torch.multiprocessing as mp
 from collections import deque
-import random 
+import random
 
 class ActorAsync(mp.Process):
     STEP = 0
@@ -53,7 +53,7 @@ class ActorAsync(mp.Process):
             eps_prob =  random.random()
             if eps_prob > eps:
                 with self.lock:
-                    action = self._network.act(np.array(self.state, copy=False))
+                    action = self._network.act(self.state)
             else:
                 action = self.env.action_space.sample()
 
