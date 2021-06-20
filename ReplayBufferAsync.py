@@ -20,6 +20,7 @@ class ReplayBufferAsync(mp.Process):
         mp.Process.__init__(self)
         self.buffer_size = buffer_size
         self.batch_size = batch_size
+        self.cache_size = 2
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.is_init_cache = False
         self.out_pointer = 1 # output pointer 0 when initialize, 1 when first output
@@ -60,7 +61,6 @@ class ReplayBufferAsync(mp.Process):
                     self.__worker_pipe.send([True, memory_share_list]) # the first one denoteing construction of share memory
                 else:
                     self.__worker_pipe.send([False, self.out_pointer])
-                    self.current_cache_size-=1
                     self.out_pointer = (self.out_pointer + 1)%self.cache_size
 
                     state, action, reward, next_state, done = replay_buffer.sample(self.batch_size)
@@ -70,7 +70,6 @@ class ReplayBufferAsync(mp.Process):
                     next_state_share[self.in_pointer] = torch.tensor(next_state, device=torch.device(0))
                     done_share[self.in_pointer] = torch.tensor(done, device=torch.device(0))
                     self.in_pointer = (self.in_pointer + 1) % self.cache_size
-                    self.current_cache_size+=1
 
             elif op == self.CLOSE:
                 self.__worker_pipe.close()

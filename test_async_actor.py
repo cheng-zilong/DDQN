@@ -153,7 +153,7 @@ if __name__ == '__main__':
     parser.set_defaults(seed=4) 
     parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
     parser.set_defaults(total_steps = int(1e7))
-    parser.set_defaults(start_training_steps=1000000)
+    parser.set_defaults(start_training_steps=50000)
     # parser.set_defaults(start_training_steps=1000)
     parser.set_defaults(train_freq=4)
     parser.add_argument('--num_atoms', type=int, default=51)

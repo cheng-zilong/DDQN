@@ -5,7 +5,10 @@
 
 2. actor process 
     * 有cache，初始化cache后，network process请求step，直接返回cache中的step，然后产生新的step
+    * 如果env done，自动reset()
+    
 
 3. ReplayBuffer process
     * 有cache，初始化cache后，network process请求sample，直接返回cache中的sample，然后产生新的sample
-    * gym env不可以加framestack，因为
+    * gym env不可以加framestack，因为lazyframe不能用pipe在进程之间传递
+        ** pipe传递数据时会pickle，导致lazyframe的压缩数据被重新展开写入ReplayBuffer Process的内存

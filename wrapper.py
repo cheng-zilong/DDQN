@@ -15,9 +15,7 @@ def make_env(env_id, seed, episode_life=True):
                             clip_rewards=False,
                             frame_stack=False,
                             scale=False)
-        obs_shape = env.observation_space.shape
-        if len(obs_shape) == 3:
-            env = TransposeImage(env)
+        env = TransposeImage(env)
         env = FrameStack(env, 4)
         env.seed(seed)
         env.action_space.np_random.seed(seed)
