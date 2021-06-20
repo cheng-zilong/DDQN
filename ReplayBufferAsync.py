@@ -31,18 +31,20 @@ class ReplayBufferAsync(mp.Process):
         self.last_frames = None 
         self.start()
 
-    def run(self):
+    def init_seed(self):
         torch.manual_seed(self.seed)
         torch.cuda.manual_seed(self.seed)
         random.seed(self.seed)
         np.random.seed(self.seed)
 
+    def run(self):
+        self.init_seed()
         replay_buffer = ReplayBuffer(self.buffer_size)
         memory_share_list = []
         frames = deque([], maxlen=self.stack_frames)
         while True:
-            op, data = self.__worker_pipe.recv()
-            if op == self.ADD:
+            cmd, data = self.__worker_pipe.recv()
+            if cmd == self.ADD:
                 action, obs, reward, done = data
                 if action is None: #if reset
                     for _ in range(self.stack_frames):
@@ -53,7 +55,7 @@ class ReplayBufferAsync(mp.Process):
                     replay_buffer.add(self.last_frames, action, reward, LazyFrames(list(frames)), done)
                     self.last_frames = LazyFrames(list(frames))
 
-            elif op == self.SAMPLE:
+            elif cmd == self.SAMPLE:
                 if not self.is_init_cache:
                     self.is_init_cache=True
                     state, action, reward, next_state, done = replay_buffer.sample(self.batch_size)
@@ -83,7 +85,7 @@ class ReplayBufferAsync(mp.Process):
                     done_share[self.in_pointer] = torch.tensor(done, device=torch.device(0))
                     self.in_pointer = (self.in_pointer + 1) % self.cache_size
 
-            elif op == self.CLOSE:
+            elif cmd == self.CLOSE:
                 self.__worker_pipe.close()
                 return
             else:

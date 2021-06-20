@@ -28,7 +28,7 @@ class OriginalReturnWrapper(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        reward = float(reward)
+        reward = np.float32(reward)
         self.total_rewards += reward
         if done:
             info['episodic_return'] = self.total_rewards
