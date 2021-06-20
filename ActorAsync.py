@@ -53,7 +53,7 @@ class ActorAsync(mp.Process):
             eps_prob =  random.random()
             if eps_prob > eps:
                 with self.lock:
-                    action = self._network.act(self.state)
+                    action = self._network.act(np.array(self.state, copy=False))
             else:
                 action = self.env.action_space.sample()
 
