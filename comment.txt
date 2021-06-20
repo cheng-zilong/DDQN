@@ -17,3 +17,6 @@
 
 4. For debugging
     * log softmax不可以自己搭建，因为训练后期，softmax计算结果可能为0，log 0会导致-inf结果
+
+5. For evaluating
+python test_async_actor.py --mode eval --model_path "save_model/CatDQN(BreakoutNoFrameskip-v4)_4_20210621-024725.pt"
