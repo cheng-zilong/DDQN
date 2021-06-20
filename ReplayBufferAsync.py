@@ -28,6 +28,7 @@ class ReplayBufferAsync(mp.Process):
         self.out_pointer = 1 # output pointer 0 when initialize, 1 when first output
         self.in_pointer = 0 # update pointer 0 when first update
         self.seed = seed
+        self.last_frames = None 
         self.start()
 
     def run(self):

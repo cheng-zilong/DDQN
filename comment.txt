@@ -13,3 +13,6 @@
     * 有cache，初始化cache后，network process请求sample，直接返回cache中的sample，然后产生新的sample
     * gym env不可以加framestack，因为lazyframe不能用pipe在进程之间传递
         ** pipe传递数据时会pickle，导致lazyframe的压缩数据被重新展开写入ReplayBuffer Process的内存
+
+4. For debugging
+    * log softmax不可以自己搭建，因为训练后期，softmax计算结果可能为0，log 0会导致-inf结果

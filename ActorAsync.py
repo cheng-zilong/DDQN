@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 import torch.multiprocessing as mp
-from collections import deque
 import random 
 
 class ActorAsync(mp.Process):
@@ -14,18 +13,21 @@ class ActorAsync(mp.Process):
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.env = env
         self.is_init_cache = False
-        self.eps = 1
         self.lock = lock
         self.steps_no = steps_no
         self.done = True
         self.start()
 
-    def run(self):
+    def init_seed(self):
         torch.manual_seed(self.seed)
         torch.cuda.manual_seed(self.seed)
         random.seed(self.seed)
         np.random.seed(self.seed)
+        self.env.seed(self.seed)
+        self.env.action_space.np_random.seed(self.seed)
 
+    def run(self):
+        self.init_seed()
         while True:
             op, data = self.__worker_pipe.recv()
             if op == self.STEP:
