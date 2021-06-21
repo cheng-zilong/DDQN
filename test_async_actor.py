@@ -97,7 +97,11 @@ class DQN:
         tic   = time.time()
         last_steps_idx = 1
         for steps_idx in range(1, self.total_steps + 1):
-            action = self.current_model.act(state)
+            rand_eps = random.random()
+            if rand_eps > 0.01:
+                action = self.current_model.act(state)
+            else:
+                action = self.env.action_space.sample()
             state, _, done, info = self.env.step(action)
             self.env.render()
             if done:
