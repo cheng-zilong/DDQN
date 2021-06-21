@@ -3,6 +3,7 @@
 '''
 layer_init + 4 step 1 gradient + async buffer
 '''
+from logging import log
 import random
 import torch
 import torch.nn as nn
@@ -17,7 +18,7 @@ import time
 from wrapper import make_env
 from statistics import mean
 from ReplayBufferAsync import ReplayBufferAsync
-import copy 
+from LogAsync import logger
 import torch.multiprocessing as mp
 from ActorAsync import ActorAsync
 from datetime import datetime
@@ -71,11 +72,9 @@ class DQN:
                     fps = episodic_steps / (toc-tic)
                     tic = time.time()
                     ep_reward_10_list_mean = mean(ep_reward_10_list)
-
-                    wandb.log({'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'loss': loss, 'eps': eps, 'fps': fps}, step=steps_idx)
-                    print('(Training Agent)', end =" ") if steps_idx > self.start_training_steps else print('(Collecting Data)', end =" ")
-                    print('ep=%6d ep_reward_last=%.2f ep_reward_avg=%.2f ep_steps=%4d total_steps=%7d loss=%.4f eps=%.4f fps=%.2f '%
-                            (ep_idx, info['episodic_return'], ep_reward_10_list_mean, episodic_steps, steps_idx, loss.item(), eps, fps))
+ 
+                    logger.add({'total_steps':steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'loss': loss, 'eps': eps, 'fps': fps}, step=steps_idx)
+                    logger.print('(Training Agent)', step=steps_idx)
                     ep_idx += 1
                     last_steps_idx = steps_idx + idx
 
@@ -89,6 +88,7 @@ class DQN:
                 torch.save(self.current_model.state_dict(), 'save_model/' + self.__class__.__name__ + '(' + self.env.unwrapped.spec.id + ')_' + str(self.seed) + '_' + now.strftime("%Y%m%d-%H%M%S") + '.pt')
                 
     def eval(self):
+        #python test_async_actor.py --mode eval --model_path "save_model/CatDQN(BreakoutNoFrameskip-v4)_4_20210621-024725.pt" --seed 6  
         model_path = self.args['model_path']
         self.current_model.load_state_dict(torch.load(model_path))
         state = self.env.reset()
@@ -97,11 +97,7 @@ class DQN:
         tic   = time.time()
         last_steps_idx = 1
         for steps_idx in range(1, self.total_steps + 1):
-            rand_eps = random.random()
-            if rand_eps > 0.01:
-                action = self.current_model.act(state)
-            else:
-                action = self.env.action_space.sample()
+            action = self.current_model.act(state)
             state, _, done, info = self.env.step(action)
             self.env.render()
             if done:
@@ -114,13 +110,9 @@ class DQN:
                     ep_idx+=1
                     ep_reward_10_list.append(info['episodic_return'])
                     ep_reward_10_list_mean = mean(ep_reward_10_list)
-                    print('ep=%6d ep_reward_last=%.2f ep_reward_avg=%.2f ep_steps=%4d total_steps=%7d fps=%.2f '%
-                                (ep_idx, info['episodic_return'], ep_reward_10_list_mean, episodic_steps, steps_idx, fps))
+                    logger.add({'total_steps':steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'fps': fps}, step=steps_idx)
+                    logger.print('(Training Agent)', step=steps_idx)
                     last_steps_idx = steps_idx
-
-    def learn(self):
-        self.train()
-        
         
     def obtain_eps(self, steps_idx):
         eps = self.eps_end + (self.eps_start - self.eps_end) * (1 - min(steps_idx,self.eps_decay_steps) / self.eps_decay_steps)
@@ -184,14 +176,15 @@ if __name__ == '__main__':
     env    = make_env(args.env_name, seed = args.seed)
     
     if args.mode == 'train':
-        wandb.init(name='CatCnnDQN(' + args.env_name + ')_' + str(args.seed), project="C51", config=args)
+        logger.init(project_name='C51', args=args)
         CatDQN(
             env=env, 
             network = CatCnnQNetwork, 
             optimizer = lambda params: torch.optim.Adam(params, lr=args.lr, eps=args.opt_eps),  
             **vars(args)
-            ).learn()
+            ).train()
     elif args.mode == 'eval':
+        logger.init()
         CatDQN(
             env=env, 
             network = CatCnnQNetwork, 
