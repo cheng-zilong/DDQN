@@ -73,8 +73,8 @@ class DQN:
                     tic = time.time()
                     ep_reward_10_list_mean = mean(ep_reward_10_list)
  
-                    logger.add({'total_steps':steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'loss': loss, 'eps': eps, 'fps': fps}, step=steps_idx)
-                    logger.print('(Training Agent)', step=steps_idx)
+                    logger.add({'total_steps':steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'loss': loss.item(), 'eps': eps, 'fps': fps})
+                    logger.print('(Training Agent) ', step=steps_idx) if steps_idx > self.start_training_steps else logger.print('(Collecting Data) ', step=steps_idx)
                     ep_idx += 1
                     last_steps_idx = steps_idx + idx
 
@@ -110,7 +110,7 @@ class DQN:
                     ep_idx+=1
                     ep_reward_10_list.append(info['episodic_return'])
                     ep_reward_10_list_mean = mean(ep_reward_10_list)
-                    logger.add({'total_steps':steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'fps': fps}, step=steps_idx)
+                    logger.add({'total_steps':steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'fps': fps})
                     logger.print('(Training Agent)', step=steps_idx)
                     last_steps_idx = steps_idx
         
@@ -161,9 +161,11 @@ if __name__ == '__main__':
     parser = get_default_parser()
     parser.set_defaults(seed=4) 
     parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
+    # parser.set_defaults(env_name= 'SpaceInvaders-v0')
+    
     parser.set_defaults(total_steps = int(1e7))
-    # parser.set_defaults(start_training_steps=50000)
-    parser.set_defaults(start_training_steps=1000)
+    parser.set_defaults(start_training_steps=50000)
+    # parser.set_defaults(start_training_steps=1000)
     parser.set_defaults(train_freq=4)
     parser.add_argument('--num_atoms', type=int, default=51)
     parser.add_argument('--v_min', type=float, default=-10.)

@@ -20,21 +20,23 @@ class LogAsync(mp.Process, metaclass=Singleton):
         mp.Process.__init__(self)
 
     def init(self, project_name = None, args = None):
-        if project_name is not None:
-            wandb.init(name='CatCnnDQN(' + args.env_name + ')_' + str(args.seed), project=project_name, config=args)
-            self.wandb_init = True
-        else:
-            self.wandb_init = False
+        self.project_name = project_name
+        self. args = args
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.log_dict = dict()
         self.start()
 
     def run(self):
+        if self.project_name is not None:
+            wandb.init(name='CatCnnDQN(' + self.args.env_name + ')_' + str(self.args.seed), project=self.project_name, config=self.args)
+            self.wandb_init = True
+        else:
+            self.wandb_init = False
         while True:
             cmd, data = self.__worker_pipe.recv()
             if cmd == self.ADD:
-                for key, value in data:
-                    self.log_dict[key] = value
+                for key in data:
+                    self.log_dict[key] = data[key]
                 
             elif cmd == self.DELETE:
                 if isinstance(data, (list,tuple)):
@@ -47,7 +49,6 @@ class LogAsync(mp.Process, metaclass=Singleton):
                 title, step = data
                 if self.wandb_init:
                     wandb.log(self.log_dict, step=step)
-                print('------------------')
                 print(title + '\n' + str(json.dumps(self.log_dict, sort_keys=False, indent=4)))
 
             elif cmd == self.EXIT:
