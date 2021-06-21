@@ -89,9 +89,26 @@ class FrameStack(FrameStack_):
         assert len(self.frames) == self.k
         return LazyFrames(list(self.frames))
 
-class LazyFrames(LazyFrames_):
-    def _force(self):
-        if self._out is None:
-            self._out = np.concatenate(self._frames, axis=0)
-            self._frames = None
-        return self._out
+# The original LayzeFrames doesn't work well
+class LazyFrames(object):
+    def __init__(self, frames):
+        """This object ensures that common frames between the observations are only stored once.
+        It exists purely to optimize memory usage which can be huge for DQN's 1M frames replay
+        buffers.
+
+        This object should only be converted to numpy array before being passed to the model.
+
+        You'd not believe how complex the previous solution was."""
+        self._frames = frames
+
+    def __array__(self, dtype=None):
+        out = np.concatenate(self._frames, axis=0)
+        if dtype is not None:
+            out = out.astype(dtype)
+        return out
+
+    def __len__(self):
+        return len(self.__array__())
+
+    def __getitem__(self, i):
+        return self.__array__()[i]

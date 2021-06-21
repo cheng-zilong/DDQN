@@ -15,6 +15,7 @@
     * gym env不可以加framestack然后传入ReplayBuffer，因为lazyframes不能用pipe在进程之间传递
         ** pipe传递数据时会pickle，导致lazyframe的压缩数据被重新展开写入ReplayBuffer Process的内存
         ** 解决方法是传递env的最近一个frame，然后在replaybuffer process中重新构建lazyframes
+        ** baseline 的lazyframe有问题
 
 4. Log Process的内存
     * 打印结果
