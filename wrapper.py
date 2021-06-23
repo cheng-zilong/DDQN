@@ -3,19 +3,12 @@ import numpy as np
 from gym.spaces.box import Box
 from collections import deque
 from gym import spaces
-from baselines.common.atari_wrappers import wrap_deepmind
-from baselines.common.atari_wrappers import FrameStack as FrameStack_, LazyFrames as LazyFrames_, NoopResetEnv, MaxAndSkipEnv, TimeLimit
+from baselines.common.atari_wrappers import FrameStack as FrameStack_, LazyFrames as LazyFrames_, make_atari, wrap_deepmind
 
-
-def make_atari(env_id, max_episode_steps=None):
-    env = gym.make(env_id)
-    env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    if max_episode_steps is not None:
-        env = TimeLimit(env, max_episode_steps=max_episode_steps)
-    return env
-
-def make_env(env_id, seed, episode_life=True, clip_rewards=True, max_episode_steps=None):
+def make_env(env_id, **args):
+        episode_life=args['episode_life'] 
+        clip_rewards=args['clip_reward']
+        max_episode_steps=args['max_episode_steps']
         env = make_atari(env_id, max_episode_steps=max_episode_steps)
         env = OriginalReturnWrapper(env)
         env = wrap_deepmind(env,
@@ -25,8 +18,8 @@ def make_env(env_id, seed, episode_life=True, clip_rewards=True, max_episode_ste
                             scale=False)
         env = TransposeImage(env)
         env = FrameStack(env, 4)
-        env.seed(seed)
-        env.action_space.np_random.seed(seed)
+        env.seed(args['seed'])
+        env.action_space.np_random.seed(args['seed'])
         return env
 
 class OriginalReturnWrapper(gym.Wrapper):

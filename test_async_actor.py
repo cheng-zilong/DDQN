@@ -159,14 +159,12 @@ class CatDQN(DQN):
 
 if __name__ == '__main__':
     parser = get_default_parser()
-    parser.set_defaults(seed=4) 
+    parser.set_defaults(seed=777) 
     # parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
     parser.set_defaults(env_name= 'SpaceInvadersNoFrameskip-v4')
-    
     parser.set_defaults(total_steps = int(1e7))
     parser.set_defaults(start_training_steps=50000)
     # parser.set_defaults(start_training_steps=1000)
-    parser.set_defaults(train_freq=4)
     parser.set_defaults(gradient_clip = 10)
     
     parser.add_argument('--num_atoms', type=int, default=51)
@@ -177,7 +175,9 @@ if __name__ == '__main__':
     torch.cuda.manual_seed(args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
-    env    = make_env(args.env_name, seed = args.seed)
+    env    = make_env(
+        args.env_name, 
+        **vars(args))
     
     if args.mode == 'train':
         logger.init(project_name='C51', args=args)
