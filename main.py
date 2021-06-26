@@ -211,11 +211,6 @@ if __name__ == '__main__':
     parser.set_defaults(start_training_steps=1000)
     parser.set_defaults(gradient_clip = 10)
 
-    parser.set_defaults(train_freq = 1)
-    parser.set_defaults(eps_decay_steps=100000)
-    parser.set_defaults(buffer_size=100000)
-    parser.set_defaults(start_training_steps=10000)
-
     parser.add_argument('--num_atoms', type=int, default=51)
     parser.add_argument('--v_min', type=float, default=-10.)
     parser.add_argument('--v_max', type=float, default=10.)
