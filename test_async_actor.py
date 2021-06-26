@@ -190,9 +190,9 @@ class CatDQN(DQN):
 if __name__ == '__main__':
     parser = get_default_parser()
     parser.set_defaults(seed=777) 
-    # parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
+    parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
     # parser.set_defaults(env_name= 'SpaceInvadersNoFrameskip-v4')
-    parser.set_defaults(env_name= 'PongNoFrameskip-v4')
+    # parser.set_defaults(env_name= 'PongNoFrameskip-v4')
     parser.set_defaults(total_steps = int(5e7))
     parser.set_defaults(start_training_steps=50000)
     # parser.set_defaults(start_training_steps=1000)
