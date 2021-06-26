@@ -160,8 +160,8 @@ class CatDQN(DQN):
         with torch.no_grad():
             state, _, _, _, _ = self.replay_buffer.sample()
             prob_next = self.current_model(state)
+        self.my_fig.clf()
         for i in range(4):
-            self.ax_left[i].cla()
             self.ax_left[i].set_xticks([])
             self.ax_left[i].set_yticks([])
             self.ax_left[i].imshow(state[-1,i].cpu().numpy())
@@ -202,13 +202,13 @@ class CatDQN(DQN):
 
 if __name__ == '__main__':
     parser = get_default_parser()
-    parser.set_defaults(seed=777) 
-    parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
+    parser.set_defaults(seed=666) 
+    # parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
     # parser.set_defaults(env_name= 'SpaceInvadersNoFrameskip-v4')
-    # parser.set_defaults(env_name= 'PongNoFrameskip-v4')
+    parser.set_defaults(env_name= 'PongNoFrameskip-v4')
     parser.set_defaults(total_steps = int(5e7))
-    # parser.set_defaults(start_training_steps=50000)
-    parser.set_defaults(start_training_steps=1000)
+    parser.set_defaults(start_training_steps=50000)
+    # parser.set_defaults(start_training_steps=1000)
     parser.set_defaults(gradient_clip = 10)
 
     parser.add_argument('--num_atoms', type=int, default=51)
