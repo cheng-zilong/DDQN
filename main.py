@@ -150,7 +150,7 @@ class CatDQN(DQN):
         self.torch_range = torch.arange(self.batch_size).long().cuda()
         
 
-        self.my_fig = plt.figure(figsize=(24, 12))
+        self.my_fig = plt.figure(figsize=(16, 8))
         gs = gridspec.GridSpec(1, 2)
         gs_left = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=gs[0])
         self.ax_left = (self.my_fig.add_subplot(gs_left[0, 0]), self.my_fig.add_subplot(gs_left[0, 1]), self.my_fig.add_subplot(gs_left[1, 0]), self.my_fig.add_subplot(gs_left[1, 1]))
@@ -160,11 +160,12 @@ class CatDQN(DQN):
         with torch.no_grad():
             state, _, _, _, _ = self.replay_buffer.sample()
             prob_next = self.current_model(state)
-        self.my_fig.clf()
         for i in range(4):
+            self.ax_left[i].cla()
             self.ax_left[i].set_xticks([])
             self.ax_left[i].set_yticks([])
             self.ax_left[i].imshow(state[-1,i].cpu().numpy())
+        self.ax_right.cla()
         self.ax_right.plot(self.atoms.cpu().numpy(), np.swapaxes(prob_next[0].cpu().numpy(),0,1))
         self.ax_right.legend(self.env.unwrapped.get_action_meanings())
         self.ax_right.grid(True)
