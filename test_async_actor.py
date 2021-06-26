@@ -22,12 +22,14 @@ from LogAsync import logger
 import torch.multiprocessing as mp
 from ActorAsync import ActorAsync
 from datetime import datetime
-
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.use('Agg')
 class DQN:
-    def __init__(self, env, netowrk, optimizer, *arg, **args):
+    def __init__(self, make_env, netowrk, optimizer, *arg, **args):
         self.arg = arg 
         self.args = args 
-        self.env = env
+        self.env = make_env(args['env_name'], **args)
         self.batch_size=args['batch_size']
         self.gamma=args['gamma']
         self.gradient_clip = args['gradient_clip']
@@ -72,7 +74,7 @@ class DQN:
                     fps = episodic_steps / (toc-tic)
                     tic = time.time()
                     ep_reward_10_list_mean = mean(ep_reward_10_list)
- 
+
                     logger.add({'total_steps':steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'loss': loss.item(), 'eps': eps, 'fps': fps})
                     logger.print('(Training Agent) ', step=steps_idx) if steps_idx > self.start_training_steps else logger.print('(Collecting Data) ', step=steps_idx)
                     ep_idx += 1
@@ -87,6 +89,12 @@ class DQN:
             if steps_idx % self.save_model_steps == 1 and steps_idx != 1:
                 torch.save(self.current_model.state_dict(), 'save_model/' + self.__class__.__name__ + '(' + self.env.unwrapped.spec.id + ')_' + str(self.seed) + '_' + now.strftime("%Y%m%d-%H%M%S") + '.pt')
                 
+            if steps_idx % 50000 == 1:
+                self.logger_samples()
+
+    def learn(self):
+        pass
+
     def eval(self):
         #python test_async_actor.py --mode eval --model_path "save_model/CatDQN(BreakoutNoFrameskip-v4)_4_20210621-024725.pt" --seed 6  
         model_path = self.args['model_path']
@@ -118,9 +126,16 @@ class DQN:
         eps = self.eps_end + (self.eps_start - self.eps_end) * (1 - min(steps_idx,self.eps_decay_steps) / self.eps_decay_steps)
         return eps
 
+    def logger_samples(self):
+        image = self.render()
+        logger.add({'sample_images': wandb.Image(image)})
+
+    def render(self):
+        pass 
+
 class CatDQN(DQN):
-    def __init__(self, env, network, optimizer, *arg, **args):
-        super().__init__(env, network, optimizer, *arg, **args)
+    def __init__(self, make_env, network, optimizer, *arg, **args):
+        super().__init__(make_env, network, optimizer, *arg, **args)
         self.num_atoms = args['num_atoms']
         self.v_min = args['v_min']
         self.v_max = args['v_max']
@@ -128,6 +143,19 @@ class CatDQN(DQN):
         self.atoms = torch.linspace(self.v_min, self.v_max, self.num_atoms).cuda()
         self.offset = torch.linspace(0, (self.batch_size - 1) * self.num_atoms, self.batch_size).long().unsqueeze(1).expand(self.batch_size, self.num_atoms).cuda()
         self.torch_range = torch.arange(self.batch_size).long().cuda()
+        self.my_fig, self.my_axes = plt.subplots(1, 2, figsize = (20, 10))
+        self.my_fig.suptitle('Samples')
+        
+    def render(self):
+        self.my_axes[1].cla()
+        with torch.no_grad():
+            state, _, _, _, _ = self.replay_buffer.sample()
+            prob_next = self.current_model(state)
+        self.my_axes[0].imshow(state[-1,-1].cpu().numpy())
+        self.my_axes[1].plot(self.atoms.cpu().numpy(), np.swapaxes(prob_next[0].cpu().numpy(),0,1))
+        self.my_axes[1].legend(self.env.unwrapped.get_action_meanings())
+        self.my_axes[1].grid(True)
+        return self.my_fig
 
     def compute_td_loss(self):
         state, action, reward, next_state, done = self.replay_buffer.sample()
@@ -152,6 +180,8 @@ class CatDQN(DQN):
         self.optimizer.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(self.current_model.parameters(), self.gradient_clip)
+        gradient_norm = nn.utils.clip_grad_norm_(self.current_model.parameters(), self.gradient_clip)
+        logger.add({'gradient_norm': gradient_norm.item()})
         with self.lock:
             self.optimizer.step()
 
@@ -161,7 +191,8 @@ if __name__ == '__main__':
     parser = get_default_parser()
     parser.set_defaults(seed=777) 
     # parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
-    parser.set_defaults(env_name= 'SpaceInvadersNoFrameskip-v4')
+    # parser.set_defaults(env_name= 'SpaceInvadersNoFrameskip-v4')
+    parser.set_defaults(env_name= 'PongNoFrameskip-v4')
     parser.set_defaults(total_steps = int(1e7))
     parser.set_defaults(start_training_steps=50000)
     # parser.set_defaults(start_training_steps=1000)
@@ -175,14 +206,11 @@ if __name__ == '__main__':
     torch.cuda.manual_seed(args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
-    env    = make_env(
-        args.env_name, 
-        **vars(args))
-    
+
     if args.mode == 'train':
         logger.init(project_name='C51', args=args)
         CatDQN(
-            env=env, 
+            make_env = make_env,
             network = CatCnnQNetwork, 
             optimizer = lambda params: torch.optim.Adam(params, lr=args.lr, eps=args.opt_eps),  
             **vars(args)
@@ -190,7 +218,7 @@ if __name__ == '__main__':
     elif args.mode == 'eval':
         logger.init()
         CatDQN(
-            env=env, 
+            make_env = make_env,
             network = CatCnnQNetwork, 
             optimizer = lambda params: torch.optim.Adam(params, lr=args.lr, eps=args.opt_eps),  
             **vars(args)
