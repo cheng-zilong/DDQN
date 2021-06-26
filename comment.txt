@@ -25,3 +25,6 @@
 
 6. For evaluating
 python test_async_actor.py --mode eval --model_path "save_model/CatDQN(BreakoutNoFrameskip-v4)_4_20210621-024725.pt"
+
+7. games
+    * python main.py --env_name PongNoFrameskip-v4  --eps_decay_steps 100000 --buffer_size 100000 --start_training_steps 10000 --train_freq 1 --update_target_steps 1000 --save_model_steps 10000
