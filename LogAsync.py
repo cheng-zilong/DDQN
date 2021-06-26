@@ -49,7 +49,12 @@ class LogAsync(mp.Process, metaclass=Singleton):
                 title, step = data
                 if self.wandb_init:
                     wandb.log(self.log_dict, step=step)
-                print(title + '\n' + str(json.dumps(self.log_dict, sort_keys=False, indent=4)) + '\n')
+
+                print(title)
+                for key in self.log_dict:
+                    if not isinstance(self.log_dict[key], wandb.Image): 
+                        print(key +':  ' + str(self.log_dict[key]))
+                print('\n')
 
             elif cmd == self.EXIT:
                 self.__worker_pipe.close()
