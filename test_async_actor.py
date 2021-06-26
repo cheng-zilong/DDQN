@@ -24,10 +24,6 @@ from ActorAsync import ActorAsync
 from datetime import datetime
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib import gridspec
-
-
-
 matplotlib.use('Agg')
 class DQN:
     def __init__(self, make_env, netowrk, optimizer, *arg, **args):
@@ -148,26 +144,18 @@ class CatDQN(DQN):
         self.atoms = torch.linspace(self.v_min, self.v_max, self.num_atoms).cuda()
         self.offset = torch.linspace(0, (self.batch_size - 1) * self.num_atoms, self.batch_size).long().unsqueeze(1).expand(self.batch_size, self.num_atoms).cuda()
         self.torch_range = torch.arange(self.batch_size).long().cuda()
+        self.my_fig, self.my_axes = plt.subplots(1, 2, figsize = (20, 10))
+        self.my_fig.suptitle('Samples')
         
-
-        self.my_fig = plt.figure(figsize=(24, 12))
-        gs = gridspec.GridSpec(1, 2)
-        gs_left = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=gs[0])
-        self.ax_left = (self.my_fig.add_subplot(gs_left[0, 0]), self.my_fig.add_subplot(gs_left[0, 1]), self.my_fig.add_subplot(gs_left[1, 0]), self.my_fig.add_subplot(gs_left[1, 1]))
-        self.ax_right = self.my_fig.add_subplot(gs[1])
-
     def render(self):
+        self.my_axes[1].cla()
         with torch.no_grad():
             state, _, _, _, _ = self.replay_buffer.sample()
             prob_next = self.current_model(state)
-        for i in range(4):
-            self.ax_left[i].cla()
-            self.ax_left[i].set_xticks([])
-            self.ax_left[i].set_yticks([])
-            self.ax_left[i].imshow(state[-1,i].cpu().numpy())
-        self.ax_right.plot(self.atoms.cpu().numpy(), np.swapaxes(prob_next[0].cpu().numpy(),0,1))
-        self.ax_right.legend(self.env.unwrapped.get_action_meanings())
-        self.ax_right.grid(True)
+        self.my_axes[0].imshow(state[-1,-1].cpu().numpy())
+        self.my_axes[1].plot(self.atoms.cpu().numpy(), np.swapaxes(prob_next[0].cpu().numpy(),0,1))
+        self.my_axes[1].legend(self.env.unwrapped.get_action_meanings())
+        self.my_axes[1].grid(True)
         return self.my_fig
 
     def compute_td_loss(self):
@@ -207,15 +195,10 @@ if __name__ == '__main__':
     # parser.set_defaults(env_name= 'SpaceInvadersNoFrameskip-v4')
     # parser.set_defaults(env_name= 'PongNoFrameskip-v4')
     parser.set_defaults(total_steps = int(5e7))
-    # parser.set_defaults(start_training_steps=50000)
-    parser.set_defaults(start_training_steps=1000)
+    parser.set_defaults(start_training_steps=50000)
+    # parser.set_defaults(start_training_steps=1000)
     parser.set_defaults(gradient_clip = 10)
-
-    parser.set_defaults(train_freq = 1)
-    parser.set_defaults(eps_decay_steps=100000)
-    parser.set_defaults(buffer_size=100000)
-    parser.set_defaults(start_training_steps=10000)
-
+    
     parser.add_argument('--num_atoms', type=int, default=51)
     parser.add_argument('--v_min', type=float, default=-10.)
     parser.add_argument('--v_max', type=float, default=10.)

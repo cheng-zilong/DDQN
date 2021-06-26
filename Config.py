@@ -23,4 +23,5 @@ def get_default_parser():
     parser.add_argument('--save_model_steps', type=int, default=int(1e6))
     parser.add_argument('--mode', type=str, default='train')
     parser.add_argument('--model_path', type=str, default = None)
+    parser.add_argument('--render_freq', type=int, default=100000)
     return parser
