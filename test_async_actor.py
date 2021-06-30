@@ -77,7 +77,7 @@ class DQN:
                     ep_reward_10_list_mean = mean(ep_reward_10_list)
 
                     logger.add({'total_steps':steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'loss': loss.item(), 'eps': eps, 'fps': fps})
-                    logger.print('(Training Agent) ', step=steps_idx) if steps_idx > self.start_training_steps else logger.print('(Collecting Data) ', step=steps_idx)
+                    logger.wandb_print('(Training Agent) ', step=steps_idx) if steps_idx > self.start_training_steps else logger.wandb_print('(Collecting Data) ', step=steps_idx)
                     ep_idx += 1
                     last_steps_idx = steps_idx + idx
 
@@ -120,7 +120,7 @@ class DQN:
                     ep_reward_10_list.append(info['episodic_return'])
                     ep_reward_10_list_mean = mean(ep_reward_10_list)
                     logger.add({'total_steps':steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': ep_reward_10_list_mean, 'fps': fps})
-                    logger.print('(Training Agent)', step=steps_idx)
+                    logger.wandb_print('(Training Agent)', step=steps_idx)
                     last_steps_idx = steps_idx
         
     def obtain_eps(self, steps_idx):

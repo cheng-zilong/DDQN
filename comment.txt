@@ -1,14 +1,17 @@
-1. 三个进程
+1. 四个进程
     * Network process（main proces）
     * Actor process
+    * Evaluator process
     * ReplayBuffer process
     * Log process 
 
-2. actor process 
+2. Actor process 
     * 有cache，初始化cache后，network process请求step，直接返回cache中的step，然后产生新的step
     * 返回 action, obs, reward, done, info，如果是reset，返回None, obs，None，None，None
     * 如果env done，自动reset()
     
+2. Evaluator process 
+    * 同步评估训练结果
 
 3. ReplayBuffer process
     * 有cache，初始化cache后，network process请求sample，直接返回cache中的sample，然后产生新的sample
@@ -27,4 +30,4 @@
 python test_async_actor.py --mode eval --model_path "save_model/CatDQN(BreakoutNoFrameskip-v4)_4_20210621-024725.pt"
 
 7. games
-    * python main.py --env_name PongNoFrameskip-v4  --eps_decay_steps 100000 --buffer_size 100000 --start_training_steps 10000 --train_freq 1 --update_target_steps 1000 --save_model_steps 10000
+    python test.py --env_name PongNoFrameskip-v4  --eps_decay_steps 100000 --buffer_size 100000 --start_training_steps 10000 --train_freq 1 --update_target_steps 1000 --eval_number 10 --eval_freq 100000 --seed 777

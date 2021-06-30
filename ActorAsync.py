@@ -2,11 +2,13 @@ import torch
 import numpy as np
 import torch.multiprocessing as mp
 import random 
+from baselines.common.atari_wrappers import EpisodicLifeEnv
 
 class ActorAsync(mp.Process):
     STEP = 0
     EXIT = 1
     NETWORK = 2
+    FORCE_RESET = 3
     def __init__(self, env, steps_no, seed, lock):
         mp.Process.__init__(self)
         self.seed = seed
@@ -29,8 +31,8 @@ class ActorAsync(mp.Process):
     def run(self):
         self.init_seed()
         while True:
-            op, data = self.__worker_pipe.recv()
-            if op == self.STEP:
+            cmd, data = self.__worker_pipe.recv()
+            if cmd == self.STEP:
                 eps = data
                 if not self.is_init_cache:
                     self.is_init_cache = True
@@ -40,11 +42,19 @@ class ActorAsync(mp.Process):
                     self.__worker_pipe.send(self.cache)
                     self.cache = self.eps_greedy_step(eps)
 
-            elif op == self.EXIT:
+            elif cmd == self.EXIT:
                 self.__worker_pipe.close()
                 return
-            elif op == self.NETWORK:
+
+            elif cmd == self.NETWORK:
                 self._network = data
+
+            elif cmd == self.FORCE_RESET:
+                # Next eps_greedy_step will reset the env
+                if isinstance(self.env, EpisodicLifeEnv):
+                    self.env.was_real_done = True
+                self.done = True
+
             else:
                 raise NotImplementedError
 
@@ -72,6 +82,9 @@ class ActorAsync(mp.Process):
     def step(self, eps):
         self.__pipe.send([self.STEP, eps])
         return self.__pipe.recv()
+
+    def force_reset(self):
+        self.__pipe.send([self.FORCE_RESET, None])
 
     def close(self):
         self.__pipe.send([self.EXIT, None])

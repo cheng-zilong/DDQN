@@ -144,5 +144,7 @@ class CatCnnQNetwork(nn.Module):
     def act(self, state):
         with torch.no_grad():
             state = torch.as_tensor(state, device=torch.device(0)).unsqueeze(0)
-            action = torch.argmax((self.forward(state) * self.atoms).sum(-1), dim=-1).item()
+            self.action_prob = self.forward(state)
+            self.action_Q = (self.action_prob * self.atoms).sum(-1)
+            action = torch.argmax(self.action_Q, dim=-1).item()
         return action
