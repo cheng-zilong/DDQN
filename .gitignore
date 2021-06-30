@@ -141,3 +141,5 @@ logs/
 .vscode/ 
 /wandb
 save_model/*
+tmp/*
+frames/*
