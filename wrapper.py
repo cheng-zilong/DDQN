@@ -6,14 +6,11 @@ from gym import spaces
 from baselines.common.atari_wrappers import FrameStack as FrameStack_, make_atari, wrap_deepmind
 
 def make_env(env_id, **args):
-        episode_life=args['episode_life'] 
-        clip_rewards=args['clip_reward']
-        max_episode_steps=args['max_episode_steps']
-        env = make_atari(env_id, max_episode_steps=max_episode_steps)
+        env = make_atari(env_id, max_episode_steps=args['max_episode_steps'])
         env = OriginalReturnWrapper(env)
         env = wrap_deepmind(env,
-                            episode_life=episode_life,
-                            clip_rewards=clip_rewards,
+                            episode_life=args['episode_life'],
+                            clip_rewards=args['clip_reward'],
                             frame_stack=False,
                             scale=False)
         env = TransposeImage(env)

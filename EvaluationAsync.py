@@ -133,9 +133,8 @@ class EvaluationAsync(mp.Process):
     def eval(self, train_steps = 0, state_dict = None):
         with self.evaluator_lock:
             if self.args['mode'] == 'eval': # if this is only an evaluation session, then load model first
-                model_path = self.args['model_path']
-                if model_path is None: raise Exception("Model Path for Evaluation is not given! Include --model_path! ")
-                self.evaluator_network.load_state_dict(torch.load(model_path))
+                if self.args['model_path'] is None: raise Exception("Model Path for Evaluation is not given! Include --model_path! ")
+                self.evaluator_network.load_state_dict(torch.load(self.args['model_path']))
             else:
                 self.evaluator_network.load_state_dict(state_dict)
             self.__pipe.send([self.EVAL, train_steps])
