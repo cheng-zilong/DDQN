@@ -1,6 +1,7 @@
 from baselines.common.atari_wrappers import EpisodicLifeEnv
 import torch
 import numpy as np
+from numpy import random
 import torch.multiprocessing as mp
 import wandb
 import json
@@ -26,39 +27,30 @@ class EvaluationAsync(mp.Process):
     def __init__(self, env, **args):
         mp.Process.__init__(self)
         self.env = env
-        self. args = args
+        self.args = args
         self.__pipe, self.__worker_pipe = mp.Pipe()
-
-        self.eval_lock = mp.Lock()
+        self.evaluator_lock = mp.Lock()
         self.start()
 
     def _eval(self, ep_idx):
-        #python test_async_actor.py --mode eval --model_path "save_model/CatDQN(BreakoutNoFrameskip-v4)_4_20210621-024725.pt" --seed 6  
-
         state = self.env.reset()
         tic   = time.time()
-
         for eval_steps_idx in range(1, self.eval_steps + 1):
-            action = self.evaluator_network.act(state)
+            eps_prob =  random.random()
+            action = self.evaluator_network.act(state) if eps_prob > self.eval_eps else self.env.action_space.sample()
             state, _, done, info = self.env.step(action)
+            if ep_idx is None or ep_idx in self.eval_render_save_gif and \
+                (eval_steps_idx-1) % self.eval_render_freq == 0 : # every eval_render_freq frames sample 1 frame
+                self._render_frame(state)
             if done:
                 state = self.env.reset()
-                if info['episodic_return'] is not None:
-                    self.ep_return = info['episodic_return']
-                    self.ep_steps = eval_steps_idx
-                    break
-
-            if ep_idx is None or ep_idx in self.args['eval_render_save_gif']:
-                if eval_steps_idx % self.eval_render_freq == 1 : # every eval_render_freq frames sample 1 frame
-                    self._render_frame(state)
-
+                if info['episodic_return'] is not None: break
         toc = time.time()
-        fps = self.ep_steps / (toc-tic)
-        self.ep_reward_list.append(self.ep_return)
-        ep_reward_list_mean = mean(self.ep_reward_list)
-        logger.terminal_print('\t (Evaluating Agent: %d)'%(self.train_steps), {'\t ep': ep_idx, '\t ep_steps':  self.ep_steps, '\t ep_reward': self.ep_return, '\t ep_reward_mean': ep_reward_list_mean, '\t fps': fps})
+        fps = eval_steps_idx / (toc-tic)
+        self.ep_reward_list.append(info['episodic_return'])
+        logger.terminal_print('----(Evaluating Agent: %d)'%(self.train_steps), {'----ep': ep_idx, '----ep_steps':  eval_steps_idx, '----ep_reward': info['episodic_return'], '----ep_reward_mean': mean(self.ep_reward_list), '----fps': fps})
 
-    def _fig2img(self):
+    def _my_fig2img(self):
         """Convert a Matplotlib figure to a PIL Image and return it"""
         buf = io.BytesIO()
         self.my_fig.savefig(buf, bbox_inches='tight')
@@ -78,21 +70,23 @@ class EvaluationAsync(mp.Process):
 
         self.ax_right.clear()
         self.ax_right.plot(self.atoms_cpu, action_prob)
-        self.ax_right.legend(legends, fontsize='xx-small')
+        self.ax_right.legend(legends, fontsize='x-small')
         self.ax_right.grid(True)
         
-        self.im_list.append(self._fig2img())
+        self.im_list.append(self._my_fig2img())
 
     def run(self):
         self.eval_steps = self.args['eval_steps']
         self.eval_number = self.args['eval_number']
         self.eval_render_freq = self.args['eval_render_freq']
+        self.eval_eps = self.args['eval_eps']
+        self.eval_render_save_gif = None if self.args['eval_render_save_gif'] is None else [int(i) for i in self.args['eval_render_save_gif']]
         self.eval_result = dict()
         self.current_max_result = -1e10
         if not self.args['eval_display']: matplotlib.use('Agg')
         self.my_fig = plt.figure(figsize=(8, 4))
+        plt.rcParams['font.size'] = '8'
         gs = gridspec.GridSpec(1, 2)
-        # gs_left = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=gs[0])
         self.ax_left = self.my_fig.add_subplot(gs[0])
         self.ax_right = self.my_fig.add_subplot(gs[1])
         self.atoms_cpu = torch.linspace(self.args['v_min'], self.args['v_max'], self.args['num_atoms'])
@@ -100,13 +94,13 @@ class EvaluationAsync(mp.Process):
         while True:
             cmd, data = self.__worker_pipe.recv()
             if cmd == self.EVAL:
-                with self.eval_lock:
+                with self.evaluator_lock:
                     self.ep_reward_list = deque(maxlen=self.eval_number)
                     self.train_steps = data
                     for ep_idx in range(1, self.eval_number+1):
                         self.im_list = []
                         self._eval(ep_idx)
-                        if ep_idx is None or ep_idx in self.args['eval_render_save_gif']:
+                        if ep_idx is None or ep_idx in self.eval_render_save_gif:
                             imageio.mimsave(self.folder_name + '%08d_%03d.gif'%(self.train_steps, ep_idx), self.im_list, duration = 0.2)
 
                     ep_reward_list_mean = mean(self.ep_reward_list)
@@ -129,16 +123,15 @@ class EvaluationAsync(mp.Process):
                     os.makedirs(self.folder_name)
                 if not os.path.exists('save_model'):
                     os.makedirs('save_model')
-
             else:
                 raise NotImplementedError
 
-    def init(self, netowrk_fun):
+    def init(self, netowrk_fun): 
         self.evaluator_network  = netowrk_fun(self.env.observation_space.shape, self.env.action_space.n, **self.args).cuda().share_memory()
         self.__pipe.send([self.NETWORK, self.evaluator_network]) # pass network to the evaluation process
 
     def eval(self, train_steps = 0, state_dict = None):
-        with self.eval_lock:
+        with self.evaluator_lock:
             if self.args['mode'] == 'eval': # if this is only an evaluation session, then load model first
                 model_path = self.args['model_path']
                 if model_path is None: raise Exception("Model Path for Evaluation is not given! Include --model_path! ")

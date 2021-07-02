@@ -9,14 +9,14 @@ class ActorAsync(mp.Process):
     EXIT = 1
     NETWORK = 2
     FORCE_RESET = 3
-    def __init__(self, env, steps_no, seed, lock):
+    def __init__(self, env, network_lock, *arg, **args):
         mp.Process.__init__(self)
-        self.seed = seed
+        self.seed = args['seed']
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.env = env
         self.is_init_cache = False
-        self.lock = lock
-        self.steps_no = steps_no
+        self.network_lock = network_lock
+        self.steps_no = args['train_freq']
         self.done = True
         self.start()
 
@@ -69,7 +69,7 @@ class ActorAsync(mp.Process):
                 continue
             eps_prob =  random.random()
             if eps_prob > eps:
-                with self.lock:
+                with self.network_lock:
                     action = self._network.act(np.array(self.state, copy=False))
             else:
                 action = self.env.action_space.sample()

@@ -17,17 +17,17 @@ class ReplayBufferAsync(mp.Process):
     SAMPLE = 1
     CLOSE = 2
 
-    def __init__(self, buffer_size, batch_size, seed, stack_frames):
+    def __init__(self, *arg, **args):
         mp.Process.__init__(self)
-        self.buffer_size = buffer_size
-        self.batch_size = batch_size
-        self.stack_frames = stack_frames
+        self.buffer_size = args['buffer_size']
+        self.batch_size = args['batch_size']
+        self.stack_frames = args['stack_frames']
         self.cache_size = 2
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.is_init_cache = False
         self.out_pointer = 1 # output pointer 0 when initialize, 1 when first output
         self.in_pointer = 0 # update pointer 0 when first update
-        self.seed = seed
+        self.seed = args['seed']
         self.last_frames = None 
         self.start()
 

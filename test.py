@@ -33,7 +33,8 @@ if __name__ == '__main__':
     parser.set_defaults(eval_freq=1000000)
     # parser.set_defaults(start_training_steps=1000)
     parser.set_defaults(eval_number=5)
-    parser.set_defaults(eval_render_save_gif=[1,5]) # save 1 and 5
+    parser.set_defaults(eval_render_freq = 2)
+    parser.set_defaults(eval_render_save_gif=[1]) # save 1 and 5
 
     parser.add_argument('--num_atoms', type=int, default=51)
     parser.add_argument('--v_min', type=float, default=-10.)

@@ -3,7 +3,7 @@ import numpy as np
 from gym.spaces.box import Box
 from collections import deque
 from gym import spaces
-from baselines.common.atari_wrappers import FrameStack as FrameStack_, LazyFrames as LazyFrames_, make_atari, wrap_deepmind
+from baselines.common.atari_wrappers import FrameStack as FrameStack_, make_atari, wrap_deepmind
 
 def make_env(env_id, **args):
         episode_life=args['episode_life'] 
@@ -17,7 +17,7 @@ def make_env(env_id, **args):
                             frame_stack=False,
                             scale=False)
         env = TransposeImage(env)
-        env = FrameStack(env, 4)
+        env = FrameStack(env, args['stack_frames'])
         env.seed(args['seed'])
         env.action_space.np_random.seed(args['seed'])
         return env

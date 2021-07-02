@@ -56,33 +56,24 @@ class LogAsync(mp.Process, metaclass=Singleton):
                 for key in self.log_dict:
                     if not isinstance(self.log_dict[key], (wandb.Image, wandb.Video)): 
                         print(key +':  ' + str(self.log_dict[key]))
-                print('\n')
+                print('-------------------')
 
             elif cmd == self.TERMINAL_PRINT:
                 caption, log_dict_tmp = data 
                 print(caption)
                 for key in log_dict_tmp:
                     print(key +':  ' + str(log_dict_tmp[key]))
-                print('\n')
+                print('-------------------')
                 
             elif cmd == self.EXIT:
                 self.__worker_pipe.close()
                 return 
-
-            # elif cmd == self.RENDER_FRAME:
-            #     if self.wandb_init:
-            #         fig, train_steps = data
-            #         wandb.log({'train_steps:' + str(train_steps): wandb.Image(fig)})
 
             else:
                 raise NotImplementedError
 
     def add(self, data):
         self.__pipe.send([self.ADD, data])
-
-    # def render_frame(self, fig, train_steps):
-        # self.__pipe.send([self.RENDER_FRAME, (fig, train_steps)])
-
         
     def delete(self, keys):
         self.__pipe.send([self.DELETE, keys])
