@@ -4,7 +4,7 @@ import numpy as np
 import torch.multiprocessing as mp
 from collections import deque
 import random
-from wrapper import LazyFrames
+from utils.Wrapper import LazyFrames
 
 from baselines.deepq.replay_buffer import ReplayBuffer
 
@@ -22,13 +22,12 @@ class ReplayBufferAsync(mp.Process):
         self.buffer_size = args['buffer_size']
         self.batch_size = args['batch_size']
         self.stack_frames = args['stack_frames']
+        self.seed = args['seed']
         self.cache_size = 2
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.is_init_cache = False
         self.out_pointer = 1 # output pointer 0 when initialize, 1 when first output
         self.in_pointer = 0 # update pointer 0 when first update
-        self.seed = args['seed']
-        self.last_frames = None 
         self.start()
 
     def init_seed(self):
@@ -52,8 +51,9 @@ class ReplayBufferAsync(mp.Process):
                     self.last_frames = LazyFrames(list(frames))
                 else:
                     frames.append(obs)
-                    replay_buffer.add(self.last_frames, action, reward, LazyFrames(list(frames)), done)
-                    self.last_frames = LazyFrames(list(frames))
+                    current_frames = LazyFrames(list(frames))
+                    replay_buffer.add(self.last_frames, action, reward, current_frames, done)
+                    self.last_frames = current_frames
 
             elif cmd == self.SAMPLE:
                 if not self.is_init_cache:

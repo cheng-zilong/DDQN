@@ -14,7 +14,7 @@ def make_env(env_id, **args):
                             frame_stack=False,
                             scale=False)
         env = TransposeImage(env)
-        env = FrameStack(env, args['stack_frames'])
+        env = FrameStack(env = env, k = args['stack_frames'])
         env.seed(args['seed'])
         env.action_space.np_random.seed(args['seed'])
         return env

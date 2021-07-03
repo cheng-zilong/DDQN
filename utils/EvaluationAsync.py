@@ -6,7 +6,7 @@ import torch.multiprocessing as mp
 import wandb
 import json
 from statistics import mean
-from LogAsync import logger
+from utils.LogAsync import logger
 import time
 import matplotlib
 import matplotlib.pyplot as plt
@@ -30,6 +30,7 @@ class EvaluationAsync(mp.Process):
         self.args = args
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.evaluator_lock = mp.Lock()
+        self.seed = args['seed']
         self.start()
 
     def _eval(self, ep_idx):
@@ -39,7 +40,7 @@ class EvaluationAsync(mp.Process):
             eps_prob =  random.random()
             action = self.evaluator_network.act(state) if eps_prob > self.eval_eps else self.env.action_space.sample()
             state, _, done, info = self.env.step(action)
-            if ep_idx is None or ep_idx in self.eval_render_save_gif and \
+            if (ep_idx is None or ep_idx in self.eval_render_save_gif) and \
                 (eval_steps_idx-1) % self.eval_render_freq == 0 : # every eval_render_freq frames sample 1 frame
                 self._render_frame(state)
             if done:
@@ -75,7 +76,16 @@ class EvaluationAsync(mp.Process):
         
         self.im_list.append(self._my_fig2img())
 
+    def init_seed(self):
+        torch.manual_seed(self.seed)
+        torch.cuda.manual_seed(self.seed)
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+        self.env.seed(self.seed)
+        self.env.action_space.np_random.seed(self.seed)
+
     def run(self):
+        self.init_seed()
         self.eval_steps = self.args['eval_steps']
         self.eval_number = self.args['eval_number']
         self.eval_render_freq = self.args['eval_render_freq']
@@ -101,7 +111,7 @@ class EvaluationAsync(mp.Process):
                         self.im_list = []
                         self._eval(ep_idx)
                         if ep_idx is None or ep_idx in self.eval_render_save_gif:
-                            imageio.mimsave(self.folder_name + '%08d_%03d.gif'%(self.train_steps, ep_idx), self.im_list, duration = 0.2)
+                            imageio.mimsave(self.gif_folder + '%08d_%03d.gif'%(self.train_steps, ep_idx), self.im_list, duration = 0.2)
 
                     ep_reward_list_mean = mean(self.ep_reward_list)
                     logger.add({'eval_last': ep_reward_list_mean})
@@ -118,9 +128,9 @@ class EvaluationAsync(mp.Process):
                 self.evaluator_network = data
                 now = datetime.now()
                 self.evaluator_name = self.evaluator_network.__class__.__name__ + '(' + self.env.unwrapped.spec.id + ')_%d_'%self.args['seed'] + now.strftime("%Y%m%d-%H%M%S")
-                self.folder_name = 'frames/' + self.evaluator_name + '/'
-                if not os.path.exists(self.folder_name):
-                    os.makedirs(self.folder_name)
+                self.gif_folder = 'save_gif/' + self.evaluator_name + '/'
+                if not os.path.exists(self.gif_folder):
+                    os.makedirs(self.gif_folder)
                 if not os.path.exists('save_model'):
                     os.makedirs('save_model')
             else:
@@ -133,7 +143,7 @@ class EvaluationAsync(mp.Process):
     def eval(self, train_steps = 0, state_dict = None):
         with self.evaluator_lock:
             if self.args['mode'] == 'eval': # if this is only an evaluation session, then load model first
-                if self.args['model_path'] is None: raise Exception("Model Path for Evaluation is not given! Include --model_path! ")
+                if self.args['model_path'] is None: raise Exception("Model Path for Evaluation is not given! Include --model_path")
                 self.evaluator_network.load_state_dict(torch.load(self.args['model_path']))
             else:
                 self.evaluator_network.load_state_dict(state_dict)

@@ -1,11 +1,11 @@
 import random
 import torch
-from Network import *
-from Config import get_default_parser
+from utils.Network import *
+from utils.Config import get_default_parser
 import numpy as np
-from wrapper import make_env
-from LogAsync import logger
-from DQN import CatDQN
+from utils.Wrapper import make_env
+from utils.LogAsync import logger
+from frameworks.DQN import CatDQN
 
 if __name__ == '__main__':
     parser = get_default_parser()

@@ -3,30 +3,18 @@
 '''
 layer_init + 4 step 1 gradient + async buffer
 '''
-import random
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from Network import *
+from utils.Network import *
 from collections import deque
-import argparse
-from Config import get_default_parser
-import wandb
-import numpy as np
 import time
-from wrapper import make_env
 from statistics import mean
-from ReplayBufferAsync import ReplayBufferAsync
-from LogAsync import logger
+from utils.ReplayBufferAsync import ReplayBufferAsync
+from utils.LogAsync import logger
 import torch.multiprocessing as mp
-from ActorAsync import ActorAsync
-from datetime import datetime
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib import gridspec
-import matplotlib.animation as animation
+from utils.ActorAsync import ActorAsync
 import torch.multiprocessing as mp
-from EvaluationAsync import EvaluationAsync
+from utils.EvaluationAsync import EvaluationAsync
 
 class DQN:
     def __init__(self, make_env_fun, netowrk_fun, optimizer_fun, *arg, **args):
@@ -70,10 +58,10 @@ class DQN:
         for train_steps_idx in range(1, self.args['train_steps'] + 1, self.args['train_freq']):
             eps = self.line_schedule(train_steps_idx-self.start_training_steps) if train_steps_idx > self.start_training_steps else 1
             data = self.actor.step(eps)
-            for idx, (action, obs, reward, done, info) in enumerate(data):
+            for frames_idx, (action, obs, reward, done, info) in enumerate(data):
                 self.replay_buffer.add(action, obs[None,-1], reward, done)
                 if info is not None and info['episodic_return'] is not None:
-                    episodic_steps = train_steps_idx + idx - last_train_steps_idx
+                    episodic_steps = train_steps_idx + frames_idx - last_train_steps_idx
                     ep_reward_list.append(info['episodic_return'])
                     toc = time.time()
                     fps = episodic_steps / (toc-tic)
@@ -81,7 +69,7 @@ class DQN:
                     logger.add({'train_steps':train_steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': mean(ep_reward_list), 'loss': loss.item(), 'eps': eps, 'fps': fps})
                     logger.wandb_print('(Training Agent) ', step=train_steps_idx) if train_steps_idx > self.start_training_steps else logger.wandb_print('(Collecting Data) ', step=train_steps_idx)
                     ep_idx += 1
-                    last_train_steps_idx = train_steps_idx + idx
+                    last_train_steps_idx = train_steps_idx + frames_idx
 
             if train_steps_idx > self.start_training_steps:
                 loss = self.compute_td_loss()

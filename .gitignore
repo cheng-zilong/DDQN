@@ -143,3 +143,4 @@ logs/
 save_model/*
 tmp/*
 frames/*
+save_gif/*
