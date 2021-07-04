@@ -12,7 +12,7 @@ def get_default_parser():
     parser.add_argument('--batch_size', type=int, default=32, help="Batch Size for training.")
     parser.add_argument('--seed', type=int, default=4)
     parser.add_argument('--eps_start', type=int, default=1)
-    parser.add_argument('--eps_end', type=int, default=0.1)
+    parser.add_argument('--eps_end', type=int, default=0.01)
     parser.add_argument('--eps_decay_steps', type=int, default=int(1e6))
     parser.add_argument('--buffer_size', type=int, default=int(1e6))
     parser.add_argument('--env_name', type=str, default='BreakoutNoFrameskip-v4')
@@ -30,7 +30,7 @@ def get_default_parser():
     parser.add_argument('--eval_freq', type=int, default=int(1e6), help="Every *eval_freq* training steps, Evaluate the model.")
     parser.add_argument('--eval_display', type=bool, default=False, help="Whether the evaluation is displayed.")
     parser.add_argument('--eval_number', type=int, default=30, help="In each evaluation, *eval_number* episodes will be implemented.")
-    parser.add_argument('--eval_eps', type=float, default=0.05, help="*eval_eps* probability to choose a random action in evaluation.")
+    parser.add_argument('--eval_eps', type=float, default=0.001, help="*eval_eps* probability to choose a random action in evaluation.")
     parser.add_argument('--eval_render_freq', type=int, default=2, help="Every *eval_render_freq* evaluation steps, render the frames.")
     parser.add_argument('--eval_render_save_gif', type=tuple, default=None, help="If None, then save all episode in gif, otherwise, \"1 10\" means only 1st and 10th episodes are saved. Notably, saving gif can be very slow!") # 
 

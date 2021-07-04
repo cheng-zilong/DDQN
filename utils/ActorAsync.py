@@ -8,7 +8,6 @@ class ActorAsync(mp.Process):
     STEP = 0
     EXIT = 1
     NETWORK = 2
-    FORCE_RESET = 3
     def __init__(self, env, network_lock, *arg, **args):
         mp.Process.__init__(self)
         self.seed = args['seed']
@@ -49,12 +48,6 @@ class ActorAsync(mp.Process):
             elif cmd == self.NETWORK:
                 self._network = data
 
-            elif cmd == self.FORCE_RESET:
-                # Next eps_greedy_step will reset the env
-                if isinstance(self.env, EpisodicLifeEnv):
-                    self.env.was_real_done = True
-                self.done = True
-
             else:
                 raise NotImplementedError
 
@@ -82,9 +75,6 @@ class ActorAsync(mp.Process):
     def step(self, eps):
         self.__pipe.send([self.STEP, eps])
         return self.__pipe.recv()
-
-    def force_reset(self):
-        self.__pipe.send([self.FORCE_RESET, None])
 
     def close(self):
         self.__pipe.send([self.EXIT, None])

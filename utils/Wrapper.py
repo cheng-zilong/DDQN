@@ -5,8 +5,8 @@ from collections import deque
 from gym import spaces
 from baselines.common.atari_wrappers import FrameStack as FrameStack_, make_atari, wrap_deepmind
 
-def make_env(env_id, **args):
-        env = make_atari(env_id, max_episode_steps=args['max_episode_steps'])
+def make_env(**args):
+        env = make_atari(args['env_name'], max_episode_steps=args['max_episode_steps'])
         env = OriginalReturnWrapper(env)
         env = wrap_deepmind(env,
                             episode_life=args['episode_life'],
@@ -28,6 +28,7 @@ class OriginalReturnWrapper(gym.Wrapper):
         obs, reward, done, info = self.env.step(action)
         reward = np.float32(reward)
         self.total_rewards += reward
+        info['total_rewards'] = self.total_rewards
         if done:
             info['episodic_return'] = self.total_rewards
             self.total_rewards = 0

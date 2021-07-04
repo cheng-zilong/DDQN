@@ -24,9 +24,9 @@ class EvaluationAsync(mp.Process):
     NETWORK = 1
     EXIT = 3
 
-    def __init__(self, env, **args):
+    def __init__(self, make_env_fun, **args):
         mp.Process.__init__(self)
-        self.env = env
+        self.make_env_fun = make_env_fun
         self.args = args
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.evaluator_lock = mp.Lock()
@@ -34,22 +34,25 @@ class EvaluationAsync(mp.Process):
         self.start()
 
     def _eval(self, ep_idx):
-        state = self.env.reset()
+        env = self.make_env_fun(**self.args)
+        env.seed(self.seed+ep_idx)
+        env.action_space.np_random.seed(self.seed+ep_idx)
+        state = env.reset()
         tic   = time.time()
         for eval_steps_idx in range(1, self.eval_steps + 1):
             eps_prob =  random.random()
-            action = self.evaluator_network.act(state) if eps_prob > self.eval_eps else self.env.action_space.sample()
-            state, _, done, info = self.env.step(action)
+            action = self.evaluator_network.act(state) if eps_prob > self.eval_eps else env.action_space.sample()
+            state, _, done, info = env.step(action)
             if (ep_idx is None or ep_idx in self.eval_render_save_gif) and \
                 (eval_steps_idx-1) % self.eval_render_freq == 0 : # every eval_render_freq frames sample 1 frame
-                self._render_frame(state)
+                self._render_frame(env, state)
             if done:
-                state = self.env.reset()
+                state = env.reset()
                 if info['episodic_return'] is not None: break
         toc = time.time()
         fps = eval_steps_idx / (toc-tic)
-        self.ep_reward_list.append(info['episodic_return'])
-        logger.terminal_print('----(Evaluating Agent: %d)'%(self.train_steps), {'----ep': ep_idx, '----ep_steps':  eval_steps_idx, '----ep_reward': info['episodic_return'], '----ep_reward_mean': mean(self.ep_reward_list), '----fps': fps})
+        self.ep_reward_list.append(info['total_rewards'])
+        logger.terminal_print('----(Evaluating Agent: %d)'%(self.train_steps), {'----ep': ep_idx, '----ep_steps':  eval_steps_idx, '----ep_reward': info['total_rewards'], '----ep_reward_mean': mean(self.ep_reward_list), '----fps': fps})
 
     def _my_fig2img(self):
         """Convert a Matplotlib figure to a PIL Image and return it"""
@@ -59,10 +62,10 @@ class EvaluationAsync(mp.Process):
         img = Image.open(buf)
         return img
 
-    def _render_frame(self, state):
+    def _render_frame(self, env, state):
         action_prob = np.swapaxes(self.evaluator_network.action_prob[0].cpu().numpy(),0, 1)
         legends = []
-        for i, action_meaning in enumerate(self.env.unwrapped.get_action_meanings()):
+        for i, action_meaning in enumerate(env.unwrapped.get_action_meanings()):
             legends.append(action_meaning + ' (Q=%+.2e)'%(self.evaluator_network.action_Q[0,i]))
 
         self.ax_left.clear()
@@ -81,8 +84,6 @@ class EvaluationAsync(mp.Process):
         torch.cuda.manual_seed(self.seed)
         random.seed(self.seed)
         np.random.seed(self.seed)
-        self.env.seed(self.seed)
-        self.env.action_space.np_random.seed(self.seed)
 
     def run(self):
         self.init_seed()
@@ -127,7 +128,7 @@ class EvaluationAsync(mp.Process):
             elif cmd == self.NETWORK:
                 self.evaluator_network = data
                 now = datetime.now()
-                self.evaluator_name = self.evaluator_network.__class__.__name__ + '(' + self.env.unwrapped.spec.id + ')_%d_'%self.args['seed'] + now.strftime("%Y%m%d-%H%M%S")
+                self.evaluator_name = self.evaluator_network.__class__.__name__ + '(' + self.args['env_name'] + ')_%d_'%self.args['seed'] + now.strftime("%Y%m%d-%H%M%S")
                 self.gif_folder = 'save_gif/' + self.evaluator_name + '/'
                 if not os.path.exists(self.gif_folder):
                     os.makedirs(self.gif_folder)
@@ -137,7 +138,8 @@ class EvaluationAsync(mp.Process):
                 raise NotImplementedError
 
     def init(self, netowrk_fun): 
-        self.evaluator_network  = netowrk_fun(self.env.observation_space.shape, self.env.action_space.n, **self.args).cuda().share_memory()
+        temp_env = self.make_env_fun(**self.args)
+        self.evaluator_network  = netowrk_fun(temp_env.observation_space.shape, temp_env.action_space.n, **self.args).cuda().share_memory()
         self.__pipe.send([self.NETWORK, self.evaluator_network]) # pass network to the evaluation process
 
     def eval(self, train_steps = 0, state_dict = None):
