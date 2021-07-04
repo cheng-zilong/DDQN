@@ -14,7 +14,7 @@ if __name__ == '__main__':
     parser.set_defaults(env_name= 'SpaceInvadersNoFrameskip-v4')
     # parser.set_defaults(env_name= 'PongNoFrameskip-v4')
     
-    parser.set_defaults(eval_render_save_gif=[1]) # save 1 and 5
+    parser.set_defaults(eval_render_save_video=[1]) # save 1 and 5
     args = parser.parse_args()
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)

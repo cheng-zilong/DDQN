@@ -1,22 +1,16 @@
-from baselines.common.atari_wrappers import EpisodicLifeEnv
 import torch
 import numpy as np
 from numpy import random
 import torch.multiprocessing as mp
-import wandb
-import json
 from statistics import mean
 from utils.LogAsync import logger
 import time
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-import matplotlib.animation as animation
 from collections import deque
 import os
 from datetime import datetime
-from PIL import Image
-import io
 import imageio
 
 class EvaluationAsync(mp.Process):
@@ -43,7 +37,7 @@ class EvaluationAsync(mp.Process):
             eps_prob =  random.random()
             action = self.evaluator_network.act(state) if eps_prob > self.eval_eps else env.action_space.sample()
             state, _, done, info = env.step(action)
-            if (ep_idx is None or ep_idx in self.eval_render_save_gif) and \
+            if (ep_idx is None or ep_idx in self.eval_render_save_video) and \
                 (eval_steps_idx-1) % self.eval_render_freq == 0 : # every eval_render_freq frames sample 1 frame
                 self._render_frame(env, state)
             if done:
@@ -53,14 +47,6 @@ class EvaluationAsync(mp.Process):
         fps = eval_steps_idx / (toc-tic)
         self.ep_reward_list.append(info['total_rewards'])
         logger.terminal_print('----(Evaluating Agent: %d)'%(self.train_steps), {'----ep': ep_idx, '----ep_steps':  eval_steps_idx, '----ep_reward': info['total_rewards'], '----ep_reward_mean': mean(self.ep_reward_list), '----fps': fps})
-
-    def _my_fig2img(self):
-        """Convert a Matplotlib figure to a PIL Image and return it"""
-        buf = io.BytesIO()
-        self.my_fig.savefig(buf, bbox_inches='tight')
-        buf.seek(0)
-        img = Image.open(buf)
-        return img
 
     def _render_frame(self, env, state):
         action_prob = np.swapaxes(self.evaluator_network.action_prob[0].cpu().numpy(),0, 1)
@@ -77,7 +63,9 @@ class EvaluationAsync(mp.Process):
         self.ax_right.legend(legends, fontsize='x-small')
         self.ax_right.grid(True)
         
-        self.im_list.append(self._my_fig2img())
+        self.my_fig.canvas.draw()
+        buf = self.my_fig.canvas.tostring_rgb()
+        self.writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(self.nrows, self.ncols, 3))
 
     def init_seed(self):
         torch.manual_seed(self.seed)
@@ -91,15 +79,16 @@ class EvaluationAsync(mp.Process):
         self.eval_number = self.args['eval_number']
         self.eval_render_freq = self.args['eval_render_freq']
         self.eval_eps = self.args['eval_eps']
-        self.eval_render_save_gif = None if self.args['eval_render_save_gif'] is None else [int(i) for i in self.args['eval_render_save_gif']]
+        self.eval_render_save_video = None if self.args['eval_render_save_video'] is None else [int(i) for i in self.args['eval_render_save_video']]
         self.eval_result = dict()
         self.current_max_result = -1e10
         if not self.args['eval_display']: matplotlib.use('Agg')
-        self.my_fig = plt.figure(figsize=(8, 4))
+        self.my_fig = plt.figure(figsize=(8, 4), dpi=80)
         plt.rcParams['font.size'] = '8'
         gs = gridspec.GridSpec(1, 2)
         self.ax_left = self.my_fig.add_subplot(gs[0])
         self.ax_right = self.my_fig.add_subplot(gs[1])
+        self.ncols, self.nrows = self.my_fig.canvas.get_width_height()
         self.atoms_cpu = torch.linspace(self.args['v_min'], self.args['v_max'], self.args['num_atoms'])
         
         while True:
@@ -109,10 +98,9 @@ class EvaluationAsync(mp.Process):
                     self.ep_reward_list = deque(maxlen=self.eval_number)
                     self.train_steps = data
                     for ep_idx in range(1, self.eval_number+1):
-                        self.im_list = []
+                        self.writer = imageio.get_writer(self.gif_folder + '%08d_%03d.mp4'%(self.train_steps, ep_idx), fps=15)
                         self._eval(ep_idx)
-                        if ep_idx is None or ep_idx in self.eval_render_save_gif:
-                            imageio.mimsave(self.gif_folder + '%08d_%03d.gif'%(self.train_steps, ep_idx), self.im_list, duration = 0.2)
+                        self.writer.close()
 
                     ep_reward_list_mean = mean(self.ep_reward_list)
                     logger.add({'eval_last': ep_reward_list_mean})
@@ -129,7 +117,7 @@ class EvaluationAsync(mp.Process):
                 self.evaluator_network = data
                 now = datetime.now()
                 self.evaluator_name = self.evaluator_network.__class__.__name__ + '(' + self.args['env_name'] + ')_%d_'%self.args['seed'] + now.strftime("%Y%m%d-%H%M%S")
-                self.gif_folder = 'save_gif/' + self.evaluator_name + '/'
+                self.gif_folder = 'save_video/' + self.evaluator_name + '/'
                 if not os.path.exists(self.gif_folder):
                     os.makedirs(self.gif_folder)
                 if not os.path.exists('save_model'):
