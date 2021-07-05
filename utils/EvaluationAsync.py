@@ -45,27 +45,23 @@ class EvaluationAsync(mp.Process):
                 if info['episodic_return'] is not None: break
         toc = time.time()
         fps = eval_steps_idx / (toc-tic)
-        self.ep_reward_list.append(info['total_rewards'])
-        logger.terminal_print('----(Evaluating Agent: %d)'%(self.train_steps), {'----ep': ep_idx, '----ep_steps':  eval_steps_idx, '----ep_reward': info['total_rewards'], '----ep_reward_mean': mean(self.ep_reward_list), '----fps': fps})
+        return eval_steps_idx, info['total_rewards'], fps
 
     def _render_frame(self, env, state):
         action_prob = np.swapaxes(self.evaluator_network.action_prob[0].cpu().numpy(),0, 1)
         legends = []
         for i, action_meaning in enumerate(env.unwrapped.get_action_meanings()):
             legends.append(action_meaning + ' (Q=%+.2e)'%(self.evaluator_network.action_Q[0,i]))
-
         self.ax_left.clear()
         self.ax_left.imshow(state[-1])
         self.ax_left.axis('off')
-
         self.ax_right.clear()
         self.ax_right.plot(self.atoms_cpu, action_prob)
-        self.ax_right.legend(legends, fontsize='x-small')
+        self.ax_right.legend(legends)
         self.ax_right.grid(True)
-        
         self.my_fig.canvas.draw()
         buf = self.my_fig.canvas.tostring_rgb()
-        self.writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(self.nrows, self.ncols, 3))
+        self.writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(self.fig_pixel_rows, self.fig_pixel_cols, 3))
 
     def init_seed(self):
         torch.manual_seed(self.seed)
@@ -80,34 +76,34 @@ class EvaluationAsync(mp.Process):
         self.eval_render_freq = self.args['eval_render_freq']
         self.eval_eps = self.args['eval_eps']
         self.eval_render_save_video = None if self.args['eval_render_save_video'] is None else [int(i) for i in self.args['eval_render_save_video']]
-        self.eval_result = dict()
-        self.current_max_result = -1e10
         if not self.args['eval_display']: matplotlib.use('Agg')
-        self.my_fig = plt.figure(figsize=(8, 4), dpi=80)
+        self.my_fig = plt.figure(figsize=(10, 5), dpi=120)
         plt.rcParams['font.size'] = '8'
         gs = gridspec.GridSpec(1, 2)
         self.ax_left = self.my_fig.add_subplot(gs[0])
         self.ax_right = self.my_fig.add_subplot(gs[1])
-        self.ncols, self.nrows = self.my_fig.canvas.get_width_height()
+        self.my_fig.tight_layout()
+        self.fig_pixel_cols, self.fig_pixel_rows = self.my_fig.canvas.get_width_height()
         self.atoms_cpu = torch.linspace(self.args['v_min'], self.args['v_max'], self.args['num_atoms'])
-        
+        video_fps = (60/4/self.args['eval_render_freq'])
         while True:
             cmd, data = self.__worker_pipe.recv()
             if cmd == self.EVAL:
                 with self.evaluator_lock:
-                    self.ep_reward_list = deque(maxlen=self.eval_number)
-                    self.train_steps = data
+                    current_train_steps = data
+                    ep_rewards_list = deque(maxlen=self.eval_number)
                     for ep_idx in range(1, self.eval_number+1):
-                        self.writer = imageio.get_writer(self.gif_folder + '%08d_%03d.mp4'%(self.train_steps, ep_idx), fps=15)
-                        self._eval(ep_idx)
+                        self.writer = imageio.get_writer(self.gif_folder + '%08d_%03d.mp4'%(current_train_steps, ep_idx), fps = video_fps)
+                        eval_steps_idx, ep_rewards, fps = self._eval(ep_idx)
                         self.writer.close()
-
-                    ep_reward_list_mean = mean(self.ep_reward_list)
-                    logger.add({'eval_last': ep_reward_list_mean})
-                    if ep_reward_list_mean >= self.current_max_result:
+                        ep_rewards_list.append(ep_rewards)
+                        ep_rewards_list_mean = mean(ep_rewards_list)
+                        logger.terminal_print('--------(Evaluating Agent: %d)'%(current_train_steps), {'--------ep': ep_idx, '--------ep_steps':  eval_steps_idx, '--------ep_reward': ep_rewards, '--------ep_reward_mean': ep_rewards_list_mean, '--------fps': fps})
+                    logger.add({'eval_last': ep_rewards_list_mean})
+                    if current_train_steps == 1 or ep_rewards_list_mean >= best_ep_rewards_list_mean:
                         torch.save(self.evaluator_network.state_dict(), 'save_model/' + self.evaluator_name + '.pt')
-                        self.current_max_result = ep_reward_list_mean
-                        logger.add({'eval_best': self.current_max_result})
+                        best_ep_rewards_list_mean = ep_rewards_list_mean
+                        logger.add({'eval_best': best_ep_rewards_list_mean})
 
             elif cmd == self.EXIT:
                 self.__worker_pipe.close()
@@ -122,6 +118,7 @@ class EvaluationAsync(mp.Process):
                     os.makedirs(self.gif_folder)
                 if not os.path.exists('save_model'):
                     os.makedirs('save_model')
+                    
             else:
                 raise NotImplementedError
 
