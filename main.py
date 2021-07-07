@@ -7,11 +7,13 @@ from utils.Wrapper import make_env
 from utils.LogAsync import logger
 from frameworks.C51_DQN import C51_DQN
 
+
+
 if __name__ == '__main__':
     parser = get_default_parser()
     parser.set_defaults(seed=555) 
-    # parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
-    parser.set_defaults(env_name= 'SpaceInvadersNoFrameskip-v4')
+    parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
+    # parser.set_defaults(env_name= 'SpaceInvadersNoFrameskip-v4')
     # parser.set_defaults(env_name= 'PongNoFrameskip-v4')
     
     parser.set_defaults(eval_render_save_video=[1]) # save 1 and 5
