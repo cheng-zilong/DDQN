@@ -2,7 +2,6 @@ import torch
 import numpy as np
 import torch.multiprocessing as mp
 import random 
-from baselines.common.atari_wrappers import EpisodicLifeEnv
 
 class ActorAsync(mp.Process):
     STEP = 0

@@ -4,7 +4,7 @@ import numpy as np
 import torch.multiprocessing as mp
 from collections import deque
 import random
-from utils.Wrapper import LazyFrames
+from GymEnvs.AtariWrapper import LazyFrames
 
 from baselines.deepq.replay_buffer import ReplayBuffer
 

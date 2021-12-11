@@ -5,9 +5,9 @@ from collections import deque
 from gym import spaces
 from baselines.common.atari_wrappers import FrameStack as FrameStack_, make_atari, wrap_deepmind
 
-def make_env(**args):
+def make_atari_env(**args):
         env = make_atari(args['env_name'], max_episode_steps=args['max_episode_steps'])
-        env = OriginalReturnWrapper(env)
+        env = TotalRewardWrapper(env)
         env = wrap_deepmind(env,
                             episode_life=args['episode_life'],
                             clip_rewards=args['clip_reward'],
@@ -19,7 +19,7 @@ def make_env(**args):
         env.action_space.np_random.seed(args['seed'])
         return env
 
-class OriginalReturnWrapper(gym.Wrapper):
+class TotalRewardWrapper(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
         self.total_rewards = 0

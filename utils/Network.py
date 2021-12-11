@@ -10,6 +10,8 @@ def layer_init(layer, w_scale=1.0):
     return layer
 
 class LinearQNetwork(nn.Module):
+    '''Linear Q network
+    '''
     def __init__(self, input_shape, num_actions):
         super(LinearQNetwork, self).__init__()
         self.layers = nn.Sequential(
@@ -31,6 +33,9 @@ class LinearQNetwork(nn.Module):
         return action.cpu().numpy()
 
 class CnnQNetwork(nn.Module):
+    '''CNN Q network
+    Nature CNN Q network
+    '''
     def __init__(self, input_shape, num_actions):
         super(CnnQNetwork, self).__init__()
         self.input_shape = input_shape
@@ -98,7 +103,8 @@ class CatLinearQNetwork(nn.Module):
         return action
 
 class CatCnnQNetwork(nn.Module):
-    '''Categorical Linear Q network
+    '''Categorical CNN Q network
+    C51 CNN Q network
     '''
     def __init__(self, input_shape, num_actions, **args):
         super(CatCnnQNetwork, self).__init__()
