@@ -4,7 +4,7 @@ import numpy as np
 import torch.multiprocessing as mp
 from collections import deque
 import random
-from GymEnvs.AtariWrapper import LazyFrames
+from gym_envs.AtariWrapper import LazyFrames
 
 from baselines.deepq.replay_buffer import ReplayBuffer
 
@@ -44,17 +44,23 @@ class ReplayBufferAsync(mp.Process):
         while True:
             cmd, data = self.__worker_pipe.recv()
             if cmd == self.ADD:
-                action, obs, reward, done = data
-                if action is None: #if reset
-                    for _ in range(self.stack_frames):
+                action, obs, reward, done, is_lazyframe = data
+                if is_lazyframe:
+                    if action is None: #if reset
+                        for _ in range(self.stack_frames):
+                            frames.append(obs)
+                        self.last_frames = LazyFrames(list(frames))
+                    else:
                         frames.append(obs)
-                    self.last_frames = LazyFrames(list(frames))
+                        current_frames = LazyFrames(list(frames))
+                        replay_buffer.add(self.last_frames, action, reward, current_frames, done)
+                        self.last_frames = current_frames
                 else:
-                    frames.append(obs)
-                    current_frames = LazyFrames(list(frames))
-                    replay_buffer.add(self.last_frames, action, reward, current_frames, done)
-                    self.last_frames = current_frames
-
+                    if action is None: #if reset
+                        self.last_frames = obs
+                    else:
+                        replay_buffer.add(self.last_frames, action, reward, obs, done)
+                        self.last_frames = obs
             elif cmd == self.SAMPLE:
                 if not self.is_init_cache:
                     self.is_init_cache=True
@@ -95,7 +101,10 @@ class ReplayBufferAsync(mp.Process):
         '''
         if action is none, it is the reset frame
         '''
-        data = (action, obs, reward, done)
+        if isinstance(obs, LazyFrames):
+            data = (action, obs[None, -1], reward, done, True)  
+        else:
+            data = (action, obs, reward, done, False)  
         self.__pipe.send([self.ADD, data])
 
     def sample(self):

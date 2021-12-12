@@ -17,7 +17,7 @@ import torch.multiprocessing as mp
 from utils.EvaluationAsync import EvaluationAsync
 
 class Nature_DQN:
-    def __init__(self, make_env_fun, netowrk_fun, optimizer_fun, *arg, **args):
+    def __init__(self, make_env_fun, network_fun, optimizer_fun, *arg, **args):
         self.arg = arg 
         self.args = args 
         self.env = make_env_fun(**args)
@@ -35,12 +35,12 @@ class Nature_DQN:
         self.replay_buffer = ReplayBufferAsync(*arg, **args)
         self.evaluator = EvaluationAsync(make_env_fun = make_env_fun, **args)
 
-        self.current_network = netowrk_fun(self.env.observation_space.shape, self.env.action_space.n, **args).cuda().share_memory()
-        self.target_network  = netowrk_fun(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
+        self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, **args).cuda().share_memory()
+        self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
         self.optimizer = optimizer_fun(self.current_network.parameters())
         self.update_target()
         
-        self.evaluator.init(netowrk_fun)
+        self.evaluator.init(network_fun)
         
     def update_target(self):
         self.target_network.load_state_dict(self.current_network.state_dict())
@@ -59,7 +59,7 @@ class Nature_DQN:
             eps = self.line_schedule(train_steps_idx-self.start_training_steps) if train_steps_idx > self.start_training_steps else 1
             data = self.actor.step(eps)
             for frames_idx, (action, obs, reward, done, info) in enumerate(data):
-                self.replay_buffer.add(action, obs[None,-1], reward, done)
+                self.replay_buffer.add(action, obs, reward, done)
                 if info is not None and info['episodic_return'] is not None:
                     episodic_steps = train_steps_idx + frames_idx - last_train_steps_idx
                     ep_reward_list.append(info['episodic_return'])
@@ -80,5 +80,23 @@ class Nature_DQN:
             if (train_steps_idx-1) % self.eval_freq == 0:
                 self.evaluator.eval(train_steps=train_steps_idx, state_dict=self.current_network.state_dict())
 
+    def compute_td_loss(self):
+        state, action, reward, next_state, done = self.replay_buffer.sample()
+
+        with torch.no_grad():
+            q_next = self.target_network(next_state).max(1)[0]
+            q_target = reward + self.gamma * (~done) * q_next 
+        
+        q = self.current_network(state).gather(1, action.unsqueeze(-1)).squeeze(-1)
+        loss = nn.MSELoss()(q_target, q)
+        self.optimizer.zero_grad()
+        loss.backward()
+        nn.utils.clip_grad_norm_(self.current_network.parameters(), self.gradient_clip)
+        gradient_norm = nn.utils.clip_grad_norm_(self.current_network.parameters(), self.gradient_clip)
+        logger.add({'gradient_norm': gradient_norm.item()})
+        with self.network_lock:
+            self.optimizer.step()
+
+        return loss
 
 # %%

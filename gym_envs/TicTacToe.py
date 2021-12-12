@@ -4,6 +4,9 @@ import numpy as np
 from gym import spaces
 from functools import reduce
 from operator import and_
+from .AtariWrapper import TotalRewardWrapper, LazyFrames
+from baselines.common.atari_wrappers import FrameStack as FrameStack_
+from collections import deque
 
 class TicTacToeEnv(gym.Env):
     def __init__(self, board_size, win_size):
@@ -12,6 +15,7 @@ class TicTacToeEnv(gym.Env):
         self.board_size = board_size
         self.symbols = [' ', 'x', 'o']
         self.action_space = spaces.Discrete(self.board_size * self.board_size)
+        self.observation_space = spaces.Box(low=0, high=2, shape=(self.board_size * self.board_size,), dtype=np.int8)
         self.rewards = {'going':0, 'draw':0, 'win':1, 'bad_position':-1}
         self.CONSTANT_A = 1 << np.arange(board_size*2)[::-1]
 
@@ -123,6 +127,13 @@ class TicTacToeEnv(gym.Env):
                 print(" | " + str(grid[i + j]), end='')
             print(" |")
         print(" " + "-" * (self.board_size * 4 + 1))
+
+def make_tic_tac_toe_env(**args):
+    env = TicTacToeEnv(board_size = args['board_size'], win_size = args['win_size'])
+    env = TotalRewardWrapper(env)
+    env.seed(args['seed'])
+    env.action_space.np_random.seed(args['seed'])
+    return env
 
 if __name__ == '__main__':
     env = TicTacToeEnv(board_size=3, win_size=3) 

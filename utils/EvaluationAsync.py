@@ -5,13 +5,11 @@ import torch.multiprocessing as mp
 from statistics import mean
 from utils.LogAsync import logger
 import time
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib import gridspec
 from collections import deque
 import os
 from datetime import datetime
 import imageio
+import matplotlib
 
 class EvaluationAsync(mp.Process):
     EVAL = 0
@@ -39,30 +37,13 @@ class EvaluationAsync(mp.Process):
             state, _, done, info = env.step(action)
             if (ep_idx is None or ep_idx in self.eval_render_save_video) and \
                 (eval_steps_idx-1) % self.eval_render_freq == 0 : # every eval_render_freq frames sample 1 frame
-                self._render_frame(env, state, action)
+                self.evaluator_network._render_frame(env, state, action, self.writer)
             if done:
                 state = env.reset()
                 if info['episodic_return'] is not None: break
         toc = time.time()
         fps = eval_steps_idx / (toc-tic)
         return eval_steps_idx, info['total_rewards'], fps
-
-    def _render_frame(self, env, state, action):
-        action_prob = np.swapaxes(self.evaluator_network.action_prob[0].cpu().numpy(),0, 1)
-        legends = []
-        for i, action_meaning in enumerate(env.unwrapped.get_action_meanings()):
-            legend_text = ' (Q=%+.2e)'%(self.evaluator_network.action_Q[0,i]) if i == action else ' (Q=%+.2e)*'%(self.evaluator_network.action_Q[0,i])
-            legends.append(action_meaning + legend_text) 
-        self.ax_left.clear()
-        self.ax_left.imshow(state[-1])
-        self.ax_left.axis('off')
-        self.ax_right.clear()
-        self.ax_right.plot(self.atoms_cpu, action_prob)
-        self.ax_right.legend(legends)
-        self.ax_right.grid(True)
-        self.my_fig.canvas.draw()
-        buf = self.my_fig.canvas.tostring_rgb()
-        self.writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(self.fig_pixel_rows, self.fig_pixel_cols, 3))
 
     def init_seed(self):
         torch.manual_seed(self.seed)
@@ -78,14 +59,6 @@ class EvaluationAsync(mp.Process):
         self.eval_eps = self.args['eval_eps']
         self.eval_render_save_video = None if self.args['eval_render_save_video'] is None else [int(i) for i in self.args['eval_render_save_video']]
         if not self.args['eval_display']: matplotlib.use('Agg')
-        self.my_fig = plt.figure(figsize=(10, 5), dpi=160)
-        plt.rcParams['font.size'] = '8'
-        gs = gridspec.GridSpec(1, 2)
-        self.ax_left = self.my_fig.add_subplot(gs[0])
-        self.ax_right = self.my_fig.add_subplot(gs[1])
-        self.my_fig.tight_layout()
-        self.fig_pixel_cols, self.fig_pixel_rows = self.my_fig.canvas.get_width_height()
-        self.atoms_cpu = torch.linspace(self.args['v_min'], self.args['v_max'], self.args['num_atoms'])
         video_fps = 60/4/self.args['eval_render_freq']
 
         while True:
