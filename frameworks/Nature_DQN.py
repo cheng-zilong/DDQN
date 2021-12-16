@@ -14,14 +14,49 @@ from utils.LogAsync import logger
 import torch.multiprocessing as mp
 from utils.ActorAsync import ActorAsync
 import torch.multiprocessing as mp
-from utils.EvaluationAsync import EvaluationAsync
+from utils.EvaluatorAsync import EvaluatorAsync
+from copy import deepcopy
 import random
+
+class MyActorAsync(ActorAsync):
+    def __init__(self, env, network_lock, seed = None, *arg, **args):
+        super().__init__(env, seed, *arg, **args)
+        self._network_lock = network_lock
+
+    def _step(self, eps, *arg, **args):
+        '''
+        epsilon greedy step
+        '''
+        # auto reset
+        if not hasattr(self,'_actor_done_flag') or self._actor_done_flag:
+            self._actor_last_state = self.env.reset()
+            self._actor_done_flag = False
+            return [None, self._actor_last_state, None, None, None]
+        eps_prob =  random.random()
+        if eps_prob > eps:
+            with self._network_lock:
+                action = self._act_network.act(np.array(self._actor_last_state, copy=False))
+        else:
+            action = self.env.action_space.sample()
+        self._actor_last_state, reward, self._actor_done_flag, info = self.env.step(action)
+        return [action, self._actor_last_state, reward, self._actor_done_flag, info]
+
+    def _update_policy(self, network = None, *arg, **args):
+        if network is not None:
+            self._act_network = network
+
+    def _save_policy(self, *arg, **args):
+        '''
+        This is only a template for the _save_policy method
+        Overwrite this method to implement your own _save_policy method
+        '''
+        pass
 
 class Nature_DQN:
     def __init__(self, make_env_fun, network_fun, optimizer_fun, *arg, **args):
         self.arg = arg 
         self.args = args 
-        self.env = make_env_fun(**args)
+        env = make_env_fun(**args)
         self.gamma=args['gamma']
         self.gradient_clip = args['gradient_clip']
         self.eps_start = args['eps_start']
@@ -31,20 +66,19 @@ class Nature_DQN:
         self.update_target_steps = args['update_target_steps']
         self.eval_freq = args['eval_freq']
 
-        
         if not hasattr(self, 'actor'):
-            
-            self.env._network_lock = mp.Lock()
-            self.actor = ActorAsync(env = self.env, step_method=self.eps_greedy_step, *arg, **args)
-
+            self._network_lock = mp.Lock()
+            self.train_actor = MyActorAsync(env = env, network_lock=self._network_lock, *arg, **args)
+            self.train_actor.start()
+        if not hasattr(self, 'evaluator'):
+            self.eval_actor = MyActorAsync(env = env, network_lock=mp.Lock(), *arg, **args)
+            self.eval_actor.start()
         self.replay_buffer = ReplayBufferAsync(*arg, **args)
 
-        if not hasattr(self, 'evaluator'):
-            self.evaluator = EvaluationAsync(make_env_fun = make_env_fun, **args)
+        self.current_network = network_fun(env.observation_space.shape, env.action_space.n, **args).cuda().share_memory()
+        self.target_network  = network_fun(env.observation_space.shape, env.action_space.n, **args).cuda()
+        self.evaluator_network = network_fun(env.observation_space.shape, env.action_space.n, **args).cuda().share_memory()
 
-        self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, **args).cuda().share_memory()
-        self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
-        self.network_fun = network_fun
         self.optimizer = optimizer_fun(self.current_network.parameters())
         self.update_target()
         
@@ -56,14 +90,14 @@ class Nature_DQN:
         return eps
     
     def train(self):
-        self.evaluator.init(self.network_fun)
         last_train_steps_idx, ep_idx = 1, 1
         ep_reward_list = deque(maxlen=self.args['ep_reward_avg_number'])
         loss  = torch.tensor(0)
         tic   = time.time()
+        self.train_actor.update_policy(network = self.current_network)
         for train_steps_idx in range(1, self.args['train_steps'] + 1, self.args['train_freq']):
             eps = self.line_schedule(train_steps_idx-self.start_training_steps) if train_steps_idx > self.start_training_steps else 1
-            data = self.actor.step(eps=eps, network = self.current_network if train_steps_idx == 1 else None)
+            data = self.train_actor.collect(steps_no = self.args['train_freq'], eps=eps)
             for frames_idx, (action, obs, reward, done, info) in enumerate(data):
                 self.replay_buffer.add(action, obs, reward, done)
                 if info is not None and info['episodic_return'] is not None:
@@ -82,9 +116,12 @@ class Nature_DQN:
 
             if (train_steps_idx-1) % self.update_target_steps == 0:
                 self.update_target()
-                
+
             if (train_steps_idx-1) % self.eval_freq == 0:
-                self.evaluator.eval(train_steps=train_steps_idx, state_dict=self.current_network.state_dict())
+                self.evaluator_network.load_state_dict(self.current_network.state_dict())
+                self.eval_actor.update_policy(network = self.evaluator_network)
+                self.eval_actor.eval(eval_idx = train_steps_idx, eps = self.args['eval_eps'])
+                # self.evaluator.save_policy(network = self.current_network) TODO
 
     def compute_td_loss(self):
         state, action, reward, next_state, done = self.replay_buffer.sample()
@@ -100,26 +137,8 @@ class Nature_DQN:
         nn.utils.clip_grad_norm_(self.current_network.parameters(), self.gradient_clip)
         gradient_norm = nn.utils.clip_grad_norm_(self.current_network.parameters(), self.gradient_clip)
         logger.add({'gradient_norm': gradient_norm.item()})
-        with self.env._network_lock:
+        with self._network_lock:
             self.optimizer.step()
         return loss
-
-    @staticmethod
-    def eps_greedy_step(env, eps, network=None):
-        # auto reset
-        if network is not None:
-            env._act_network = network
-        if not hasattr(env,'_actor_done_flag') or env._actor_done_flag:
-            env._actor_last_state = env.reset()
-            env._actor_done_flag = False
-            return [None, env._actor_last_state, None, None, None]
-        eps_prob =  random.random()
-        if eps_prob > eps:
-            with env._network_lock:
-                action = env._act_network.act(np.array(env._actor_last_state, copy=False))
-        else:
-            action = env.action_space.sample()
-        env._actor_last_state, reward, env._actor_done_flag, info = env.step(action)
-        return [action, env._actor_last_state, reward, env._actor_done_flag, info]
 
 # %%
