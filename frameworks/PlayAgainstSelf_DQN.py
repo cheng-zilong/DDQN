@@ -13,7 +13,7 @@ from utils.LogAsync import logger
 import torch.multiprocessing as mp
 from utils.ActorAsync import ActorAsync
 import torch.multiprocessing as mp
-from utils.EvaluationAsync import EvaluationAsync
+from utils.EvaluatorAsync import EvaluatorAsync
 from .Nature_DQN import Nature_DQN
 import random
 
@@ -34,7 +34,7 @@ class PlayAgainstSelf_DQN(Nature_DQN):
         self.actor.set_network(self.current_network)
         for train_steps_idx in range(1, self.args['train_steps'] + 1, self.args['train_freq']):
             eps = self.line_schedule(train_steps_idx-self.start_training_steps) if train_steps_idx > self.start_training_steps else 1
-            data = self.actor.step(eps)
+            data = self.actor.collect(eps)
             for frames_idx, (action, obs, reward, done, info) in enumerate(data):
                 self.replay_buffer.add(action, obs, reward, done)
                 if info is not None and info['episodic_return'] is not None:
@@ -60,7 +60,7 @@ class PlayAgainstSelf_DQN(Nature_DQN):
                 self.update_target()
                 
             if (train_steps_idx-1) % self.eval_freq == 0:
-                self.evaluator.eval(train_steps=train_steps_idx, state_dict=self.current_network.state_dict())
+                self.evaluator.eval(eval_idx=train_steps_idx, state_dict=self.current_network.state_dict())
 
 class TwoPlayer_ActorAsync(ActorAsync):
     def eps_greedy_step(self, eps):
@@ -95,7 +95,7 @@ class TwoPlayer_ActorAsync(ActorAsync):
                 self.state = obs
         return data
 
-class TwoPlayer_EvaluationAsync(EvaluationAsync):
+class TwoPlayer_EvaluationAsync(EvaluatorAsync):
     def _eval(self, ep_idx):
         env = self.make_env_fun(**self.args)
         env.seed(self.seed+ep_idx)
@@ -103,21 +103,21 @@ class TwoPlayer_EvaluationAsync(EvaluationAsync):
         state = env.reset()
         next_player = 1
         tic   = time.time()
-        for eval_steps_idx in range(1, self.eval_steps + 1):
+        for ep_steps_idx in range(1, self.args['eval_max_steps'] + 1):
             eps_prob =  random.random()
-            action = self.evaluator_network.act(np.asarray(state) if next_player==1 else -np.asarray(state)) if eps_prob > self.eval_eps else env.action_space.sample()
+            action = self.evaluator_policy.act(np.asarray(state) if next_player==1 else -np.asarray(state)) if eps_prob > self.eval_eps else env.action_space.sample()
             state, _, done, info = env.step(action)
             next_player = info['next_player']
             if (ep_idx is None or ep_idx in self.eval_render_save_video) and \
-                (eval_steps_idx-1) % self.eval_render_freq == 0 : # every eval_render_freq frames sample 1 frame
+                (ep_steps_idx-1) % self.eval_render_freq == 0 : # every eval_render_freq frames sample 1 frame
                 if self.args['eval_display']: 
                     env.render(folder = self.gif_folder, number = self.current_train_steps)
             if done:
                 state = env.reset()
                 if info['episodic_return'] is not None: break
         toc = time.time()
-        fps = eval_steps_idx / (toc-tic)
-        return eval_steps_idx, info['total_rewards'], fps
+        fps = ep_steps_idx / (toc-tic)
+        return ep_steps_idx, info['total_rewards'], fps
 
 # %%
 

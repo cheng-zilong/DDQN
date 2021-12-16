@@ -2,9 +2,7 @@ import torch
 import torch.nn as nn
 import torch.autograd as autograd 
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
-from matplotlib import gridspec
-import numpy as np 
+
 
 def layer_init(layer, w_scale=1.0):
     nn.init.orthogonal_(layer.weight.data)
@@ -34,9 +32,6 @@ class LinearQNetwork(nn.Module):
             q_value = self.forward(state)
             action  = q_value.max(1)[1].data[0]
         return action.cpu().numpy()
-
-    def _render_frame(self, env, state, action, writer):
-        pass
 class CnnQNetwork(nn.Module):
     '''CNN Q network
     Nature CNN Q network
@@ -75,9 +70,6 @@ class CnnQNetwork(nn.Module):
             action  = q_value.max(1)[1].data[0]
         return action.cpu().numpy()
 
-    def _render_frame(self, env, state, action, writer):
-        pass
-
 class CatLinearQNetwork(nn.Module):
     '''Categorical Linear Q network
     '''
@@ -109,9 +101,6 @@ class CatLinearQNetwork(nn.Module):
             dist = dist * torch.linspace(self.Vmin, self.Vmax, self.num_atoms)
             action = dist.sum(2).max(1)[1].numpy()[0]
         return action
-
-    def _render_frame(self, env, state, action, writer):
-        pass
 
 class CatCnnQNetwork(nn.Module):
     '''Categorical CNN Q network
@@ -169,27 +158,3 @@ class CatCnnQNetwork(nn.Module):
             action = torch.argmax(self.action_Q, dim=-1).item()
         return action
 
-    def _render_frame(self, env, state, action, writer):
-        if self.my_fig is None:
-            self.my_fig = plt.figure(figsize=(10, 5), dpi=160)
-            plt.rcParams['font.size'] = '8'
-            gs = gridspec.GridSpec(1, 2)
-            self.ax_left = self.my_fig.add_subplot(gs[0])
-            self.ax_right = self.my_fig.add_subplot(gs[1])
-            self.my_fig.tight_layout()
-            self.fig_pixel_cols, self.fig_pixel_rows = self.my_fig.canvas.get_width_height()
-        action_prob = np.swapaxes(self.action_prob[0].cpu().numpy(),0, 1)
-        legends = []
-        for i, action_meaning in enumerate(env.unwrapped.get_action_meanings()):
-            legend_text = ' (Q=%+.2e)'%(self.action_Q[0,i]) if i == action else ' (Q=%+.2e)*'%(self.action_Q[0,i])
-            legends.append(action_meaning + legend_text) 
-        self.ax_left.clear()
-        self.ax_left.imshow(state[-1])
-        self.ax_left.axis('off')
-        self.ax_right.clear()
-        self.ax_right.plot(self.atoms_cpu, action_prob)
-        self.ax_right.legend(legends)
-        self.ax_right.grid(True)
-        self.my_fig.canvas.draw()
-        buf = self.my_fig.canvas.tostring_rgb()
-        writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(self.fig_pixel_rows, self.fig_pixel_cols, 3))

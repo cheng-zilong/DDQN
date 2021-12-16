@@ -26,12 +26,13 @@ def get_default_parser():
     parser.add_argument('--ep_reward_avg_number', type=int, default = 10)
     
     # Evaluation
-    parser.add_argument('--eval_steps', type=int, default=18000, help="The maximum steps for each episode in evaluation.")
+    parser.add_argument('--eval_max_steps', type=int, default=18000, help="The maximum steps for each episode in evaluation.")
     parser.add_argument('--eval_freq', type=int, default=int(1e6), help="Every *eval_freq* training steps, Evaluate the model.")
     parser.add_argument('--eval_display', type=bool, default=False, help="Whether the evaluation is displayed.")
     parser.add_argument('--eval_number', type=int, default=30, help="In each evaluation, *eval_number* episodes will be implemented.")
     parser.add_argument('--eval_eps', type=float, default=0.001, help="*eval_eps* probability to choose a random action in evaluation.")
     parser.add_argument('--eval_render_freq', type=int, default=1, help="Every *eval_render_freq* evaluation steps, render the frames.")
+    parser.add_argument('--eval_video_fps', type=int, default=15, help="Export *eval_video_fps* frames per second in the video")
     parser.add_argument('--eval_render_save_video', type=tuple, default=None, help="If None, then save all episode in gif, otherwise, \"1 10\" means only 1st and 10th episodes are saved. Notably, saving gif can be very slow!") # 
 
     # C51
