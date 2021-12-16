@@ -65,22 +65,22 @@ class EvaluationAsync(mp.Process):
             cmd, data = self.__worker_pipe.recv()
             if cmd == self.EVAL:
                 with self.evaluator_lock:
-                    current_train_steps = data
+                    self.current_train_steps = data
                     ep_rewards_list = deque(maxlen=self.eval_number)
                     for ep_idx in range(1, self.eval_number+1):
-                        self.writer = imageio.get_writer(self.gif_folder + '%08d_%03d.mp4'%(current_train_steps, ep_idx), fps = video_fps)
+                        self.writer = imageio.get_writer(self.gif_folder + '%08d_%03d.mp4'%(self.current_train_steps, ep_idx), fps = video_fps)
                         eval_steps_idx, ep_rewards, fps = self._eval(ep_idx)
                         self.writer.close()
                         ep_rewards_list.append(ep_rewards)
                         ep_rewards_list_mean = mean(ep_rewards_list)
-                        logger.terminal_print('--------(Evaluating Agent: %d)'%(current_train_steps), {
+                        logger.terminal_print('--------(Evaluating Agent: %d)'%(self.current_train_steps), {
                             '--------ep': ep_idx, 
                             '--------ep_steps':  eval_steps_idx, 
                             '--------ep_reward': ep_rewards, 
                             '--------ep_reward_mean': ep_rewards_list_mean, 
                             '--------fps': fps})
                     logger.add({'eval_last': ep_rewards_list_mean})
-                    if current_train_steps == 1 or ep_rewards_list_mean >= best_ep_rewards_list_mean:
+                    if self.current_train_steps == 1 or ep_rewards_list_mean >= best_ep_rewards_list_mean:
                         torch.save(self.evaluator_network.state_dict(), 'save_model/' + self.evaluator_name + '.pt')
                         best_ep_rewards_list_mean = ep_rewards_list_mean
                         logger.add({'eval_best': best_ep_rewards_list_mean})

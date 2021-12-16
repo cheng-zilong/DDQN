@@ -7,16 +7,17 @@ class ActorAsync(mp.Process):
     STEP = 0
     EXIT = 1
     NETWORK = 2
-    def __init__(self, env, network_lock, *arg, **args):
+    def __init__(self, env, step_method, *arg, **args):
         mp.Process.__init__(self)
         self.seed = args['seed']
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self.env = env
-        self.is_init_cache = False
-        self.network_lock = network_lock
         self.steps_no = args['train_freq']
-        self.done = True
+        self.step_method = step_method
         self.start()
+    
+    def reset(self):
+        return self.env.reset()
 
     def init_seed(self):
         torch.manual_seed(self.seed)
@@ -26,53 +27,39 @@ class ActorAsync(mp.Process):
         self.env.seed(self.seed)
         self.env.action_space.np_random.seed(self.seed)
 
+    def collect(self, *arg, **args):
+        data = []
+        for _ in range(self.steps_no):
+            one_step = self.step_method(self.env, *arg, **args)
+            data.append(one_step) 
+        return data
+
     def run(self):
         self.init_seed()
+        is_init_cache = False
         while True:
-            cmd, data = self.__worker_pipe.recv()
+            (cmd, msg) = self.__worker_pipe.recv()
             if cmd == self.STEP:
-                eps = data
-                if not self.is_init_cache:
-                    self.is_init_cache = True
-                    self.__worker_pipe.send(self.eps_greedy_step(eps))
-                    self.cache = self.eps_greedy_step(eps)
+                if not is_init_cache:
+                    is_init_cache = True
+                    self.__worker_pipe.send(self.collect(*(msg[0]), **(msg[1])))
+                    self.cache = self.collect(*(msg[0]), **(msg[1]))
                 else:
                     self.__worker_pipe.send(self.cache)
-                    self.cache = self.eps_greedy_step(eps)
+                    self.cache = self.collect(*(msg[0]), **(msg[1]))
 
             elif cmd == self.EXIT:
                 self.__worker_pipe.close()
                 return
 
             elif cmd == self.NETWORK:
-                self._network = data
+                self._network = msg
 
             else:
                 raise NotImplementedError
 
-    def eps_greedy_step(self, eps):
-        # auto reset
-        data = []
-        for _ in range(self.steps_no):
-            if self.done:
-                self.state = self.env.reset()
-                data.append([None, self.state, None, None, None])
-                self.done = False
-                continue
-            eps_prob =  random.random()
-            if eps_prob > eps:
-                with self.network_lock:
-                    action = self._network.act(np.array(self.state, copy=False))
-            else:
-                action = self.env.action_space.sample()
-
-            obs, reward, self.done, info = self.env.step(action)
-            data.append([action, obs, reward, self.done, info])
-            self.state = obs
-        return data
-
-    def step(self, eps):
-        self.__pipe.send([self.STEP, eps])
+    def step(self, *arg, **args):
+        self.__pipe.send([self.STEP, (arg, args)])
         return self.__pipe.recv()
 
     def close(self):
