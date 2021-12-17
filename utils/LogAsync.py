@@ -1,8 +1,5 @@
-import torch
-import numpy as np
-import torch.multiprocessing as mp
+import multiprocessing as mp
 import wandb
-import json
 
 class Singleton(type):
     _instances = {}
@@ -60,9 +57,11 @@ class LogAsync(mp.Process, metaclass=Singleton):
 
             elif cmd == self.TERMINAL_PRINT:
                 caption, log_dict_tmp = data 
-                print(caption)
-                for key in log_dict_tmp:
-                    print(key +':  ' + str(log_dict_tmp[key]))
+                if caption != "":
+                    print(caption) 
+                if log_dict_tmp != None:
+                    for key in log_dict_tmp:
+                        print(key +':  ' + str(log_dict_tmp[key]))
                 print('-------------------')
                 
             elif cmd == self.EXIT:
@@ -81,7 +80,7 @@ class LogAsync(mp.Process, metaclass=Singleton):
     def wandb_print(self, caption, step):
         self.__pipe.send([self.WANDB_PRINT, [caption, step]])
 
-    def terminal_print(self, caption, log_dict_tmp):
+    def terminal_print(self, caption = "", log_dict_tmp = None):
         self.__pipe.send([self.TERMINAL_PRINT, [caption, log_dict_tmp]])
 
     def exit(self):
