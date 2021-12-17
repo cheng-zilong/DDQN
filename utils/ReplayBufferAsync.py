@@ -5,9 +5,9 @@ import torch.multiprocessing as mp
 from collections import deque
 import random
 from gym_envs.AtariWrapper import LazyFrames
-from .Async import Async
 
 from baselines.deepq.replay_buffer import ReplayBuffer
+from .Async import Async
 
 class ReplayBufferAsync(Async):
     '''
