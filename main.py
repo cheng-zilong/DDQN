@@ -15,6 +15,7 @@ if __name__ == '__main__':
     parser = get_default_parser()
     parser.set_defaults(seed=555) 
     parser.set_defaults(env_name= 'BreakoutNoFrameskip-v4')
+    parser.set_defaults(start_training_steps= 10000)
     # parser.set_defaults(env_name= 'SpaceInvadersNoFrameskip-v4')
     # parser.set_defaults(env_name= 'PongNoFrameskip-v4')
     

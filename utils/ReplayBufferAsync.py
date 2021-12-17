@@ -5,10 +5,11 @@ import torch.multiprocessing as mp
 from collections import deque
 import random
 from gym_envs.AtariWrapper import LazyFrames
+from .Async import Async
 
 from baselines.deepq.replay_buffer import ReplayBuffer
 
-class ReplayBufferAsync(mp.Process):
+class ReplayBufferAsync(Async):
     '''
     add numpy
     sample torch.tensor.cuda()
@@ -18,17 +19,15 @@ class ReplayBufferAsync(mp.Process):
     CLOSE = 2
 
     def __init__(self, *arg, **args):
-        mp.Process.__init__(self)
+        super().__init__(*arg, **args)
         self.buffer_size = args['buffer_size']
         self.batch_size = args['batch_size']
         self.stack_frames = args['stack_frames']
         self.seed = args['seed']
         self.cache_size = 2
-        self.__pipe, self.__worker_pipe = mp.Pipe()
         self.is_init_cache = False
         self.out_pointer = 1 # output pointer 0 when initialize, 1 when first output
         self.in_pointer = 0 # update pointer 0 when first update
-        self.start()
 
     def init_seed(self):
         torch.manual_seed(self.seed)
@@ -39,37 +38,24 @@ class ReplayBufferAsync(mp.Process):
     def run(self):
         self.init_seed()
         replay_buffer = ReplayBuffer(self.buffer_size)
-        memory_share_list = []
         frames = deque([], maxlen=self.stack_frames)
         while True:
-            cmd, data = self.__worker_pipe.recv()
+            cmd, msg = self._receive()
             if cmd == self.ADD:
-                action, obs, reward, done, is_lazyframe = data
-                if is_lazyframe:
-                    if action is None: #if reset
-                        for _ in range(self.stack_frames):
-                            frames.append(obs)
-                        self.last_frames = LazyFrames(list(frames))
-                    else:
+                action, obs, reward, done = msg
+                if action is None: #if reset
+                    for _ in range(self.stack_frames):
                         frames.append(obs)
-                        current_frames = LazyFrames(list(frames))
-                        replay_buffer.add(self.last_frames, action, reward, current_frames, done)
-                        self.last_frames = current_frames
+                    self.last_frames = LazyFrames(list(frames))
                 else:
-                    if action is None: #if reset
-                        self.last_frames = obs
-                    else:
-                        replay_buffer.add(self.last_frames, action, reward, obs, done)
-                        self.last_frames = obs
+                    frames.append(obs)
+                    current_frames = LazyFrames(list(frames))
+                    replay_buffer.add(self.last_frames, action, reward, current_frames, done)
+                    self.last_frames = current_frames
             elif cmd == self.SAMPLE:
                 if not self.is_init_cache:
                     self.is_init_cache=True
-                    state, action, reward, next_state, done = replay_buffer.sample(self.batch_size)
-                    state_share = torch.zeros((self.cache_size, *state.shape), dtype=torch.tensor(state).dtype, device=torch.device(0)).share_memory_()
-                    action_share = torch.zeros((self.cache_size, *action.shape), dtype=torch.tensor(action).dtype, device=torch.device(0)).share_memory_()
-                    reward_share = torch.zeros((self.cache_size, *reward.shape), dtype=torch.tensor(reward).dtype, device=torch.device(0)).share_memory_()
-                    next_state_share = torch.zeros((self.cache_size, *next_state.shape), dtype=torch.tensor(next_state).dtype, device=torch.device(0)).share_memory_()
-                    done_share = torch.zeros((self.cache_size, *done.shape), dtype=torch.tensor(done).dtype, device=torch.device(0)).share_memory_()
+                    state_share, action_share, reward_share, next_state_share, done_share = msg
                     for i in range(0, self.cache_size): # no need update 0
                         state, action, reward, next_state, done = replay_buffer.sample(self.batch_size)
                         state_share[i] = torch.tensor(state, device=torch.device(0))
@@ -77,10 +63,9 @@ class ReplayBufferAsync(mp.Process):
                         reward_share[i] = torch.tensor(reward, device=torch.device(0))
                         next_state_share[i] = torch.tensor(next_state, device=torch.device(0))
                         done_share[i] = torch.tensor(done, device=torch.device(0))
-                    memory_share_list = [state_share, action_share, reward_share, next_state_share, done_share]
-                    self.__worker_pipe.send([True, memory_share_list]) # the first one denoteing construction of share memory
+                    self._send(True)
                 else:
-                    self.__worker_pipe.send([False, self.out_pointer])
+                    self._send(self.out_pointer)
                     self.out_pointer = (self.out_pointer + 1)%self.cache_size
 
                     state, action, reward, next_state, done = replay_buffer.sample(self.batch_size)
@@ -92,7 +77,7 @@ class ReplayBufferAsync(mp.Process):
                     self.in_pointer = (self.in_pointer + 1) % self.cache_size
 
             elif cmd == self.CLOSE:
-                self.__worker_pipe.close()
+                self._worker_pipe.close()
                 return
             else:
                 raise Exception('Unknown command')
@@ -102,20 +87,29 @@ class ReplayBufferAsync(mp.Process):
         if action is none, it is the reset frame
         '''
         if isinstance(obs, LazyFrames):
-            data = (action, obs[None, -1], reward, done, True)  
+            data = (action, obs[None, -1], reward, done)  
         else:
-            data = (action, obs, reward, done, False)  
-        self.__pipe.send([self.ADD, data])
+            data = (action, [obs], reward, done)  #加一个维度因为lazyframe叠第0维
+        self.__last_data = data
+        self.send(self.ADD, data)
 
     def sample(self):
-        self.__pipe.send([self.SAMPLE, None])
-        is_construct_cache, data = self.__pipe.recv()
-        if is_construct_cache:
-            self.state_share, self.action_share, self.reward_share, self.next_state_share, self.done_share =  data
+        ## return share tensor the first time, the return idx
+        if not self.is_init_cache:
+            self.is_init_cache=True
+            self.state_share = torch.tensor([[LazyFrames([self.__last_data[1]]*self.stack_frames)]*self.batch_size]*self.cache_size, device=torch.device(0)).share_memory_()
+            self.action_share = torch.tensor([[self.__last_data[0]]*self.batch_size]*self.cache_size, device=torch.device(0)).share_memory_()
+            self.reward_share = torch.tensor([[self.__last_data[2]]*self.batch_size]*self.cache_size, device=torch.device(0)).share_memory_()
+            self.next_state_share = torch.tensor([[LazyFrames([self.__last_data[1]]*self.stack_frames)]*self.batch_size]*self.cache_size, device=torch.device(0)).share_memory_()
+            self.done_share = torch.tensor([[self.__last_data[3]]*self.batch_size]*self.cache_size, device=torch.device(0)).share_memory_()
+            self.send(self.SAMPLE, (self.state_share, self.action_share, self.reward_share, self.next_state_share, self.done_share))
+            self.receive()
             return self.state_share[0], self.action_share[0], self.reward_share[0], self.next_state_share[0], self.done_share[0]
         else:
-            return self.state_share[data], self.action_share[data], self.reward_share[data], self.next_state_share[data], self.done_share[data]
+            self.send(self.SAMPLE, None)
+            cache_idx = self.receive()
+            return self.state_share[cache_idx], self.action_share[cache_idx], self.reward_share[cache_idx], self.next_state_share[cache_idx], self.done_share[cache_idx]
 
     def close(self):
-        self.__pipe.send([self.CLOSE, None])
-        self.__pipe.close()
+        self.send(self.CLOSE, None)
+        self._pipe.close()

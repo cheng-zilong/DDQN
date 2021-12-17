@@ -31,5 +31,5 @@
 python test_async_actor.py --mode eval --model_path "save_model/CatDQN(BreakoutNoFrameskip-v4)_4_20210621-024725.pt"
 
 7. games
-    python test.py --env_name PongNoFrameskip-v4  --eps_decay_steps 100000 --buffer_size 100000 --start_training_steps 10000 --train_freq 1 --update_target_steps 1000 --eval_number 10 --eval_freq 100000 --seed 777
+    python test.py --env_name PongNoFrameskip-v4  --eps_decay_steps 100000 --buffer_size 100000 --start_training_steps 10000 --train_freq 1 --update_target_freq 1000 --eval_number 10 --eval_freq 100000 --seed 777
     python test.py --mode eval --model_path "save_model/CatDQN(BreakoutNoFrameskip-v4)_4_20210621-024725.pt" --seed 6  

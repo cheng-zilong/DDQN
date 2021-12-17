@@ -17,6 +17,7 @@ import torch.multiprocessing as mp
 from utils.EvaluatorAsync import EvaluatorAsync
 from copy import deepcopy
 import random
+import numpy as np
 
 class MyActorAsync(ActorAsync):
     def __init__(self, env, network_lock, seed = None, *arg, **args):
@@ -63,7 +64,7 @@ class Nature_DQN:
         self.eps_end = args['eps_end']
         self.eps_decay_steps = args['eps_decay_steps']
         self.start_training_steps = args['start_training_steps']
-        self.update_target_steps = args['update_target_steps']
+        self.update_target_freq = args['update_target_freq']
         self.eval_freq = args['eval_freq']
 
         if not hasattr(self, 'actor'):
@@ -74,6 +75,7 @@ class Nature_DQN:
             self.eval_actor = MyActorAsync(env = env, network_lock=mp.Lock(), *arg, **args)
             self.eval_actor.start()
         self.replay_buffer = ReplayBufferAsync(*arg, **args)
+        self.replay_buffer.start()
 
         self.current_network = network_fun(env.observation_space.shape, env.action_space.n, **args).cuda().share_memory()
         self.target_network  = network_fun(env.observation_space.shape, env.action_space.n, **args).cuda()
@@ -114,7 +116,7 @@ class Nature_DQN:
             if train_steps_idx > self.start_training_steps:
                 loss = self.compute_td_loss()
 
-            if (train_steps_idx-1) % self.update_target_steps == 0:
+            if (train_steps_idx-1) % self.update_target_freq == 0:
                 self.update_target()
 
             if (train_steps_idx-1) % self.eval_freq == 0:

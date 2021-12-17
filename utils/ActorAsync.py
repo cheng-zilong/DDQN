@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import torch.multiprocessing as mp
 import random 
 import time
 from statistics import mean
@@ -9,7 +8,8 @@ from utils.LogAsync import logger
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import numpy as np 
-class ActorAsync(mp.Process):
+from .Async import Async
+class ActorAsync(Async):
     STEP = 0
     EXIT = 1
     RESET = 2
@@ -17,30 +17,28 @@ class ActorAsync(mp.Process):
     SAVE_POLICY=4
     EVAL=5
     def __init__(self, env, seed = None, *arg, **args):
-        mp.Process.__init__(self)
-        self._pipe, self._worker_pipe = mp.Pipe()
+        super().__init__(env, seed = None, *arg, **args)
         self.env = env
         self.seed = random.randint(0,10000) if seed == None else seed
         self.arg = arg 
         self.args = args 
 
-
     def run(self):
         self._init_seed()
         is_init_cache = False
         while True:
-            (cmd, msg) = self._worker_pipe.recv()
+            (cmd, msg) = self._receive()
             if cmd == self.STEP:
                 if not is_init_cache:
                     is_init_cache = True
-                    self._worker_pipe.send(self._collect(*(msg[0]), **(msg[1])))
+                    self._send(self._collect(*(msg[0]), **(msg[1])))
                     self.cache = self._collect(*(msg[0]), **(msg[1]))
                 else:
-                    self._worker_pipe.send(self.cache)
+                    self._send(self.cache)
                     self.cache = self._collect(*(msg[0]), **(msg[1]))
 
             elif cmd == self.RESET:
-                self._worker_pipe.send(self._reset())
+                self._send(self._reset())
                 is_init_cache = False
 
             elif cmd == self.EVAL:
@@ -61,22 +59,22 @@ class ActorAsync(mp.Process):
 
     def collect(self, steps_no, *arg, **args):
         args['steps_no'] = steps_no
-        self._pipe.send([self.STEP, (arg, args)])
-        return self._pipe.recv()
+        self.send(self.STEP, (arg, args))
+        return self.receive()
 
     def reset(self):
-        self._pipe.send([self.RESET, None])
-        return self._pipe.recv()
+        self.send(self.RESET, None)
+        return self.receive()
 
     def close(self):
-        self._pipe.send([self.EXIT, None])
+        self.send(self.EXIT, None)
         self._pipe.close()
 
     def update_policy(self, *arg, **args):
-        self._pipe.send([self.UPDATE_POLICY, (arg, args)])
+        self.send(self.UPDATE_POLICY, (arg, args))
 
     def save_policy(self, *arg, **args):
-        self._pipe.send([self.SAVE_POLICY, (arg, args)])
+        self.send(self.SAVE_POLICY, (arg, args))
 
     def eval(self, eval_idx = 0, *arg, **args):
         # #TODO
@@ -87,8 +85,7 @@ class ActorAsync(mp.Process):
         #         self.evaluator_policy.load_state_dict(torch.load(self.args['model_path']))
         #     else:
         #         self.evaluator_policy.load_state_dict(state_dict)
-        
-        self._pipe.send([self.EVAL, (arg, args)])
+        self.send(self.EVAL, (arg, args))
 
     def _init_seed(self):
         torch.manual_seed(self.seed)

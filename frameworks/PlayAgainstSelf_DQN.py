@@ -56,7 +56,7 @@ class PlayAgainstSelf_DQN(Nature_DQN):
             if train_steps_idx > self.start_training_steps:
                 loss = self.compute_td_loss()
 
-            if (train_steps_idx-1) % self.update_target_steps == 0:
+            if (train_steps_idx-1) % self.update_target_freq == 0:
                 self.update_target()
                 
             if (train_steps_idx-1) % self.eval_freq == 0:
