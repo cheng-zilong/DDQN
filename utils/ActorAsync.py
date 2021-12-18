@@ -5,10 +5,13 @@ import time
 from statistics import mean
 from collections import deque
 from utils.LogAsync import logger
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-import numpy as np 
 from .Async import Async
+from utils.Network import *
+import os
+import imageio
 class ActorAsync(Async):
     STEP = 0
     EXIT = 1
@@ -16,6 +19,8 @@ class ActorAsync(Async):
     UPDATE_POLICY=3
     SAVE_POLICY=4
     EVAL=5
+    RENDER=6
+    UNWRAPPED_RESET=7
     def __init__(self, env, seed = None, *arg, **args):
         super().__init__(env, seed = None, *arg, **args)
         self.env = env
@@ -41,6 +46,10 @@ class ActorAsync(Async):
                 self._send(self._reset())
                 is_init_cache = False
 
+            elif cmd == self.UNWRAPPED_RESET:
+                self._unwrapped_reset()
+                is_init_cache = False
+
             elif cmd == self.EVAL:
                 self._eval(*(msg[0]), **(msg[1]))
 
@@ -50,6 +59,9 @@ class ActorAsync(Async):
             elif cmd == self.SAVE_POLICY:
                 self._save_policy(*(msg[0]), **(msg[1]))
 
+            elif cmd == self.RENDER:
+                self._render(*(msg[0]), **(msg[1]))
+
             elif cmd == self.EXIT:
                 self._worker_pipe.close()
                 return
@@ -57,13 +69,17 @@ class ActorAsync(Async):
             else:
                 raise NotImplementedError
 
-    def collect(self, steps_no, *arg, **args):
-        args['steps_no'] = steps_no
+    def collect(self, steps_number, *arg, **args):
+        args['steps_number'] = steps_number
         self.send(self.STEP, (arg, args))
         return self.receive()
 
     def reset(self):
         self.send(self.RESET, None)
+        return self.receive()
+
+    def unwrapped_reset(self):
+        self.send(self.UNWRAPPED_RESET, None)
         return self.receive()
 
     def close(self):
@@ -77,15 +93,11 @@ class ActorAsync(Async):
         self.send(self.SAVE_POLICY, (arg, args))
 
     def eval(self, eval_idx = 0, *arg, **args):
-        # #TODO
         args['eval_idx'] = eval_idx
-        # with self.evaluator_lock:
-        #     if self.args['mode'] == 'eval': # if this is only an evaluation session, then load model first
-        #         if self.args['model_path'] is None: raise Exception("Model Path for Evaluation is not given! Include --model_path")
-        #         self.evaluator_policy.load_state_dict(torch.load(self.args['model_path']))
-        #     else:
-        #         self.evaluator_policy.load_state_dict(state_dict)
         self.send(self.EVAL, (arg, args))
+
+    def render(self, *arg, **args):
+        self.send(self.RENDER, (arg, args))
 
     def _init_seed(self):
         torch.manual_seed(self.seed)
@@ -100,46 +112,29 @@ class ActorAsync(Async):
         self._actor_done_flag = False
         return self._actor_last_state
 
-    def _collect(self, *arg, **args):
+    def _unwrapped_reset(self):
+        '''
+        some gym envs cannot be reset because of the episodic life wrapper
+        you can use this function to force the env to reset even it is not the end of an episode
+        '''
+        self.env.unwrapped.reset()
+        self._actor_last_state = self.env.reset()
+        self._actor_done_flag = False
+        return self._actor_last_state
+
+    def _collect(self, steps_number, *arg, **args):
         data = []
-        for _ in range(args['steps_no']):
+        for _ in range(steps_number):
             one_step = self._step(*arg, **args)
             data.append(one_step) 
         return data
 
-    def _eval_ep(self, ep_idx, *arg, **args):
-        # Evaluate one episode
-        state = self._reset()
-        tic   = time.time()
-        for ep_steps_idx in range(1, self.args['eval_max_steps'] + 1):
-            action, state, reward, done, info = self._collect(steps_no = 1, *arg, **args)[-1] 
-            # step returns a list [[action, state, reward, done, info]]
-            # if (ep_idx is None or ep_idx in self.eval_render_save_video) and \
-            #     (ep_steps_idx-1) % self.args['eval_render_freq'] == 0 : # every eval_render_freq frames sample 1 frame
-            #     self.evaluator_policy._render_frame(self.eval_actor, state, action, self.writer) TODO
-            if done:
-                if info['episodic_return'] is not None: break
-        toc = time.time()
-        fps = ep_steps_idx / (toc-tic)
-        return ep_steps_idx, info['total_rewards'], fps
-
-    def _eval(self, *arg, **args):
-        eval_idx = args['eval_idx']
-        ep_rewards_list = deque(maxlen=self.args['eval_number'])
-        for ep_idx in range(1, self.args['eval_number']+1):
-            # self.writer = imageio.get_writer(self.gif_folder + '%08d_%03d.mp4'%(eval_idx, ep_idx), fps = self.args['eval_video_fps'])#TODO
-            ep_steps, ep_rewards, fps = self._eval_ep(ep_idx, *arg, **args)
-            # self.writer.close()#TODO
-            ep_rewards_list.append(ep_rewards)
-            ep_rewards_list_mean = mean(ep_rewards_list)
-            logger.terminal_print(
-                '--------(Evaluating Agent: %d)'%(eval_idx), {
-                '--------ep': ep_idx, 
-                '--------ep_steps':  ep_steps, 
-                '--------ep_reward': ep_rewards, 
-                '--------ep_reward_mean': ep_rewards_list_mean, 
-                '--------fps': fps})
-        logger.add({'eval_last': ep_rewards_list_mean})
+    def _eval(self, eval_idx, *arg, **args):
+        '''
+        This is a template for the _eval method
+        Overwrite this method to implement your own _eval method
+        '''
+        pass 
 
     def _step(self, *arg, **args):
         '''
@@ -163,28 +158,95 @@ class ActorAsync(Async):
         '''
         pass
 
-    #TODO
-    def _render_frame(self, actor, state, action, writer):
-        if self.my_fig is None:
-            self.my_fig = plt.figure(figsize=(10, 5), dpi=160)
-            plt.rcParams['font.size'] = '8'
-            gs = gridspec.GridSpec(1, 2)
-            self.ax_left = self.my_fig.add_subplot(gs[0])
-            self.ax_right = self.my_fig.add_subplot(gs[1])
-            self.my_fig.tight_layout()
-            self.fig_pixel_cols, self.fig_pixel_rows = self.my_fig.canvas.get_width_height()
-        action_prob = np.swapaxes(self.action_prob[0].cpu().numpy(),0, 1)
-        legends = []
-        for i, action_meaning in enumerate(actor.env.unwrapped.get_action_meanings()):
-            legend_text = ' (Q=%+.2e)'%(self.action_Q[0,i]) if i == action else ' (Q=%+.2e)*'%(self.action_Q[0,i])
-            legends.append(action_meaning + legend_text) 
-        self.ax_left.clear()
-        self.ax_left.imshow(state[-1])
-        self.ax_left.axis('off')
-        self.ax_right.clear()
-        self.ax_right.plot(self.atoms_cpu, action_prob)
-        self.ax_right.legend(legends)
-        self.ax_right.grid(True)
-        self.my_fig.canvas.draw()
-        buf = self.my_fig.canvas.tostring_rgb()
-        writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(self.fig_pixel_rows, self.fig_pixel_cols, 3))
+    def _render(self, *arg, **args):
+        '''
+        This is only a template for the _render method
+        Overwrite this method to implement your own _render method
+        '''
+        pass
+class NetworkActorAsync(ActorAsync):
+    '''
+    Policy 是一个network的agent
+    Policy 是从state到action的映射
+    '''
+    def __init__(self, env, network_lock, seed = None, *arg, **args):
+        super().__init__(env, seed, *arg, **args)
+        self._network_lock = network_lock
+        self._network = None
+        self._actor_done_flag = True
+        self._actor_last_state = None
+
+    def _step(self, eps, *arg, **args):
+        '''
+        epsilon greedy step
+        '''
+        if  self._network is None:
+            raise Exception("Network has not been initialized!")
+        # auto reset
+        if self._actor_done_flag:
+            self._actor_last_state = self.env.reset()
+            self._actor_done_flag = False
+            return [None, self._actor_last_state, None, None, None]
+        eps_prob =  random.random()
+        if eps_prob > eps:
+            with self._network_lock:
+                action = self._network.act(np.asarray(self._actor_last_state))
+        else:
+            action = self.env.action_space.sample()
+        self._actor_last_state, reward, self._actor_done_flag, info = self.env.step(action)
+        return action, self._actor_last_state, reward, self._actor_done_flag, info
+
+    def _update_policy(self, network, *arg, **args):
+        self._network = network
+
+    def _save_policy(self, *arg, **args):
+        '''
+        name=
+        idx is the name of this policy
+        '''
+        if not os.path.exists('save_model/' + logger._run_name + '/'):
+            os.makedirs('save_model/' + logger._run_name + '/')
+        torch.save(self._network.state_dict(), 'save_model/' + logger._run_name + '/' + str(args['name']) +'.pt')
+
+    def _eval(self, eval_idx, eval_number, eval_max_steps, *arg, **args):
+        ep_rewards_list = deque(maxlen=eval_number)
+        for ep_idx in range(1, eval_number+1):
+            self._unwrapped_reset()
+            for ep_steps_idx in range(1, eval_max_steps + 1):
+                _, _, _, done, info = self._collect(steps_number = 1, *arg, **args)[-1] 
+                if done:
+                    if info['episodic_return'] is not None: break
+            ep_rewards_list.append(info['total_rewards'])
+            ep_rewards_list_mean = mean(ep_rewards_list)
+            logger.terminal_print(
+                '--------(Evaluator Index: %d)'%(eval_idx), {
+                '--------ep': ep_idx, 
+                '--------ep_steps':  ep_steps_idx, 
+                '--------ep_reward': info['total_rewards'], 
+                '--------ep_reward_mean': ep_rewards_list_mean})
+        logger.add({'eval_last': ep_rewards_list_mean})
+
+    def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *arg, **args):
+        if not is_show: matplotlib.use('Agg')
+        if not os.path.exists('save_video/' + logger._run_name + '/'):
+            os.makedirs('save_video/' + logger._run_name + '/')
+        writer = imageio.get_writer('save_video/' + logger._run_name + '/' + str(name) +'.mp4', fps = fps)
+        my_fig = plt.figure(figsize=figsize, dpi=dpi)
+        plt.rcParams['font.size'] = '8'
+        ax = my_fig.add_subplot(111)
+        my_fig.tight_layout()
+        fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
+        self._unwrapped_reset()
+        for _ in range(1, render_max_steps + 1):
+            _, _, _, done, info = self._collect(steps_number = 1, *arg, **args)[-1] 
+            ax.clear()
+            ax.imshow(self.env.render(mode = render_mode))
+            ax.axis('off')
+            my_fig.canvas.draw()
+            buf = my_fig.canvas.tostring_rgb()
+            writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(fig_pixel_rows, fig_pixel_cols, 3))
+            if done:
+                if info['episodic_return'] is not None: break
+        writer.close()
+
+

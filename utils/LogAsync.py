@@ -1,5 +1,6 @@
 import multiprocessing as mp
 import wandb
+from datetime import datetime
 
 class Singleton(type):
     _instances = {}
@@ -19,40 +20,49 @@ class LogAsync(mp.Process, metaclass=Singleton):
     def __init__(self):
         mp.Process.__init__(self)
         
-    def init(self, project_name = None, args = None):
-        self.project_name = project_name
-        self. args = args
+    def init(self, project_name, policy_class, env_name, seed, *arg, **args):
+        self._project_name = project_name
+        self._policy_name = policy_class.__name__
+        self._env_name = env_name
+        self._seed = seed
+        self._args = args
         self.__pipe, self.__worker_pipe = mp.Pipe()
-        self.log_dict = dict()
+        self._log_dict = dict()
+        now = datetime.now()
+        self._run_name = self._policy_name + '(' + self._env_name + ')_%d_'%self._seed + now.strftime("%Y%m%d-%H%M%S")
         self.start()
 
+    @property
+    def run_name(self):
+        return self._run_name
+
+    @property
+    def project_name(self):
+        return self._project_name
+
     def run(self):
-        if self.project_name is not None:
-            wandb.init(name='CatCnnDQN(' + self.args.env_name + ')_' + str(self.args.seed), project=self.project_name, config=self.args)
-            self.wandb_init = True
-        else:
-            self.wandb_init = False
+        
+        wandb.init(name=self._run_name, project=self._project_name, config=self._args)
         while True:
             cmd, data = self.__worker_pipe.recv()
             if cmd == self.ADD:
                 for key in data:
-                    self.log_dict[key] = data[key]
+                    self._log_dict[key] = data[key]
                 
             elif cmd == self.DELETE:
                 if isinstance(data, (list,tuple)):
                     for key in data:
-                        self.log_dict.pop(key, None)
+                        self._log_dict.pop(key, None)
                 else:
-                    self.log_dict.pop(data, None)
+                    self._log_dict.pop(data, None)
 
             elif cmd == self.WANDB_PRINT:
                 caption, step = data
-                if self.wandb_init:
-                    wandb.log(self.log_dict, step=step)
+                wandb.log(self._log_dict, step=step)
                 print(caption)
-                for key in self.log_dict:
-                    if not isinstance(self.log_dict[key], (wandb.Image, wandb.Video)): 
-                        print(key +':  ' + str(self.log_dict[key]))
+                for key in self._log_dict:
+                    if not isinstance(self._log_dict[key], (wandb.Image, wandb.Video)): 
+                        print(key +':  ' + str(self._log_dict[key]))
                 print('-------------------')
 
             elif cmd == self.TERMINAL_PRINT:

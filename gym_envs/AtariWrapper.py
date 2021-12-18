@@ -36,9 +36,6 @@ class TotalRewardWrapper(gym.Wrapper):
             info['episodic_return'] = None
         return obs, reward, done, info
 
-    def reset(self):
-        return self.env.reset()
-
 
 class TransposeImage(gym.ObservationWrapper):
     '''

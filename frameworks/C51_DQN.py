@@ -8,16 +8,52 @@ import torch.nn as nn
 from utils.Network import *
 from utils.LogAsync import logger
 from frameworks.Nature_DQN import Nature_DQN
-
+from utils.ActorAsync import NetworkActorAsync
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib import gridspec
+import os
+import imageio
+import numpy as np
+import torch.multiprocessing as mp
+from utils.ReplayBufferAsync import ReplayBufferAsync
 class C51_DQN(Nature_DQN):
     def __init__(self, make_env_fun, network_fun, optimizer_fun, *arg, **args):
-        super().__init__(make_env_fun, network_fun, optimizer_fun, *arg, **args)
-        self.v_min = args['v_min']
-        self.v_max = args['v_max']
-        self.delta_z = float(self.v_max - self.v_min) / (args['num_atoms'] - 1)
-        self.atoms_gpu = torch.linspace(self.v_min, self.v_max, args['num_atoms']).cuda()
+        '''
+        v_min
+        v_max
+        seed
+        gamma
+        clip_gradient
+        eps_start
+        eps_end
+        eps_decay_steps
+        start_training_steps
+        update_target_freq
+        eval_freq
+        '''
+        self.arg = arg 
+        self.args = args 
+        self._init_seed()
+        
+        self.env = make_env_fun(**args)
+        self.network_lock = mp.Lock()
+        self.train_actor = C51_NetworkActorAsync(env = self.env, network_lock=self.network_lock, *arg, **args)
+        self.train_actor.start()
+        self.eval_actor = C51_NetworkActorAsync(env = self.env, network_lock=mp.Lock(), *arg, **args)
+        self.eval_actor.start()
+        self.replay_buffer = ReplayBufferAsync(*arg, **args)
+        self.replay_buffer.start()
+
+        self.delta_z = float(self.args['v_max'] - self.args['v_min']) / (args['num_atoms'] - 1)
+        self.atoms_gpu = torch.linspace(self.args['v_min'], self.args['v_max'], args['num_atoms']).cuda()
         self.offset = torch.linspace(0, (args['batch_size'] - 1) * args['num_atoms'], args['batch_size']).long().unsqueeze(1).expand(args['batch_size'], args['num_atoms']).cuda()
         self.torch_range = torch.arange(args['batch_size']).long().cuda()
+
+        self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, **args).cuda().share_memory()
+        self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
+        self.optimizer = optimizer_fun(self.current_network.parameters())
+        self.update_target()
 
     def compute_td_loss(self):
         state, action, reward, next_state, done = self.replay_buffer.sample()
@@ -29,8 +65,8 @@ class C51_DQN(Nature_DQN):
             prob_next = prob_next[self.torch_range, a_next, :]
 
         rewards = reward.unsqueeze(-1)
-        atoms_target = rewards + self.gamma * (~done).unsqueeze(-1) * self.atoms_gpu.view(1, -1)
-        atoms_target.clamp_(self.v_min, self.v_max).unsqueeze_(1)
+        atoms_target = rewards + self.args['gamma'] * (~done).unsqueeze(-1) * self.atoms_gpu.view(1, -1)
+        atoms_target.clamp_(self.args['v_min'], self.args['v_max']).unsqueeze_(1)
         
         target_prob = (1 - (atoms_target - self.atoms_gpu.view(1, -1, 1)).abs() / self.delta_z).clamp(0, 1) * prob_next.unsqueeze(1)
         target_prob = target_prob.sum(-1)
@@ -41,14 +77,44 @@ class C51_DQN(Nature_DQN):
 
         self.optimizer.zero_grad()
         loss.backward()
-        nn.utils.clip_grad_norm_(self.current_network.parameters(), self.gradient_clip)
-        gradient_norm = nn.utils.clip_grad_norm_(self.current_network.parameters(), self.gradient_clip)
+        nn.utils.clip_grad_norm_(self.current_network.parameters(), self.args['clip_gradient'])
+        gradient_norm = nn.utils.clip_grad_norm_(self.current_network.parameters(), self.args['clip_gradient'])
         logger.add({'gradient_norm': gradient_norm.item()})
         with self.network_lock:
             self.optimizer.step()
-
         return loss
 
-    
 
+class C51_NetworkActorAsync(NetworkActorAsync):
+    def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *arg, **args):
+        if not is_show: matplotlib.use('Agg')
+        if not os.path.exists('save_video/' + logger._run_name + '/'):
+            os.makedirs('save_video/' + logger._run_name + '/')
+        writer = imageio.get_writer('save_video/' + logger._run_name + '/' + str(name) +'.mp4', fps = fps)
+        my_fig = plt.figure(figsize=figsize, dpi=dpi)
+        gs = gridspec.GridSpec(1, 2)
+        ax_left, ax_right = my_fig.add_subplot(gs[0]), my_fig.add_subplot(gs[1])
+        my_fig.tight_layout()
+        fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
+        self._unwrapped_reset()
+        for _ in range(1, render_max_steps + 1):
+            action, _, _, done, info = self._collect(steps_number = 1, *arg, **args)[-1] 
+            action_prob = np.swapaxes(self._network.action_prob[0].cpu().numpy(),0, 1)
+            legends = []
+            for i, action_meaning in enumerate(self.env.unwrapped.get_action_meanings()):
+                legend_text = ' (Q=%+.2e)'%(self._network.action_Q[0,i]) if i == action else ' (Q=%+.2e)*'%(self._network.action_Q[0,i])
+                legends.append(action_meaning + legend_text) 
+            ax_left.clear()
+            ax_left.imshow(self.env.render(mode = render_mode))
+            ax_left.axis('off')
+            ax_right.clear()
+            ax_right.plot(self._network.atoms_cpu, action_prob)
+            ax_right.legend(legends)
+            ax_right.grid(True)
+            my_fig.canvas.draw()
+            buf = my_fig.canvas.tostring_rgb()
+            writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(fig_pixel_rows, fig_pixel_cols, 3))
+            if done:
+                if info['episodic_return'] is not None: break
+        writer.close()
 # %%
