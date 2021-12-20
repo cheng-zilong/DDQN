@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.autograd as autograd 
 import torch.nn.functional as F
 
-
 def layer_init(layer, w_scale=1.0):
     nn.init.orthogonal_(layer.weight.data)
     layer.weight.data.mul_(w_scale)
@@ -13,7 +12,7 @@ def layer_init(layer, w_scale=1.0):
 class LinearQNetwork(nn.Module):
     '''Linear Q network
     '''
-    def __init__(self, input_shape, num_actions, *arg, **args):
+    def __init__(self, input_shape, num_actions, *args, **kwargs):
         super(LinearQNetwork, self).__init__()
         self.layers = nn.Sequential(
             layer_init(nn.Linear(input_shape[0], 128)),
@@ -36,7 +35,7 @@ class CnnQNetwork(nn.Module):
     '''CNN Q network
     Nature CNN Q network
     '''
-    def __init__(self, input_shape, num_actions, *arg, **args):
+    def __init__(self, input_shape, num_actions, *args, **kwargs):
         super(CnnQNetwork, self).__init__()
         self.input_shape = input_shape
         self.features = nn.Sequential(
@@ -73,12 +72,12 @@ class CnnQNetwork(nn.Module):
 class CatLinearQNetwork(nn.Module):
     '''Categorical Linear Q network
     '''
-    def __init__(self, input_shape, num_actions, *arg, **args):
+    def __init__(self, input_shape, num_actions, *args, **kwargs):
         super(CatLinearQNetwork, self).__init__()
         self.num_actions  = num_actions
-        self.num_atoms    = args['num_atoms']
-        self.Vmin         = args['v_min']
-        self.Vmax         = args['v_max']
+        self.num_atoms    = kwargs['num_atoms']
+        self.Vmin         = kwargs['v_min']
+        self.Vmax         = kwargs['v_max']
         self.layers = nn.Sequential(
             layer_init(nn.Linear(input_shape[0], 128)),
             nn.ReLU(),
@@ -106,12 +105,12 @@ class CatCnnQNetwork(nn.Module):
     '''Categorical CNN Q network
     C51 CNN Q network
     '''
-    def __init__(self, input_shape, num_actions, *arg, **args):
+    def __init__(self, input_shape, num_actions, *args, **kwargs):
         super(CatCnnQNetwork, self).__init__()
         self.num_actions  = num_actions
-        self.num_atoms    = args['num_atoms']
-        self.Vmin         = args['v_min']
-        self.Vmax         = args['v_max']
+        self.num_atoms    = kwargs['num_atoms']
+        self.Vmin         = kwargs['v_min']
+        self.Vmax         = kwargs['v_max']
         self.input_shape = input_shape
 
         self.features = nn.Sequential(
@@ -132,7 +131,6 @@ class CatCnnQNetwork(nn.Module):
         self.atoms = self.atoms_cpu.cuda()
         self.my_fig = None
         
-
     def forward(self, x):
         x = self.features(x / 255.0)
         x = x.view(x.size(0), -1)

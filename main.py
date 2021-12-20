@@ -11,26 +11,25 @@ from gym_envs.TicTacToe import make_tic_tac_toe_env
 
 # # Atari
 if __name__ == '__main__':
-    args = vars(get_default_parser().parse_args())
-    args['start_training_steps'] = 50000
-    args['eval_render_save_video']=[1] # save 1 and 5
-    args['policy_class']= CatCnnQNetwork #CnnQNetwork CatCnnQNetwork
-    args['env_name'] = 'BreakoutNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
-    args['seed']=555 
-    logger.init(project_name='C51', **args)
+    kwargs = vars(get_default_parser().parse_args())
+    kwargs['start_training_steps'] = 50000
+    kwargs['policy_class']= CatCnnQNetwork #CnnQNetwork CatCnnQNetwork
+    kwargs['env_name'] = 'SpaceInvadersNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
+    kwargs['seed']=555 
+    logger.init(project_name='C51', **kwargs)
 
     C51_DQN(
         make_env_fun = make_atari_env,
-        network_fun = args['policy_class'], 
-        optimizer_fun = lambda params: torch.optim.Adam(params, lr=args['lr'], eps=args['optimizer_eps']),  
-        **args
+        network_fun = kwargs['policy_class'], 
+        optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),  
+        **kwargs
         ).train()
 
     # Nature_DQN(
     #     make_env_fun = make_atari_env,
     #     network_fun = args['policy_class'], 
     #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=args['lr'], eps=args['optimizer_eps']),  
-    #     **args
+    #     **kwargs
     #     ).train()
 
 # # # tic-tac-toe

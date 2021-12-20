@@ -18,7 +18,7 @@ import numpy as np
 import torch.multiprocessing as mp
 from utils.ReplayBufferAsync import ReplayBufferAsync
 class C51_DQN(Nature_DQN):
-    def __init__(self, make_env_fun, network_fun, optimizer_fun, *arg, **args):
+    def __init__(self, make_env_fun, network_fun, optimizer_fun, *args, **kwargs):
         '''
         v_min
         v_max
@@ -32,26 +32,26 @@ class C51_DQN(Nature_DQN):
         update_target_freq
         eval_freq
         '''
-        self.arg = arg 
-        self.args = args 
+        self.arg = args 
+        self.args = kwargs 
         self._init_seed()
         
-        self.env = make_env_fun(**args)
+        self.env = make_env_fun(**kwargs)
         self.network_lock = mp.Lock()
-        self.train_actor = C51_NetworkActorAsync(env = self.env, network_lock=self.network_lock, *arg, **args)
+        self.train_actor = C51_NetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
         self.train_actor.start()
-        self.eval_actor = C51_NetworkActorAsync(env = self.env, network_lock=mp.Lock(), *arg, **args)
+        self.eval_actor = C51_NetworkActorAsync(env = self.env, network_lock=mp.Lock(), *args, **kwargs)
         self.eval_actor.start()
-        self.replay_buffer = ReplayBufferAsync(*arg, **args)
+        self.replay_buffer = ReplayBufferAsync(*args, **kwargs)
         self.replay_buffer.start()
 
-        self.delta_z = float(self.args['v_max'] - self.args['v_min']) / (args['num_atoms'] - 1)
-        self.atoms_gpu = torch.linspace(self.args['v_min'], self.args['v_max'], args['num_atoms']).cuda()
-        self.offset = torch.linspace(0, (args['batch_size'] - 1) * args['num_atoms'], args['batch_size']).long().unsqueeze(1).expand(args['batch_size'], args['num_atoms']).cuda()
-        self.torch_range = torch.arange(args['batch_size']).long().cuda()
+        self.delta_z = float(self.args['v_max'] - self.args['v_min']) / (kwargs['num_atoms'] - 1)
+        self.atoms_gpu = torch.linspace(self.args['v_min'], self.args['v_max'], kwargs['num_atoms']).cuda()
+        self.offset = torch.linspace(0, (kwargs['batch_size'] - 1) * kwargs['num_atoms'], kwargs['batch_size']).long().unsqueeze(1).expand(kwargs['batch_size'], kwargs['num_atoms']).cuda()
+        self.torch_range = torch.arange(kwargs['batch_size']).long().cuda()
 
-        self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, **args).cuda().share_memory()
-        self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, **args).cuda()
+        self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, **kwargs).cuda().share_memory()
+        self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, **kwargs).cuda()
         self.optimizer = optimizer_fun(self.current_network.parameters())
         self.update_target()
 
@@ -79,14 +79,13 @@ class C51_DQN(Nature_DQN):
         loss.backward()
         nn.utils.clip_grad_norm_(self.current_network.parameters(), self.args['clip_gradient'])
         gradient_norm = nn.utils.clip_grad_norm_(self.current_network.parameters(), self.args['clip_gradient'])
-        logger.add({'gradient_norm': gradient_norm.item()})
+        logger.add({'gradient_norm': gradient_norm.item(), 'loss': loss.item()})
         with self.network_lock:
             self.optimizer.step()
         return loss
 
-
 class C51_NetworkActorAsync(NetworkActorAsync):
-    def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *arg, **args):
+    def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *args, **kwargs):
         if not is_show: matplotlib.use('Agg')
         if not os.path.exists('save_video/' + logger._run_name + '/'):
             os.makedirs('save_video/' + logger._run_name + '/')
@@ -98,7 +97,7 @@ class C51_NetworkActorAsync(NetworkActorAsync):
         fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
         self._unwrapped_reset()
         for _ in range(1, render_max_steps + 1):
-            action, _, _, done, info = self._collect(steps_number = 1, *arg, **args)[-1] 
+            action, _, _, done, info = self._collect(steps_number = 1, *args, **kwargs)[-1] 
             action_prob = np.swapaxes(self._network.action_prob[0].cpu().numpy(),0, 1)
             legends = []
             for i, action_meaning in enumerate(self.env.unwrapped.get_action_meanings()):

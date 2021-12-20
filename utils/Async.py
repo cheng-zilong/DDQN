@@ -3,7 +3,7 @@ import torch.multiprocessing as mp
 class Async(mp.Process):
     __ProcessID = 0
     ProcessDict = dict()
-    def __init__(self, *arg, **args):
+    def __init__(self, *args, **kwargs):
         mp.Process.__init__(self)
         self._pipe, self._worker_pipe = mp.Pipe()
         self.__process_id = Async.__ProcessID

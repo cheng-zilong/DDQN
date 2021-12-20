@@ -20,12 +20,12 @@ class LogAsync(mp.Process, metaclass=Singleton):
     def __init__(self):
         mp.Process.__init__(self)
         
-    def init(self, project_name, policy_class, env_name, seed, *arg, **args):
+    def init(self, project_name, policy_class, env_name, seed, *args, **kwargs):
         self._project_name = project_name
         self._policy_name = policy_class.__name__
         self._env_name = env_name
         self._seed = seed
-        self._args = args
+        self._args = kwargs
         self.__pipe, self.__worker_pipe = mp.Pipe()
         self._log_dict = dict()
         now = datetime.now()

@@ -21,12 +21,12 @@ class ActorAsync(Async):
     EVAL=5
     RENDER=6
     UNWRAPPED_RESET=7
-    def __init__(self, env, seed = None, *arg, **args):
-        super().__init__(env, seed = None, *arg, **args)
+    def __init__(self, env, seed = None, *args, **kwargs):
+        super().__init__(env, seed = None, *args, **kwargs)
         self.env = env
         self.seed = random.randint(0,10000) if seed == None else seed
-        self.arg = arg 
-        self.args = args 
+        self.arg = args 
+        self.args = kwargs 
 
     def run(self):
         self._init_seed()
@@ -69,9 +69,9 @@ class ActorAsync(Async):
             else:
                 raise NotImplementedError
 
-    def collect(self, steps_number, *arg, **args):
-        args['steps_number'] = steps_number
-        self.send(self.STEP, (arg, args))
+    def collect(self, steps_number, *args, **kwargs):
+        kwargs['steps_number'] = steps_number
+        self.send(self.STEP, (args, kwargs))
         return self.receive()
 
     def reset(self):
@@ -86,18 +86,18 @@ class ActorAsync(Async):
         self.send(self.EXIT, None)
         self._pipe.close()
 
-    def update_policy(self, *arg, **args):
-        self.send(self.UPDATE_POLICY, (arg, args))
+    def update_policy(self, *args, **kwargs):
+        self.send(self.UPDATE_POLICY, (args, kwargs))
 
-    def save_policy(self, *arg, **args):
-        self.send(self.SAVE_POLICY, (arg, args))
+    def save_policy(self, *args, **kwargs):
+        self.send(self.SAVE_POLICY, (args, kwargs))
 
-    def eval(self, eval_idx = 0, *arg, **args):
-        args['eval_idx'] = eval_idx
-        self.send(self.EVAL, (arg, args))
+    def eval(self, eval_idx = 0, *args, **kwargs):
+        kwargs['eval_idx'] = eval_idx
+        self.send(self.EVAL, (args, kwargs))
 
-    def render(self, *arg, **args):
-        self.send(self.RENDER, (arg, args))
+    def render(self, *args, **kwargs):
+        self.send(self.RENDER, (args, kwargs))
 
     def _init_seed(self):
         torch.manual_seed(self.seed)
@@ -122,21 +122,21 @@ class ActorAsync(Async):
         self._actor_done_flag = False
         return self._actor_last_state
 
-    def _collect(self, steps_number, *arg, **args):
+    def _collect(self, steps_number, *args, **kwargs):
         data = []
         for _ in range(steps_number):
-            one_step = self._step(*arg, **args)
+            one_step = self._step(*args, **kwargs)
             data.append(one_step) 
         return data
 
-    def _eval(self, eval_idx, *arg, **args):
+    def _eval(self, eval_idx, *args, **kwargs):
         '''
         This is a template for the _eval method
         Overwrite this method to implement your own _eval method
         '''
         pass 
 
-    def _step(self, *arg, **args):
+    def _step(self, *args, **kwargs):
         '''
         This is a template for the _step method
         Overwrite this method to implement your own _step method
@@ -144,21 +144,21 @@ class ActorAsync(Async):
         '''
         pass 
 
-    def _update_policy(self, *arg, **args):
+    def _update_policy(self, *args, **kwargs):
         '''
         This is only a template for the _update_policy method
         Overwrite this method to implement your own _update_policy method
         '''
         pass
 
-    def _save_policy(self, *arg, **args):
+    def _save_policy(self, *args, **kwargs):
         '''
         This is only a template for the _save_policy method
         Overwrite this method to implement your own _save_policy method
         '''
         pass
 
-    def _render(self, *arg, **args):
+    def _render(self, *args, **kwargs):
         '''
         This is only a template for the _render method
         Overwrite this method to implement your own _render method
@@ -169,14 +169,14 @@ class NetworkActorAsync(ActorAsync):
     Policy 是一个network的agent
     Policy 是从state到action的映射
     '''
-    def __init__(self, env, network_lock, seed = None, *arg, **args):
-        super().__init__(env, seed, *arg, **args)
+    def __init__(self, env, network_lock, seed = None, *args, **kwargs):
+        super().__init__(env, seed, *args, **kwargs)
         self._network_lock = network_lock
         self._network = None
         self._actor_done_flag = True
-        self._actor_last_state = None
+        self._actor_state = None
 
-    def _step(self, eps, *arg, **args):
+    def _step(self, eps, *args, **kwargs):
         '''
         epsilon greedy step
         '''
@@ -184,36 +184,35 @@ class NetworkActorAsync(ActorAsync):
             raise Exception("Network has not been initialized!")
         # auto reset
         if self._actor_done_flag:
-            self._actor_last_state = self.env.reset()
-            self._actor_done_flag = False
-            return [None, self._actor_last_state, None, None, None]
+            self._actor_state = self._reset()
+            return None, self._actor_state, None, None, None
         eps_prob =  random.random()
         if eps_prob > eps:
             with self._network_lock:
-                action = self._network.act(np.asarray(self._actor_last_state))
+                action = self._network.act(np.asarray(self._actor_state))
         else:
             action = self.env.action_space.sample()
-        self._actor_last_state, reward, self._actor_done_flag, info = self.env.step(action)
-        return action, self._actor_last_state, reward, self._actor_done_flag, info
+        self._actor_state, reward, self._actor_done_flag, info = self.env.step(action)
+        return action, self._actor_state, reward, self._actor_done_flag, info
 
-    def _update_policy(self, network, *arg, **args):
+    def _update_policy(self, network, *args, **kwargs):
         self._network = network
 
-    def _save_policy(self, *arg, **args):
+    def _save_policy(self, *args, **kwargs):
         '''
         name=
         idx is the name of this policy
         '''
         if not os.path.exists('save_model/' + logger._run_name + '/'):
             os.makedirs('save_model/' + logger._run_name + '/')
-        torch.save(self._network.state_dict(), 'save_model/' + logger._run_name + '/' + str(args['name']) +'.pt')
+        torch.save(self._network.state_dict(), 'save_model/' + logger._run_name + '/' + str(kwargs['name']) +'.pt')
 
-    def _eval(self, eval_idx, eval_number, eval_max_steps, *arg, **args):
+    def _eval(self, eval_idx, eval_number, eval_max_steps, *args, **kwargs):
         ep_rewards_list = deque(maxlen=eval_number)
         for ep_idx in range(1, eval_number+1):
             self._unwrapped_reset()
             for ep_steps_idx in range(1, eval_max_steps + 1):
-                _, _, _, done, info = self._collect(steps_number = 1, *arg, **args)[-1] 
+                _, _, _, done, info = self._collect(steps_number = 1, *args, **kwargs)[-1] 
                 if done:
                     if info['episodic_return'] is not None: break
             ep_rewards_list.append(info['total_rewards'])
@@ -226,7 +225,7 @@ class NetworkActorAsync(ActorAsync):
                 '--------ep_reward_mean': ep_rewards_list_mean})
         logger.add({'eval_last': ep_rewards_list_mean})
 
-    def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *arg, **args):
+    def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *args, **kwargs):
         if not is_show: matplotlib.use('Agg')
         if not os.path.exists('save_video/' + logger._run_name + '/'):
             os.makedirs('save_video/' + logger._run_name + '/')
@@ -238,7 +237,7 @@ class NetworkActorAsync(ActorAsync):
         fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
         self._unwrapped_reset()
         for _ in range(1, render_max_steps + 1):
-            _, _, _, done, info = self._collect(steps_number = 1, *arg, **args)[-1] 
+            _, _, _, done, info = self._collect(steps_number = 1, *args, **kwargs)[-1] 
             ax.clear()
             ax.imshow(self.env.render(mode = render_mode))
             ax.axis('off')
@@ -249,4 +248,149 @@ class NetworkActorAsync(ActorAsync):
                 if info['episodic_return'] is not None: break
         writer.close()
 
+class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
+    '''
+    Multiple players
+    Sequential Game
+    Using neural network policy
+    '''
+    def __init__(self, env, network_lock, seed = None, player_number=2, *args, **kwargs):
+        super().__init__(env, seed, *args, **kwargs)
+        self._player_number = player_number
+        self._network_lock = network_lock
+        self._network_list = []
+        self._actor_state_list = deque([None]*self._player_number+1,maxlen=self._player_number+1) #多一个state存储最后一个玩家执行action后的状态
+        self._actor_action_list = deque([None]*(self._player_number*2), maxlen=self._player_number*2)
+        self._actor_reward_list = deque([None]*(self._player_number*2), maxlen=self._player_number+1)
+        self._actor_done_flag = True
+        self._not_done_number = 0
+        self._done_state = None
+        self._actor_done_list = deque([None]*(self._player_number*2), maxlen=self._player_number+1)
 
+    def _step(self, eps, *args, **kwargs):
+        '''
+        epsilon greedy step
+        return action_obs_reward_list, done, info
+        每个player的一个完整step指的是，当前state采取action后到下一次需要采取action之前的state，产生的reward，done情况
+        假设有5个player
+        对于2号player，他返回的的完整step是：
+            action: 2号player根据前一个state采取的action   (之后3、4、5、1号player根据自己的policy采取action)
+            state: 2号player当前的state
+            reward: 2号player两个state之间产生的对于2号player的reward之和
+            done: 2号player两个state之间产生的done
+            info: 2号player两个state之间产生的info
+        
+        reward是0-4 players采取action后reward的总和
+        比如3号player采取的action对0号player有利，那么player0号的在当前次action后的reward会增加
+        '''
+        def epsilon_choose_action(player_idx, state):
+            eps_prob =  random.random()
+            if eps_prob > eps:
+                with self._network_lock:
+                    action = self._network_list[player_idx].act(np.asarray(state))
+            else:
+                action = self.env.action_space.sample()
+                return action
+        if len(self._network_list)==0:
+            raise Exception("Network has not been initialized!")
+        # auto reset
+        if self._actor_done_flag:
+            if self._not_done_number != 0:
+                # 清空所有没reset的player，保证每一个player都有terminal state
+                for _ in range(self._player_number):
+                    self._actor_action_list.append(None) 
+                    self._actor_state_list.append(self._done_state)
+                    self._actor_reward_list.append([0]*self._player_number)
+                    self._actor_done_list.append(True)
+                self._not_done_number = 0
+            else:
+                self._actor_done_flag = False
+                self._actor_state_list.append(self._reset())
+                for player_idx in range(self._player_number):
+                    # 根据上一个state确定action
+                    action = epsilon_choose_action(player_idx=player_idx, state=self._actor_state_list[-1])
+                    self._actor_action_list.append(action) 
+                    state, reward, self._actor_done_flag, _ = self.env.step(action)
+                    self._actor_state_list.append(state)
+                    self._actor_reward_list.append(reward)
+                    self._actor_done_list.append(False)
+                    if self._actor_done_flag:
+                        raise Exception("The game cannot be done during the reset period. Each player must take at least one step.")
+        else:
+            for player_idx in range(self._player_number):
+                # 根据上一个state确定action
+                action = epsilon_choose_action(player_idx=player_idx, state=self._actor_state_list[-1])
+                self._actor_action_list.append(action)
+                state, reward, self._actor_done_flag, info = self.env.step(action)
+                self._actor_state_list.append(state)
+                self._actor_reward_list.append(reward)
+                if self._actor_done_flag:
+                    self._actor_done_list.append(True)
+                    break
+                else:
+                    self._actor_done_list.append(False)
+            for _ in range(player_idx+1, self._player_number):
+                self._actor_action_list.append(None)
+                self._actor_state_list.append(state)
+                self._actor_reward_list.append([0]*self._player_number)
+                self._actor_done_list.append(True)
+            self._not_done_number = player_idx + 1
+            self._done_state = state
+        return list(zip(list(self._actor_action_list[0:self._player_number]), 
+                list(self._actor_state_list[0:self._player_number]), 
+                [sum(x) for x in zip(*self._actor_reward_list[0:self._player_number])],
+                list(self._actor_done_list[0:self._player_number]))), info
+            
+    def _update_policy(self, network_list, *args, **kwargs):
+        for network in network_list:
+            self._network_list.append(network)
+
+    def _save_policy(self, *args, **kwargs):
+        '''
+        name: The name of this policy
+        '''
+        if not os.path.exists('save_model/' + logger._run_name + '/'):
+            os.makedirs('save_model/' + logger._run_name + '/')
+        for player_idx, network in enumerate(self._network_list):
+            torch.save(network.state_dict(), 'save_model/' + logger._run_name + '/' + str(kwargs['name']) +'_player%d.pt'%(player_idx))
+
+    # def _eval(self, eval_idx, eval_number, eval_max_steps, *arg, **args):
+    #     ep_rewards_list = deque(maxlen=eval_number)
+    #     for ep_idx in range(1, eval_number+1):
+    #         self._unwrapped_reset()
+    #         for ep_steps_idx in range(1, eval_max_steps + 1):
+    #             _, _, _, done, info = self._collect(steps_number = 1, *arg, **args)[-1] 
+    #             if done:
+    #                 if info['episodic_return'] is not None: break
+    #         ep_rewards_list.append(info['total_rewards'])
+    #         ep_rewards_list_mean = mean(ep_rewards_list)
+    #         logger.terminal_print(
+    #             '--------(Evaluator Index: %d)'%(eval_idx), {
+    #             '--------ep': ep_idx, 
+    #             '--------ep_steps':  ep_steps_idx, 
+    #             '--------ep_reward': info['total_rewards'], 
+    #             '--------ep_reward_mean': ep_rewards_list_mean})
+    #     logger.add({'eval_last': ep_rewards_list_mean})
+
+    def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *args, **kwargs):
+        if not is_show: matplotlib.use('Agg')
+        if not os.path.exists('save_video/' + logger._run_name + '/'):
+            os.makedirs('save_video/' + logger._run_name + '/')
+        writer = imageio.get_writer('save_video/' + logger._run_name + '/' + str(name) +'.mp4', fps = fps)
+        my_fig = plt.figure(figsize=figsize, dpi=dpi)
+        plt.rcParams['font.size'] = '8'
+        ax = my_fig.add_subplot(111)
+        my_fig.tight_layout()
+        fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
+        self._unwrapped_reset()
+        for _ in range(1, render_max_steps + 1):
+            _, _, _, done, info = self._collect(steps_number = 1, *args, **kwargs)[-1] 
+            ax.clear()
+            ax.imshow(self.env.render(mode = render_mode))
+            ax.axis('off')
+            my_fig.canvas.draw()
+            buf = my_fig.canvas.tostring_rgb()
+            writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(fig_pixel_rows, fig_pixel_cols, 3))
+            if done:
+                if info['episodic_return'] is not None: break
+        writer.close()
