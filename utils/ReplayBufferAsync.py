@@ -55,25 +55,36 @@ class ReplayBufferAsync(Async):
 
     def add(self, action, obs, reward, done):
         '''
+        如果数据本身就是lazyframe的结构，就假设数据已经堆叠好了,所以取最后一个数据
+        如果数据本身不是lazyframe的结构，就假设数据是单个产生的,没有堆叠维度
+        The format of data state must be
+        [time stack dim, data dim] if it is lazyframes format
         if action is none, it is the reset frame
         '''
         if isinstance(obs, LazyFrames):
             data = (action, obs[None, -1], reward, done)  
         else:
-            data = (action, [obs], reward, done)  #加一个维度因为lazyframe叠第0维
+            data = (action, np.asarray(obs), reward, done) 
         if data[0] is not None: #如果action不为None，那可以作为data example
-            self.__data_example = data
+            self._data_example = data
         self.send(self.ADD, data)
 
     def sample(self):
         ## return share tensor the first time, the return idx
         if not self.is_init_cache:
             self.is_init_cache=True
-            self.state_share = torch.tensor([[LazyFrames([self.__data_example[1]]*self.stack_frames)]*self.batch_size]*2, device=torch.device(0)).share_memory_()
-            self.action_share = torch.tensor([[self.__data_example[0]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
-            self.reward_share = torch.tensor([[self.__data_example[2]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
-            self.next_state_share = torch.tensor([[LazyFrames([self.__data_example[1]]*self.stack_frames)]*self.batch_size]*2, device=torch.device(0)).share_memory_()
-            self.done_share = torch.tensor([[self.__data_example[3]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
+            if self.stack_frames  == 1:
+                self.state_share = torch.tensor([[self._data_example[1]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
+                self.action_share = torch.tensor([[self._data_example[0]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
+                self.reward_share = torch.tensor([[self._data_example[2]]*self.batch_size]*2, device=torch.device(0), dtype=torch.float32).share_memory_()
+                self.next_state_share = torch.tensor([[self._data_example[1]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
+                self.done_share = torch.tensor([[self._data_example[3]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
+            else:
+                self.state_share = torch.tensor([[LazyFrames([self._data_example[1]]*self.stack_frames)]*self.batch_size]*2, device=torch.device(0)).share_memory_()
+                self.action_share = torch.tensor([[self._data_example[0]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
+                self.reward_share = torch.tensor([[self._data_example[2]]*self.batch_size]*2, device=torch.device(0), dtype=torch.float32).share_memory_()
+                self.next_state_share = torch.tensor([[LazyFrames([self._data_example[1]]*self.stack_frames)]*self.batch_size]*2, device=torch.device(0)).share_memory_()
+                self.done_share = torch.tensor([[self._data_example[3]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
             self.send(self.SAMPLE, (self.state_share, self.action_share, self.reward_share, self.next_state_share, self.done_share))
             self.receive()
             self.sample_idx = 0
@@ -111,11 +122,22 @@ class ReplayBufferAsync(Async):
 
     def _add(self, action, obs, reward, done):
         if action is None: #if reset
-            for _ in range(self.stack_frames):
-                self._frames.append(obs)
-            self._last_frames = LazyFrames(list(self._frames))
+            if self.stack_frames == 1:
+                self._last_frames = obs
+            else:
+                for _ in range(self.stack_frames):
+                    self._frames.append(obs)
+                self._last_frames = LazyFrames(list(self._frames))
         else:
-            self._frames.append(obs)
-            current_frames = LazyFrames(list(self._frames))
-            self._replay_buffer.add(self._last_frames, action, reward, current_frames, done)
-            self._last_frames = current_frames
+            if self.stack_frames == 1:
+                self._replay_buffer.add(np.array(self._last_frames,copy=True), 
+                                        np.array(action,copy=True), 
+                                        np.array(reward, dtype=np.float32,copy=True), 
+                                        np.array(obs,copy=True), 
+                                        np.array(done,copy=True))
+                self._last_frames = obs
+            else:
+                self._frames.append(obs)
+                current_frames = LazyFrames(list(self._frames))
+                self._replay_buffer.add(self._last_frames, action, reward, current_frames, done)
+                self._last_frames = current_frames

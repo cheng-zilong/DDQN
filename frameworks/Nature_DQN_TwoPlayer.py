@@ -10,7 +10,7 @@ from statistics import mean
 from utils.ReplayBufferAsync import ReplayBufferAsync
 from utils.LogAsync import logger
 import torch.multiprocessing as mp
-from utils.ActorAsync import NetworkActorAsync
+from utils.ActorAsync import MultiPlayerSequentialGameNetworkActorAsync 
 from copy import deepcopy
 import random
 import numpy as np
@@ -35,9 +35,9 @@ class Nature_DQN_TwoPlayer:
 
         self.env = make_env_fun(**kwargs)
         self.network_lock = mp.Lock()
-        self.train_actor = NetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
+        self.train_actor = MultiPlayerSequentialGameNetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
         self.train_actor.start()
-        self.eval_actor = NetworkActorAsync(env = self.env, network_lock=mp.Lock(), *args, **kwargs)
+        self.eval_actor = MultiPlayerSequentialGameNetworkActorAsync(env = self.env, network_lock=mp.Lock(), *args, **kwargs)
         self.eval_actor.start()
     
         self.replay_buffer_list = []
@@ -49,7 +49,7 @@ class Nature_DQN_TwoPlayer:
         for _ in range(self.player_number):
             self.current_network_list.append(network_fun(self.env.observation_space.shape, self.env.action_space.n, **kwargs).cuda().share_memory())
             self.target_network_list.append(network_fun(self.env.observation_space.shape, self.env.action_space.n, **kwargs).cuda() )
-            self.optimizer_list.append(optimizer_fun(self.current_network_player1.parameters()))
+            self.optimizer_list.append(optimizer_fun(self.current_network_list[-1].parameters()))
         self.update_target()
 
     def _init_seed(self):
@@ -75,20 +75,21 @@ class Nature_DQN_TwoPlayer:
         for train_steps_idx in range(1, self.args['train_steps'] + 1, self.args['train_freq']):
             eps = self.line_schedule(train_steps_idx-self.args['start_training_steps']) if train_steps_idx > self.args['start_training_steps'] else 1
             data = self.train_actor.collect(steps_number = self.args['train_freq'], eps=eps)
-            for frames_idx, action_obs_reward_list, done, info in enumerate(data):
-                for player_idx, action, obs, reward in enumerate(action_obs_reward_list):
+            for frames_idx, ep_data in enumerate(data):
+                for player_idx, (action, obs, reward, done, info) in enumerate(ep_data):
                     self.replay_buffer_list[player_idx].add(action, obs, reward, done)
-                if info is not None and info['episodic_return'] is not None:
-                    # 如果有一方赢了info['episodic_return']=1，如果平局是0
-                    episodic_steps = train_steps_idx + frames_idx - last_train_steps_idx
-                    ep_reward_list.append(info['episodic_return'])
-                    toc = time.time()
-                    fps = episodic_steps / (toc-tic)
-                    tic = time.time()
-                    logger.add({'train_steps':train_steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': mean(ep_reward_list), 'eps': eps, 'fps': fps})
-                    logger.wandb_print('(Training Agent) ', step=train_steps_idx) if train_steps_idx > self.args['start_training_steps'] else logger.wandb_print('(Collecting Data) ', step=train_steps_idx)
-                    ep_idx += 1
-                    last_train_steps_idx = train_steps_idx + frames_idx
+                    if info is not None and info['episodic_return'] is not None:
+                        # 如果有一方赢了info['episodic_return']=1，如果平局是0
+                        episodic_steps = train_steps_idx + frames_idx - last_train_steps_idx
+                        ep_reward_list.append(info['episodic_return'])
+                        toc = time.time()
+                        fps = episodic_steps / (toc-tic)
+                        tic = time.time()
+                        if ep_idx % self.args['train_log_freq'] == 0:
+                            logger.add({'train_steps':train_steps_idx ,'ep': ep_idx, 'ep_steps': episodic_steps, 'ep_reward': info['episodic_return'], 'ep_reward_avg': np.mean(list(ep_reward_list),axis=0), 'eps': eps, 'fps': fps})
+                            logger.wandb_print('(Training Agent) ', step=train_steps_idx) if train_steps_idx > self.args['start_training_steps'] else logger.wandb_print('(Collecting Data) ', step=train_steps_idx)
+                        ep_idx += 1
+                        last_train_steps_idx = train_steps_idx + frames_idx
 
             if train_steps_idx > self.args['start_training_steps']:
                 self.compute_td_loss()
@@ -100,14 +101,13 @@ class Nature_DQN_TwoPlayer:
                 self.eval_actor.update_policy(network_list = deepcopy(self.current_network_list))
                 # self.eval_actor.eval(eval_idx = train_steps_idx, eval_number = self.args['eval_number'], eval_max_steps = self.args['eval_max_steps'], eps = self.args['eval_eps'])
                 self.eval_actor.save_policy(name = train_steps_idx)
-                self.eval_actor.render(name=train_steps_idx, render_max_steps=self.args['eval_max_steps'], render_mode='rgb_array',fps=self.args['eval_video_fps'], is_show=self.args['eval_display'], eps = self.args['eval_eps'])
+                # self.eval_actor.render(name=train_steps_idx, render_max_steps=self.args['eval_max_steps'], render_mode='rgb_array',fps=self.args['eval_video_fps'], is_show=self.args['eval_display'], eps = self.args['eval_eps'])
 
     def compute_td_loss(self):
         '''
         TODO
         Agent 网络训练可以并行
         '''
-
         gradient_norm_list = []
         loss_list = []
         for player_idx in range(self.player_number):
@@ -120,8 +120,8 @@ class Nature_DQN_TwoPlayer:
             loss = nn.MSELoss()(q_target, q)
             self.optimizer_list[player_idx].zero_grad()
             loss.backward()
-            nn.utils.clip_grad_norm_(self.current_network_list[[player_idx]].parameters(), self.args['clip_gradient'])
-            gradient_norm = nn.utils.clip_grad_norm_(self.current_network_list[[player_idx]].parameters(), self.args['clip_gradient'])
+            nn.utils.clip_grad_norm_(self.current_network_list[player_idx].parameters(), self.args['clip_gradient'])
+            gradient_norm = nn.utils.clip_grad_norm_(self.current_network_list[player_idx].parameters(), self.args['clip_gradient'])
             gradient_norm_list.append(gradient_norm.item())
             loss_list.append(loss.item())
             with self.network_lock:

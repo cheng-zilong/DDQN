@@ -8,12 +8,22 @@ def layer_init(layer, w_scale=1.0):
     layer.weight.data.mul_(w_scale)
     nn.init.constant_(layer.bias.data, 0)
     return layer
+class NetworkBase(nn.Module):
+    def __init__(self, input_shape, num_actions, *args, **kwargs):
+        super().__init__()
+    
+    def forward(self, x):
+        pass
+
+    def act(self, state, *args, **kwargs):
+        pass
+
 
 class LinearQNetwork(nn.Module):
     '''Linear Q network
     '''
     def __init__(self, input_shape, num_actions, *args, **kwargs):
-        super(LinearQNetwork, self).__init__()
+        super().__init__()
         self.layers = nn.Sequential(
             layer_init(nn.Linear(input_shape[0], 128)),
             nn.ReLU(),
@@ -23,11 +33,14 @@ class LinearQNetwork(nn.Module):
         )
         
     def forward(self, x):
-        return self.layers(x.float())
+        return self.layers(torch.as_tensor(x, device=torch.device(0), dtype=torch.float))
     
-    def act(self, state):
+    def act(self, state, *args, **kwargs):
+        '''
+        state format [X]
+        '''
         with torch.no_grad():
-            state   = torch.FloatTensor(state).unsqueeze(0).cuda()
+            state = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
             q_value = self.forward(state)
             action  = q_value.max(1)[1].data[0]
         return action.cpu().numpy()
@@ -62,9 +75,12 @@ class CnnQNetwork(nn.Module):
     def feature_size(self):
         return self.features(autograd.Variable(torch.zeros(1, *self.input_shape))).view(1, -1).size(1)
 
-    def act(self, state):
+    def act(self, state, *args, **kwargs):
+        '''
+        State format [X,Y]
+        '''
         with torch.no_grad():
-            state   = torch.FloatTensor(state).unsqueeze(0).cuda()
+            state = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
             q_value = self.forward(state)
             action  = q_value.max(1)[1].data[0]
         return action.cpu().numpy()
@@ -89,13 +105,16 @@ class CatLinearQNetwork(nn.Module):
         )
 
     def forward(self, x):
-        x = self.layers(x.float())
+        x = self.layers(torch.as_tensor(x, device=torch.device(0), dtype=torch.float))
         x = F.softmax(x.view(-1, self.num_atoms)).view(-1, self.num_actions, self.num_atoms)
         return x
     
-    def act(self, state):
+    def act(self, state, *args, **kwargs):
+        '''
+        State Format [X]
+        '''
         with torch.no_grad():
-            state = torch.FloatTensor(state).unsqueeze(0).cuda()
+            state = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
             dist = self.forward(state).data.cpu()
             dist = dist * torch.linspace(self.Vmin, self.Vmax, self.num_atoms)
             action = dist.sum(2).max(1)[1].numpy()[0]
@@ -148,11 +167,48 @@ class CatCnnQNetwork(nn.Module):
     def feature_size(self):
         return self.features(autograd.Variable(torch.zeros(1, *self.input_shape))).view(1, -1).size(1)
 
-    def act(self, state):
+    def act(self, state, *args, **kwargs):
         with torch.no_grad():
-            state = torch.as_tensor(state, device=torch.device(0)).unsqueeze(0)
+            state = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
             self.action_prob = self.forward(state)
             self.action_Q = (self.action_prob * self.atoms).sum(-1)
             action = torch.argmax(self.action_Q, dim=-1).item()
         return action
 
+class CnnQNetwork_TicTacToe(nn.Module):
+    '''
+    CNN Q network for tic tac toe
+    '''
+    def __init__(self, input_shape, num_actions, *args, **kwargs):
+        super().__init__()
+        self.input_shape = input_shape
+        self.features = nn.Sequential(
+            layer_init(nn.Conv2d(input_shape[0], 32, kernel_size=3, padding=1, stride=1)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(32, 64, kernel_size=3, padding=1, stride=1)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(64, 64, kernel_size=3, padding=1, stride=1)),
+            nn.ReLU()
+        )
+        
+        self.fc = nn.Sequential(
+            layer_init(nn.Linear(self.feature_size(), 512)),
+            nn.ReLU(),
+            layer_init(nn.Linear(512, num_actions))
+        )
+        
+    def forward(self, x):
+        x = self.features(torch.as_tensor(x, device=torch.device(0), dtype=torch.float))
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        return x
+
+    def feature_size(self):
+        return self.features(autograd.Variable(torch.zeros(1, *self.input_shape))).view(1, -1).size(1)
+
+    def act(self, state, legal_action_mask, *args, **kwargs):
+        with torch.no_grad():
+            state   = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
+            q_value = self.forward(state)
+            action  = q_value.max(1)[1].data[0]
+        return action.cpu().numpy()

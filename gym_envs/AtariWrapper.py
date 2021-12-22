@@ -5,18 +5,19 @@ from collections import deque
 from gym import spaces
 from baselines.common.atari_wrappers import FrameStack as FrameStack_, make_atari, wrap_deepmind
 
-def make_atari_env(**kwargs):
-        env = make_atari(kwargs['env_name'], max_episode_steps=kwargs['max_episode_steps'])
+def make_atari_env(seed, env_name, max_episode_steps, 
+    episode_life, clip_reward, stack_frames, **kwargs):
+        env = make_atari(env_name, max_episode_steps=max_episode_steps)
         env = TotalRewardWrapper(env)
         env = wrap_deepmind(env,
-                            episode_life=kwargs['episode_life'],
-                            clip_rewards=kwargs['clip_reward'],
+                            episode_life=episode_life,
+                            clip_rewards=clip_reward,
                             frame_stack=False,
                             scale=False)
         env = TransposeImage(env)
-        env = FrameStack(env = env, k = kwargs['stack_frames'])
-        env.seed(kwargs['seed'])
-        env.action_space.np_random.seed(kwargs['seed'])
+        env = FrameStack(env = env, k = stack_frames)
+        env.seed(seed)
+        env.action_space.np_random.seed(seed)
         return env
 
 class TotalRewardWrapper(gym.Wrapper):

@@ -4,6 +4,7 @@ import numpy as np
 from gym import spaces
 from functools import reduce
 from operator import and_
+from copy import deepcopy
 
 class TicTacToeEnv(gym.Env):
     def __init__(self, board_size, win_size):
@@ -30,6 +31,7 @@ class TicTacToeEnv(gym.Env):
             self.total_steps = np.sum(np.asarray(init_state[0]+init_state[1]).reshape(-1) != 0)
             self.status = self.check_status() 
         next_player = self.state[2,0,0] 
+        self._legal_action_mask = np.asarray(np.asarray(self.state[0]+self.state[1]) == 0)
         if self.status == 'win':
             self.winner = 0 if next_player == 1 else 1
             self.next_player = -1
@@ -39,7 +41,7 @@ class TicTacToeEnv(gym.Env):
         elif self.status == 'going':
             self.winner = -1
             self.next_player = next_player
-        return self.state
+        return self.state.copy()
 
     def check_status(self):
         if self.check_win():
@@ -107,7 +109,7 @@ class TicTacToeEnv(gym.Env):
         #         sub_matrix_diag2 = [sub_matrix[self.win_size-1-k][k]==sub_matrix[self.win_size-1][0] for k in range(1,self.win_size)]
         #         if (all(sub_matrix_diag1) and (sub_matrix[0][0] != 0)) or (all(sub_matrix_diag2) and (sub_matrix[self.win_size-1][0] != 0)):
         #             return True
-        return False
+        # return False
 
     def step(self, action):
         current_player = self.next_player
@@ -123,7 +125,9 @@ class TicTacToeEnv(gym.Env):
             down_position = (int(action/self.board_size), int(action%self.board_size))
             if (self.state[0] + self.state[1])[down_position[0], down_position[1]] != 0:
                 raise Exception('Illegal move')
+            self._legal_action_mask[down_position[0], down_position[1]] = False
             self.state[current_player, down_position[0], down_position[1]] = 1
+            self.state[2,:,:] = 0 if current_player == 1 else 1
             self.total_steps+=1
             if self.total_steps >= self.win_size * 2 - 1:
                 # no one wins unless the number of steps is greater than win_size * 2 - 1
@@ -145,7 +149,7 @@ class TicTacToeEnv(gym.Env):
                 self.next_player = 0 if current_player == 1 else 1
                 reward = [self.reward_criterion['going'], self.reward_criterion['going']]
                 done = False
-        return self.state, reward, done, {'steps':self.total_steps, 'winner':self.winner}
+        return self.state.copy(), reward, done, {'steps':self.total_steps, 'winner':self.winner}
 
     def render(self, mode=None, close=False, folder=None, number=None):
         if folder == None:
@@ -179,34 +183,38 @@ class TicTacToeEnv(gym.Env):
             file1.write(" " + "-" * (self.board_size * 4 + 1))
             file1.close()
 
-def make_tic_tac_toe_env(**kwargs):
-    env = TicTacToeEnv(board_size = kwargs['board_size'], win_size = kwargs['win_size'])
+    @property
+    def legal_action_mask(self):
+        return self._legal_action_mask
+
+def make_tic_tac_toe_env(seed, **kwargs):
+    env = TicTacToeEnv(board_size = 3, win_size = 3)
     from .AtariWrapper import TotalRewardWrapper
     env = TotalRewardWrapper(env)
-    env.seed(kwargs['seed'])
-    env.action_space.np_random.seed(kwargs['seed'])
+    env.seed(seed)
+    env.action_space.np_random.seed(seed)
     return env
 
-
-
-# Test program 1, run 1 episode
+# # Test program 1, run 1 episode
 # if __name__ == '__main__':
+#     from itertools import compress
 #     env = TicTacToeEnv(board_size=3, win_size=3) 
 #     env.reset()
-#     action_list = list(np.random.choice(9, 9, replace=False))
 #     while True:
-#         state, reward, done, infos = env.step(action_list.pop())
+#         action = np.random.choice(list(compress(range(9),env.legal_action_mask.reshape(-1))), 1)
+#         _, reward, done, infos = env.step(action)
 #         env.render()
 #         print("Infos : " + str(infos))
+#         print(reward)
 #         print()
 #         if done: 
 #             env.reset()
 #             break
 
 # Test program 2, run many episodes
-import numpy as np
-from tqdm import tqdm
 if __name__ == '__main__':
+    import numpy as np
+    from tqdm import tqdm
     board_size = 3
     win_size = 3
     # board_size = 3
@@ -216,7 +224,7 @@ if __name__ == '__main__':
     x_win_cnt = 0
     o_win_cnt = 0
     draw_cnt = 0
-    for i in tqdm(range(50001)):
+    for i in tqdm(range(1,50001)):
         action_list = list(np.random.choice(board_size*board_size, board_size*board_size, replace=False))
         while True:
             state, reward, done, infos = env.step(action_list.pop())

@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import random 
 import time
+from gym import spaces
 from statistics import mean
 from collections import deque
 from utils.LogAsync import logger
@@ -12,6 +13,7 @@ from .Async import Async
 from utils.Network import *
 import os
 import imageio
+from itertools import compress
 class ActorAsync(Async):
     STEP = 0
     EXIT = 1
@@ -108,9 +110,9 @@ class ActorAsync(Async):
         self.env.action_space.np_random.seed(self.seed)
 
     def _reset(self):
-        self._actor_last_state = self.env.reset()
+        self._actor_state = self.env.reset()
         self._actor_done_flag = False
-        return self._actor_last_state
+        return self._actor_state
 
     def _unwrapped_reset(self):
         '''
@@ -118,9 +120,9 @@ class ActorAsync(Async):
         you can use this function to force the env to reset even it is not the end of an episode
         '''
         self.env.unwrapped.reset()
-        self._actor_last_state = self.env.reset()
+        self._actor_state = self.env.reset()
         self._actor_done_flag = False
-        return self._actor_last_state
+        return self._actor_state
 
     def _collect(self, steps_number, *args, **kwargs):
         data = []
@@ -259,13 +261,34 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
         self._player_number = player_number
         self._network_lock = network_lock
         self._network_list = []
-        self._actor_state_list = deque([None]*self._player_number+1,maxlen=self._player_number+1) #多一个state存储最后一个玩家执行action后的状态
+        self._actor_state_list = deque([None]*(self._player_number+1),maxlen=self._player_number+1) #多一个state存储最后一个玩家执行action后的状态
         self._actor_action_list = deque([None]*(self._player_number*2), maxlen=self._player_number*2)
-        self._actor_reward_list = deque([None]*(self._player_number*2), maxlen=self._player_number+1)
+        self._actor_reward_list = deque([[0]*self._player_number]*(self._player_number+1), maxlen=self._player_number+1)
+        self._actor_info_list = deque([None]*(self._player_number+1), maxlen=self._player_number+1)
         self._actor_done_flag = True
         self._not_done_number = 0
         self._done_state = None
-        self._actor_done_list = deque([None]*(self._player_number*2), maxlen=self._player_number+1)
+        self._actor_done_list = deque([None]*(self._player_number+1), maxlen=self._player_number+1)
+
+
+    def _epsilon_choose_action(self, player_idx, state, eps):
+        eps_prob =  random.random()
+        if hasattr(self.env, 'legal_action_mask') and self.env.legal_action_mask is not None:
+            # TODO other kinds of actions space
+            if eps_prob > eps:
+                with self._network_lock:
+                    action = self._network_list[player_idx].act(np.asarray(state), legal_action_mask = self.env.legal_action_mask)
+            else:
+                if isinstance(self.env.action_space, spaces.Discrete):
+                    action = np.random.choice(list(compress(range(self.env.action_space.n),self.env.legal_action_mask.reshape(-1))), 1)
+                return action
+        else:
+            if eps_prob > eps:
+                with self._network_lock:
+                    action = self._network_list[player_idx].act(np.asarray(state))
+            else:
+                action = self.env.action_space.sample()
+                return action
 
     def _step(self, eps, *args, **kwargs):
         '''
@@ -283,14 +306,7 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
         reward是0-4 players采取action后reward的总和
         比如3号player采取的action对0号player有利，那么player0号的在当前次action后的reward会增加
         '''
-        def epsilon_choose_action(player_idx, state):
-            eps_prob =  random.random()
-            if eps_prob > eps:
-                with self._network_lock:
-                    action = self._network_list[player_idx].act(np.asarray(state))
-            else:
-                action = self.env.action_space.sample()
-                return action
+
         if len(self._network_list)==0:
             raise Exception("Network has not been initialized!")
         # auto reset
@@ -302,44 +318,51 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
                     self._actor_state_list.append(self._done_state)
                     self._actor_reward_list.append([0]*self._player_number)
                     self._actor_done_list.append(True)
+                    self._actor_info_list.append(None)
                 self._not_done_number = 0
             else:
                 self._actor_done_flag = False
                 self._actor_state_list.append(self._reset())
                 for player_idx in range(self._player_number):
                     # 根据上一个state确定action
-                    action = epsilon_choose_action(player_idx=player_idx, state=self._actor_state_list[-1])
+                    action = self._epsilon_choose_action(player_idx=player_idx, state=self._actor_state_list[-1],eps=eps)
                     self._actor_action_list.append(action) 
-                    state, reward, self._actor_done_flag, _ = self.env.step(action)
+                    state, reward, self._actor_done_flag, info = self.env.step(action)
                     self._actor_state_list.append(state)
                     self._actor_reward_list.append(reward)
                     self._actor_done_list.append(False)
+                    self._actor_info_list.append(info)
                     if self._actor_done_flag:
                         raise Exception("The game cannot be done during the reset period. Each player must take at least one step.")
         else:
             for player_idx in range(self._player_number):
                 # 根据上一个state确定action
-                action = epsilon_choose_action(player_idx=player_idx, state=self._actor_state_list[-1])
+                action = self._epsilon_choose_action(player_idx=player_idx, state=self._actor_state_list[-1], eps=eps)
                 self._actor_action_list.append(action)
                 state, reward, self._actor_done_flag, info = self.env.step(action)
                 self._actor_state_list.append(state)
                 self._actor_reward_list.append(reward)
+                self._actor_info_list.append(info)
                 if self._actor_done_flag:
                     self._actor_done_list.append(True)
                     break
                 else:
                     self._actor_done_list.append(False)
-            for _ in range(player_idx+1, self._player_number):
-                self._actor_action_list.append(None)
-                self._actor_state_list.append(state)
-                self._actor_reward_list.append([0]*self._player_number)
-                self._actor_done_list.append(True)
-            self._not_done_number = player_idx + 1
-            self._done_state = state
-        return list(zip(list(self._actor_action_list[0:self._player_number]), 
-                list(self._actor_state_list[0:self._player_number]), 
-                [sum(x) for x in zip(*self._actor_reward_list[0:self._player_number])],
-                list(self._actor_done_list[0:self._player_number]))), info
+            if self._actor_done_flag:
+                for _ in range(player_idx+1, self._player_number):
+                    self._actor_action_list.append(None)
+                    self._actor_state_list.append(state)
+                    self._actor_reward_list.append([0]*self._player_number)
+                    self._actor_done_list.append(True)
+                    self._actor_info_list.append(None) 
+                self._not_done_number = player_idx + 1
+                self._done_state = state
+            # TODO some efficiency prblem with slicing with deque
+        return list(zip(list(self._actor_action_list)[0:self._player_number], 
+                        list(self._actor_state_list)[0:self._player_number], 
+                        [sum(x) for x in zip(*list(self._actor_reward_list)[0:self._player_number])],
+                        list(self._actor_done_list)[0:self._player_number],
+                        list(self._actor_info_list)[0:self._player_number]))
             
     def _update_policy(self, network_list, *args, **kwargs):
         for network in network_list:
