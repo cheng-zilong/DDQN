@@ -11,8 +11,12 @@ from .Async import Async
 from utils.Network import *
 import os
 import imageio
-from itertools import compress
+
 class ActorAsync(Async):
+    '''
+    State must be np array
+    done must be bool
+    '''
     COLLECT = 0
     EXIT = 1
     RESET = 2
@@ -278,18 +282,50 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
     Sequential Game
     Using neural network policy
     '''
+    class _list_with_size:
+        def __init__(self, size, init_element):
+            self._data = list([init_element]*size)
+            self._size = size
+
+        def append(self, value):
+            self._data.pop(0)
+            self._data.append(value)
+
+        def __getitem__(self, val):
+            return self._data[val]
+            
+        def __str__(self):
+            return str(self._data)
+
+        def __array__(self):
+            return np.asarray(self._data)
+
+        def __eq__(self, other):
+            return self.__array__() == other
+
+        def __iter__(self):
+            self.n = 0
+            return self
+
+        def __next__(self):
+            if self.n < self._size:
+                self.n += 1
+                return self._data[self.n-1]
+            else:
+                raise StopIteration
+
     def __init__(self, env, network_lock, seed = None, player_number=2, *args, **kwargs):
         super().__init__(env, seed, *args, **kwargs)
         self._player_number = player_number
         self._network_lock = network_lock
-        self._network_list = []
-        self._actor_state_list = deque([None]*(self._player_number+1),maxlen=self._player_number+1) #多一个state存储最后一个玩家执行action后的状态
-        self._actor_action_list = deque([None]*(self._player_number*2), maxlen=self._player_number*2)
-        self._actor_reward_list = deque([[0]*self._player_number]*(self._player_number+1), maxlen=self._player_number+1)
-        self._actor_info_list = deque([None]*(self._player_number+1), maxlen=self._player_number+1)
+        self._network_list = deque(maxlen=2)
+        self._actor_state_list = self._list_with_size(init_element=None, size=self._player_number+1) #多一个state存储最后一个玩家执行action后的状态
+        self._actor_action_list = self._list_with_size(init_element=None, size=self._player_number*2) 
+        self._actor_reward_list = self._list_with_size(init_element=[0]*self._player_number, size=self._player_number*2)
+        self._actor_info_list = self._list_with_size(init_element=None, size=self._player_number+1) 
         self._not_done_number = 0
         self._done_state = None
-        self._actor_done_list = deque([None]*(self._player_number+1), maxlen=self._player_number+1)
+        self._actor_done_list = self._list_with_size(init_element=None, size=self._player_number+1) 
 
     def _eps_greedy_action(self, player_idx, state, eps):
         eps_prob =  random.random()
@@ -300,7 +336,7 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
                     action = self._network_list[player_idx].act(state, legal_action_mask = self.env.legal_action_mask)
             else:
                 if isinstance(self.env.action_space, spaces.Discrete):
-                    action = random.choice(list(compress(range(self.env.action_space.n),self.env.legal_action_mask.reshape(-1))))
+                    action = random.choice(np.asarray(range(self.env.action_space.n))[self.env.legal_action_mask])
         else:
             if eps_prob > eps:
                 with self._network_lock:
@@ -377,11 +413,12 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
                     self._actor_info_list.append(None) 
                 self._not_done_number = player_idx + 1
             # TODO some efficiency prblem with slicing with deque
-        return list(zip(list(self._actor_action_list)[0:self._player_number], 
-                        list(self._actor_state_list)[0:self._player_number], 
-                        [sum(x) for x in zip(*list(self._actor_reward_list)[0:self._player_number])],
-                        list(self._actor_done_list)[0:self._player_number],
-                        list(self._actor_info_list)[0:self._player_number]))
+        reward_array = np.asarray(self._actor_reward_list)
+        return list(zip(self._actor_action_list[0:self._player_number], 
+                        self._actor_state_list[0:self._player_number], 
+                        [np.sum(reward_array[idx:idx+self._player_number,idx]) for idx in range(self._player_number)],
+                        self._actor_done_list[0:self._player_number],
+                        self._actor_info_list[0:self._player_number]))
             
     def _update_policy(self, network_list, *args, **kwargs):
         for network in network_list:

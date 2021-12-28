@@ -1,8 +1,8 @@
+from math import inf
 import torch
 import torch.nn as nn
 import torch.autograd as autograd 
 import torch.nn.functional as F
-
 def layer_init(layer, w_scale=1.0):
     nn.init.orthogonal_(layer.weight.data)
     layer.weight.data.mul_(w_scale)
@@ -183,9 +183,19 @@ class CnnQNetwork_TicTacToe(nn.Module):
         super().__init__()
         self.input_shape = input_shape
         self.features = nn.Sequential(
-            layer_init(nn.Conv2d(input_shape[0], 32, kernel_size=3, padding=1, stride=1)),
+            layer_init(nn.Conv2d(input_shape[0], 64, kernel_size=3, padding=1, stride=1)),
             nn.ReLU(),
-            layer_init(nn.Conv2d(32, 64, kernel_size=3, padding=1, stride=1)),
+            layer_init(nn.Conv2d(64, 64, kernel_size=3, padding=1, stride=1)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(64, 64, kernel_size=3, padding=1, stride=1)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(64, 64, kernel_size=3, padding=1, stride=1)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(64, 64, kernel_size=3, padding=1, stride=1)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(64, 64, kernel_size=3, padding=1, stride=1)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(64, 64, kernel_size=3, padding=1, stride=1)),
             nn.ReLU(),
             layer_init(nn.Conv2d(64, 64, kernel_size=3, padding=1, stride=1)),
             nn.ReLU()
@@ -210,5 +220,6 @@ class CnnQNetwork_TicTacToe(nn.Module):
         with torch.no_grad():
             state   = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
             q_value = self.forward(state)
+            q_value[:,~legal_action_mask] = -inf
             action  = q_value.max(1)[1].data[0]
         return action.cpu().numpy()

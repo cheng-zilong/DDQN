@@ -28,8 +28,8 @@ class C51_DQN(Nature_DQN):
         eps_start
         eps_end
         eps_decay_steps
-        start_training_steps
-        update_target_freq
+        train_start_step
+        train_update_target_freq
         eval_freq
         '''
         self.arg = args 

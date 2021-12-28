@@ -185,7 +185,7 @@ class TicTacToeEnv(gym.Env):
 
     @property
     def legal_action_mask(self):
-        return self._legal_action_mask
+        return self._legal_action_mask.reshape(-1)
 
 def make_tic_tac_toe_env(seed, **kwargs):
     env = TicTacToeEnv(board_size = 3, win_size = 3)
