@@ -41,24 +41,25 @@ class Nature_DQN:
         self.args = args 
         self.kwargs = kwargs 
         self._init_seed()
-        self.env = make_env_fun(**kwargs)
+        self.env = make_env_fun(*args, **kwargs)
 
         kwargs['policy_class'] = network_fun.__name__
         kwargs['env_name'] = self.env.unwrapped.spec.id
-        logger.init(**kwargs)
+        logger.init(*args, **kwargs)
 
-        self.network_lock = mp.Lock()
-        self.train_actor = NetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
-        self.train_actor.start()
-        self.eval_actor = NetworkActorAsync(env = self.env, network_lock=mp.Lock(), *args, **kwargs)
-        self.eval_actor.start()
-        self.replay_buffer = ReplayBufferAsync(*args, **kwargs)
-        self.replay_buffer.start()
+        if type(self) is Nature_DQN:
+            self.network_lock = mp.Lock()
+            self.train_actor = NetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
+            self.train_actor.start()
+            self.eval_actor = NetworkActorAsync(env = self.env, network_lock=mp.Lock(), *args, **kwargs)
+            self.eval_actor.start()
+            self.replay_buffer = ReplayBufferAsync(*args, **kwargs)
+            self.replay_buffer.start()
 
-        self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda().share_memory() 
-        self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda() 
-        self.optimizer = optimizer_fun(self.current_network.parameters()) 
-        self.update_target()
+            self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda().share_memory() 
+            self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda() 
+            self.optimizer = optimizer_fun(self.current_network.parameters()) 
+            self.update_target()
 
     def _init_seed(self):
         torch.manual_seed(self.kwargs['seed'])

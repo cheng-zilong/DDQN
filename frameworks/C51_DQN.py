@@ -19,37 +19,29 @@ import torch.multiprocessing as mp
 from utils.ReplayBufferAsync import ReplayBufferAsync
 class C51_DQN(Nature_DQN):
     def __init__(self, make_env_fun, network_fun, optimizer_fun, *args, **kwargs):
+        super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
         '''
         v_min
         v_max
         num_atoms
         '''
-        self.args = args 
-        self.kwargs = kwargs 
-        self._init_seed()
-        
-        self.env = make_env_fun(*args, **kwargs)
+        if type(self) is C51_DQN:
+            self.network_lock = mp.Lock()
+            self.train_actor = C51_NetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
+            self.train_actor.start()
+            self.eval_actor = C51_NetworkActorAsync(env = self.env, network_lock=mp.Lock(), *args, **kwargs)
+            self.eval_actor.start()
+            self.replay_buffer = ReplayBufferAsync(*args, **kwargs)
+            self.replay_buffer.start()
 
-        kwargs['policy_class'] = network_fun.__name__
-        kwargs['env_name'] = self.env.unwrapped.spec.id
-        logger.init(**kwargs)
+            self.delta_z = float(self.kwargs['v_max'] - self.kwargs['v_min']) / (kwargs['num_atoms'] - 1)
+            self.offset = torch.linspace(0, (kwargs['batch_size'] - 1) * kwargs['num_atoms'], kwargs['batch_size']).long().unsqueeze(1).expand(kwargs['batch_size'], kwargs['num_atoms']).cuda()
+            self.torch_range = torch.arange(kwargs['batch_size']).long().cuda()
 
-        self.network_lock = mp.Lock()
-        self.train_actor = C51_NetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
-        self.train_actor.start()
-        self.eval_actor = C51_NetworkActorAsync(env = self.env, network_lock=mp.Lock(), *args, **kwargs)
-        self.eval_actor.start()
-        self.replay_buffer = ReplayBufferAsync(*args, **kwargs)
-        self.replay_buffer.start()
-
-        self.delta_z = float(self.kwargs['v_max'] - self.kwargs['v_min']) / (kwargs['num_atoms'] - 1)
-        self.offset = torch.linspace(0, (kwargs['batch_size'] - 1) * kwargs['num_atoms'], kwargs['batch_size']).long().unsqueeze(1).expand(kwargs['batch_size'], kwargs['num_atoms']).cuda()
-        self.torch_range = torch.arange(kwargs['batch_size']).long().cuda()
-
-        self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda().share_memory()
-        self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda()
-        self.optimizer = optimizer_fun(self.current_network.parameters())
-        self.update_target()
+            self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda().share_memory()
+            self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda()
+            self.optimizer = optimizer_fun(self.current_network.parameters())
+            self.update_target()
 
     def compute_td_loss(self):
         state, action, reward, next_state, done = self.replay_buffer.sample()

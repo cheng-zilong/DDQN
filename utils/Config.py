@@ -24,6 +24,7 @@ def get_default_parser():
     parser.add_argument('--mode', type=str, default='train') # eval
     parser.add_argument('--model_path', type=str, default = None)
     parser.add_argument('--ep_reward_avg_number', type=int, default = 10)
+    parser.add_argument('--project_name', type=str, default = 'C51')
     
     # Evaluation
     parser.add_argument('--eval_max_steps', type=int, default=18000, help="The maximum steps for each episode in evaluation.")

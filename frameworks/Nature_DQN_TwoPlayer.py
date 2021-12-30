@@ -33,7 +33,12 @@ class Nature_DQN_TwoPlayer:
         self._init_seed()
         self.player_number = 2
 
-        self.env = make_env_fun(**kwargs)
+        self.env = make_env_fun(*args, **kwargs)
+
+        kwargs['policy_class'] = network_fun.__name__
+        kwargs['env_name'] = self.env.unwrapped.spec.id
+        logger.init(*args, **kwargs)
+
         self.network_lock = mp.Lock()
         self.train_actor = MultiPlayerSequentialGameNetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
         self.train_actor.start()

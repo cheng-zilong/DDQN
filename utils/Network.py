@@ -47,7 +47,7 @@ class LinearQNetwork(nn.Module):
             with network_lock, torch.no_grad():
                 state = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
                 q_value = self.forward(state)
-                return q_value.max(1)[1].data[0]
+                return q_value.max(1)[1].item()
         else:
             return random.randint(0, self._num_actions-1)
 
@@ -206,6 +206,6 @@ class CnnQNetwork_TicTacToe(CnnQNetwork):
                 state = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
                 q_value = self.forward(state)
                 q_value[:,~legal_action_mask] = -inf
-            return q_value.max(1)[1].data[0]
+            return q_value.max(1)[1].item()
         else:
             return random.choice(list(range(self._num_actions))[legal_action_mask])
