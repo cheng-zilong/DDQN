@@ -22,21 +22,18 @@ class C51_DQN(Nature_DQN):
         '''
         v_min
         v_max
-        seed
-        gamma
-        clip_gradient
-        eps_start
-        eps_end
-        eps_decay_steps
-        train_start_step
-        train_update_target_freq
-        eval_freq
+        num_atoms
         '''
-        self.arg = args 
-        self.args = kwargs 
+        self.args = args 
+        self.kwargs = kwargs 
         self._init_seed()
         
-        self.env = make_env_fun(**kwargs)
+        self.env = make_env_fun(*args, **kwargs)
+
+        kwargs['policy_class'] = network_fun.__name__
+        kwargs['env_name'] = self.env.unwrapped.spec.id
+        logger.init(**kwargs)
+
         self.network_lock = mp.Lock()
         self.train_actor = C51_NetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
         self.train_actor.start()
@@ -45,13 +42,12 @@ class C51_DQN(Nature_DQN):
         self.replay_buffer = ReplayBufferAsync(*args, **kwargs)
         self.replay_buffer.start()
 
-        self.delta_z = float(self.args['v_max'] - self.args['v_min']) / (kwargs['num_atoms'] - 1)
-        self.atoms_gpu = torch.linspace(self.args['v_min'], self.args['v_max'], kwargs['num_atoms']).cuda()
+        self.delta_z = float(self.kwargs['v_max'] - self.kwargs['v_min']) / (kwargs['num_atoms'] - 1)
         self.offset = torch.linspace(0, (kwargs['batch_size'] - 1) * kwargs['num_atoms'], kwargs['batch_size']).long().unsqueeze(1).expand(kwargs['batch_size'], kwargs['num_atoms']).cuda()
         self.torch_range = torch.arange(kwargs['batch_size']).long().cuda()
 
-        self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, **kwargs).cuda().share_memory()
-        self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, **kwargs).cuda()
+        self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda().share_memory()
+        self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda()
         self.optimizer = optimizer_fun(self.current_network.parameters())
         self.update_target()
 
@@ -60,15 +56,15 @@ class C51_DQN(Nature_DQN):
 
         with torch.no_grad():
             prob_next = self.target_network(next_state)
-            q_next = (prob_next * self.atoms_gpu).sum(-1)
+            q_next = (prob_next * self.current_network.atoms_gpu).sum(-1)
             a_next = torch.argmax(q_next, dim=-1)
             prob_next = prob_next[self.torch_range, a_next, :]
 
         rewards = reward.unsqueeze(-1)
-        atoms_target = rewards + self.args['gamma'] * (~done).unsqueeze(-1) * self.atoms_gpu.view(1, -1)
-        atoms_target.clamp_(self.args['v_min'], self.args['v_max']).unsqueeze_(1)
+        atoms_target = rewards + self.kwargs['gamma'] * (~done).unsqueeze(-1) * self.current_network.atoms_gpu.view(1, -1)
+        atoms_target.clamp_(self.kwargs['v_min'], self.kwargs['v_max']).unsqueeze_(1)
         
-        target_prob = (1 - (atoms_target - self.atoms_gpu.view(1, -1, 1)).abs() / self.delta_z).clamp(0, 1) * prob_next.unsqueeze(1)
+        target_prob = (1 - (atoms_target - self.current_network.atoms_gpu.view(1, -1, 1)).abs() / self.delta_z).clamp(0, 1) * prob_next.unsqueeze(1)
         target_prob = target_prob.sum(-1)
 
         log_prob = self.current_network.forward_log(state)
@@ -77,8 +73,8 @@ class C51_DQN(Nature_DQN):
 
         self.optimizer.zero_grad()
         loss.backward()
-        nn.utils.clip_grad_norm_(self.current_network.parameters(), self.args['clip_gradient'])
-        gradient_norm = nn.utils.clip_grad_norm_(self.current_network.parameters(), self.args['clip_gradient'])
+        nn.utils.clip_grad_norm_(self.current_network.parameters(), self.kwargs['clip_gradient'])
+        gradient_norm = nn.utils.clip_grad_norm_(self.current_network.parameters(), self.kwargs['clip_gradient'])
         logger.add({'gradient_norm': gradient_norm.item(), 'loss': loss.item()})
         with self.network_lock:
             self.optimizer.step()

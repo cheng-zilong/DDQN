@@ -151,8 +151,8 @@ class TicTacToeEnv(gym.Env):
                 done = False
         return self.state.copy(), reward, done, {'steps':self.total_steps, 'winner':self.winner}
 
-    def render(self, mode=None, close=False, folder=None, number=None):
-        if folder == None:
+    def render(self, mode=None, close=False):
+        if mode == "human" or mode == None:
             print('\nNext Player: %d'%(self.next_player))
             for i in range(self.board_size):
                 print(" " + "-" * (self.board_size * 4 + 1))
@@ -162,32 +162,18 @@ class TicTacToeEnv(gym.Env):
                     elif self.state[1,i,j] == 1:
                         symbol = 'x'
                     else:
-                         symbol = ' '
+                            symbol = ' '
                     print(" | " + str(symbol), end='')
                 print(" |")
             print(" " + "-" * (self.board_size * 4 + 1))
-        else:
-            file1 = open(folder + "/Render_" + ("" if number is None else str(number)) + ".txt", "a")
-            file1.write('\nNext Player: %d'%(self.next_player))
-            for i in range(self.board_size):
-                file1.write(" " + "-" * (self.board_size * 4 + 1))
-                for j in range(self.board_size):
-                    if self.state[0,i,j] == 1:
-                        symbol = 'o'
-                    elif self.state[1,i,j] == 1:
-                        symbol = 'x'
-                    else:
-                         symbol = ' '
-                    file1.write(" | " + str(symbol), end='')
-                file1.write(" |")
-            file1.write(" " + "-" * (self.board_size * 4 + 1))
-            file1.close()
+        elif mode == "rgb_array":
+            return (self.state[0] * 0.5) + (self.state[1] * 1)
 
     @property
     def legal_action_mask(self):
         return self._legal_action_mask.reshape(-1)
 
-def make_tic_tac_toe_env(seed, **kwargs):
+def make_tic_tac_toe_env(seed, *args, **kwargs):
     env = TicTacToeEnv(board_size = 3, win_size = 3)
     from .AtariWrapper import TotalRewardWrapper
     env = TotalRewardWrapper(env)

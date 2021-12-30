@@ -22,7 +22,7 @@ class LogAsync(mp.Process, metaclass=Singleton):
         
     def init(self, project_name, policy_class, env_name, seed, *args, **kwargs):
         self._project_name = project_name
-        self._policy_name = policy_class.__name__
+        self._policy_name = policy_class
         self._env_name = env_name
         self._seed = seed
         self._args = kwargs

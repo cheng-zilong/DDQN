@@ -29,8 +29,6 @@ class ActorAsync(Async):
         super().__init__(env, seed = None, *args, **kwargs)
         self.env = env
         self.seed = random.randint(0,10000) if seed == None else seed
-        self.arg = args 
-        self.args = kwargs 
         self.__actor_state = None # It must be in a tenor format
         self.__actor_done_flag = True # Assume the initial state is done
 
@@ -115,7 +113,6 @@ class ActorAsync(Async):
 
     def _reset(self):
         self.actor_state = self.env.reset()
-        self.actor_done_flag = False
         return self.actor_state
 
     def _unwrapped_reset(self):
@@ -125,7 +122,6 @@ class ActorAsync(Async):
         '''
         self.env.unwrapped.reset()
         self.actor_state = self.env.reset()
-        self.actor_done_flag = False
         return self.actor_state
 
     def _collect(self, steps_number, *args, **kwargs):
@@ -196,44 +192,36 @@ class NetworkActorAsync(ActorAsync):
     Policy 是从state到action的映射
     '''
     def __init__(self, env, network_lock, seed = None, *args, **kwargs):
-        super().__init__(env, seed, *args, **kwargs)
+        super().__init__(env, seed)
         self._network_lock = network_lock
         self._network = None
 
-    def _eps_greedy_action(self, eps):
-        eps_prob =  random.random()
-        if eps_prob > eps:
-            with self._network_lock:
-                action = self._network.act(self.actor_state)
-        else:
-            action = self.env.action_space.sample()
-        return action
-
-    def _step(self, eps, *args, **kwargs):
+    def _step(self, eps):
         '''
         epsilon greedy step
         '''
         if self._network is None:
             raise Exception("Network has not been initialized!")
-        # auto reset
         if self.actor_done_flag:
+            # auto reset
             self.actor_state = self._reset()
+            self.actor_done_flag = False
             return None, self.actor_state, None, None, None
-        action = self._eps_greedy_action(eps)
+        action = self._network.eps_greedy_act(self.actor_state, eps, self._network_lock)
+
         self.actor_state, reward, self.actor_done_flag, info = self.env.step(action)
         return action, self.actor_state, reward, self.actor_done_flag, info
 
-    def _update_policy(self, network, *args, **kwargs):
+    def _update_policy(self, network):
         self._network = network
 
-    def _save_policy(self, *args, **kwargs):
+    def _save_policy(self, name):
         '''
-        name=
-        idx is the name of this policy
+        The name of this policy
         '''
         if not os.path.exists('save_model/' + logger._run_name + '/'):
             os.makedirs('save_model/' + logger._run_name + '/')
-        torch.save(self._network.state_dict(), 'save_model/' + logger._run_name + '/' + str(kwargs['name']) +'.pt')
+        torch.save(self._network.state_dict(), 'save_model/' + logger._run_name + '/' + str(name) +'.pt')
 
     def _eval(self, eval_idx, eval_number, eval_max_steps, *args, **kwargs):
         ep_rewards_list = deque(maxlen=eval_number)
@@ -241,8 +229,8 @@ class NetworkActorAsync(ActorAsync):
             self._unwrapped_reset()
             for ep_steps_idx in range(1, eval_max_steps + 1):
                 _, _, _, done, info = self._collect(steps_number = 1, *args, **kwargs)[-1] 
-                if done:
-                    if info['episodic_return'] is not None: break
+                if (done) and (info is not None) and (info['episodic_return'] is not None): 
+                    break
             ep_rewards_list.append(info['total_rewards'])
             ep_rewards_list_mean = mean(ep_rewards_list)
             logger.terminal_print(
@@ -272,8 +260,8 @@ class NetworkActorAsync(ActorAsync):
             my_fig.canvas.draw()
             buf = my_fig.canvas.tostring_rgb()
             writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(fig_pixel_rows, fig_pixel_cols, 3))
-            if done:
-                if info['episodic_return'] is not None: break
+            if (done) and (info is not None) and (info['episodic_return'] is not None): 
+                break
         writer.close()
 
 class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
@@ -283,7 +271,7 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
     Using neural network policy
     '''
     class _list_with_size:
-        def __init__(self, size, init_element):
+        def __init__(self, size, init_element=None):
             self._data = list([init_element]*size)
             self._size = size
 
@@ -315,10 +303,10 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
                 raise StopIteration
 
     def __init__(self, env, network_lock, seed = None, player_number=2, *args, **kwargs):
-        super().__init__(env, seed, *args, **kwargs)
+        super().__init__(env, seed)
         self._player_number = player_number
         self._network_lock = network_lock
-        self._network_list = deque(maxlen=2)
+        self._network_list = deque(maxlen=player_number)
         self._actor_state_list = self._list_with_size(init_element=None, size=self._player_number+1) #多一个state存储最后一个玩家执行action后的状态
         self._actor_action_list = self._list_with_size(init_element=None, size=self._player_number*2) 
         self._actor_reward_list = self._list_with_size(init_element=[0]*self._player_number, size=self._player_number*2)
@@ -327,25 +315,7 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
         self._done_state = None
         self._actor_done_list = self._list_with_size(init_element=None, size=self._player_number+1) 
 
-    def _eps_greedy_action(self, player_idx, state, eps):
-        eps_prob =  random.random()
-        if hasattr(self.env, 'legal_action_mask') and self.env.legal_action_mask is not None:
-            # TODO other kinds of actions space
-            if eps_prob > eps:
-                with self._network_lock:
-                    action = self._network_list[player_idx].act(state, legal_action_mask = self.env.legal_action_mask)
-            else:
-                if isinstance(self.env.action_space, spaces.Discrete):
-                    action = random.choice(np.asarray(range(self.env.action_space.n))[self.env.legal_action_mask])
-        else:
-            if eps_prob > eps:
-                with self._network_lock:
-                    action = self._network_list[player_idx].act(state)
-            else:
-                action = self.env.action_space.sample()
-        return action
-
-    def _step(self, eps, *args, **kwargs):
+    def _step(self, eps):
         '''
         epsilon greedy step
         return action_obs_reward_list, done, info
@@ -376,11 +346,10 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
                     self._actor_info_list.append(None)
                 self._not_done_number = 0
             else:
-                self.actor_done_flag = False
                 self._actor_state_list.append(self._reset())
                 for player_idx in range(self._player_number):
                     # 根据上一个state确定action
-                    action = self._eps_greedy_action(player_idx=player_idx, state=self._actor_state_list[-1],eps=eps)
+                    action = self._network_list[player_idx].eps_greedy_act(self._actor_state_list[-1], eps, self._network_lock, self.env.legal_action_mask)
                     self._actor_action_list.append(action) 
                     state, reward, self.actor_done_flag, info = self.env.step(action)
                     self._actor_state_list.append(np.asarray(state))
@@ -392,7 +361,7 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
         else:
             for player_idx in range(self._player_number):
                 # 根据上一个state确定action
-                action = self._eps_greedy_action(player_idx=player_idx, state=self._actor_state_list[-1], eps=eps)
+                action = self._network_list[player_idx].eps_greedy_act(self._actor_state_list[-1], eps, self._network_lock, self.env.legal_action_mask)
                 self._actor_action_list.append(action)
                 state, reward, self.actor_done_flag, info = self.env.step(action)
                 self._actor_state_list.append(np.asarray(state))
@@ -420,36 +389,36 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
                         self._actor_done_list[0:self._player_number],
                         self._actor_info_list[0:self._player_number]))
             
-    def _update_policy(self, network_list, *args, **kwargs):
+    def _update_policy(self, network_list):
         for network in network_list:
             self._network_list.append(network)
 
-    def _save_policy(self, *args, **kwargs):
+    def _save_policy(self, name):
         '''
         name: The name of this policy
         '''
         if not os.path.exists('save_model/' + logger._run_name + '/'):
             os.makedirs('save_model/' + logger._run_name + '/')
         for player_idx, network in enumerate(self._network_list):
-            torch.save(network.state_dict(), 'save_model/' + logger._run_name + '/' + str(kwargs['name']) +'_player%d.pt'%(player_idx))
+            torch.save(network.state_dict(), 'save_model/' + logger._run_name + '/' + str(name) +'_player%d.pt'%(player_idx))
 
-    # def _eval(self, eval_idx, eval_number, eval_max_steps, *arg, **args):
-    #     ep_rewards_list = deque(maxlen=eval_number)
-    #     for ep_idx in range(1, eval_number+1):
-    #         self._unwrapped_reset()
-    #         for ep_steps_idx in range(1, eval_max_steps + 1):
-    #             _, _, _, done, info = self._collect(steps_number = 1, *arg, **args)[-1] 
-    #             if done:
-    #                 if info['episodic_return'] is not None: break
-    #         ep_rewards_list.append(info['total_rewards'])
-    #         ep_rewards_list_mean = mean(ep_rewards_list)
-    #         logger.terminal_print(
-    #             '--------(Evaluator Index: %d)'%(eval_idx), {
-    #             '--------ep': ep_idx, 
-    #             '--------ep_steps':  ep_steps_idx, 
-    #             '--------ep_reward': info['total_rewards'], 
-    #             '--------ep_reward_mean': ep_rewards_list_mean})
-    #     logger.add({'eval_last': ep_rewards_list_mean})
+    def _eval(self, eval_idx, eval_number, eval_max_steps, *arg, **args):
+        ep_rewards_list = deque(maxlen=eval_number)
+        for ep_idx in range(1, eval_number+1):
+            self._unwrapped_reset()
+            for ep_steps_idx in range(1, eval_max_steps + 1):
+                # TODO 分开评估
+                _, _, _, done, info = self._collect(steps_number = 1, *arg, **args)[-1][-1]
+                if (done) and (info is not None) and (info['episodic_return'] is not None): break
+            ep_rewards_list.append(info['total_rewards'])
+            ep_rewards_list_mean = np.mean(np.array(ep_rewards_list),axis=0)
+            logger.terminal_print(
+                '--------(Evaluator Index: %d)'%(eval_idx), {
+                '--------ep': ep_idx, 
+                '--------ep_steps':  ep_steps_idx, 
+                '--------ep_reward': info['total_rewards'], 
+                '--------ep_reward_mean': ep_rewards_list_mean})
+        logger.add({'eval_last': ep_rewards_list_mean})
 
     def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *args, **kwargs):
         if not is_show: matplotlib.use('Agg')
@@ -463,13 +432,14 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
         fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
         self._unwrapped_reset()
         for _ in range(1, render_max_steps + 1):
-            _, _, _, done, info = self._collect(steps_number = 1, *args, **kwargs)[-1] 
+            # TODO 分开评估
+            _, _, _, done, info = self._collect(steps_number = 1, *args, **kwargs)[-1][-1]
             ax.clear()
-            ax.imshow(self.env.render(mode = render_mode))
+            ax.imshow(self.env.render(mode = render_mode), vmin=0, vmax=1)
             ax.axis('off')
             my_fig.canvas.draw()
             buf = my_fig.canvas.tostring_rgb()
             writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(fig_pixel_rows, fig_pixel_cols, 3))
-            if done:
-                if info['episodic_return'] is not None: break
+            if (done) and (info is not None) and (info['episodic_return'] is not None): 
+                break
         writer.close()

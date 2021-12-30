@@ -55,17 +55,15 @@ class ReplayBufferAsync(Async):
 
     def add(self, action, obs, reward, done):
         '''
-        如果数据本身就是lazyframe的结构，就假设数据已经堆叠好了,所以取最后一个数据
-        如果数据本身不是lazyframe的结构，就假设数据是单个产生的,没有堆叠维度
+        如果stack_frame != 1，就假设数据已经堆叠好了,所以取最后一个数据
+        如果stack_frame == 1，就假设数据是单个产生的,没有堆叠维度
         The format of data state must be
         [time stack dim, data dim] if it is lazyframes format
         if action is none, it is the reset frame
         '''
-        if isinstance(obs, LazyFrames):
-            data = (action, obs[None, -1], reward, done)  
-        else:
-            data = (action, np.asarray(obs), reward, done) 
-        if data[0] is not None: #如果action不为None，那可以作为data example
+        obs = np.asarray(obs[None, -1]) if self.stack_frames!=1 else np.asarray(obs)
+        data = (action, obs, reward, done)  
+        if (not hasattr(self, '_data_example')) and data[0] is not None: #如果action不为None，那可以作为data example
             self._data_example = data
         self.send(self.ADD, data)
 
@@ -73,17 +71,17 @@ class ReplayBufferAsync(Async):
         ## return share tensor the first time, the return idx
         if not self.is_init_cache:
             self.is_init_cache=True
-            if self.stack_frames  == 1:
+            if self.stack_frames == 1:
                 self.state_share = torch.tensor([[self._data_example[1]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
                 self.action_share = torch.tensor([[self._data_example[0]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
                 self.reward_share = torch.tensor([[self._data_example[2]]*self.batch_size]*2, device=torch.device(0), dtype=torch.float32).share_memory_()
                 self.next_state_share = torch.tensor([[self._data_example[1]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
                 self.done_share = torch.tensor([[self._data_example[3]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
             else:
-                self.state_share = torch.tensor([[LazyFrames([self._data_example[1]]*self.stack_frames)]*self.batch_size]*2, device=torch.device(0)).share_memory_()
+                self.state_share = torch.tensor([[[self._data_example[1][0]]*self.stack_frames]*self.batch_size]*2, device=torch.device(0)).share_memory_()
                 self.action_share = torch.tensor([[self._data_example[0]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
                 self.reward_share = torch.tensor([[self._data_example[2]]*self.batch_size]*2, device=torch.device(0), dtype=torch.float32).share_memory_()
-                self.next_state_share = torch.tensor([[LazyFrames([self._data_example[1]]*self.stack_frames)]*self.batch_size]*2, device=torch.device(0)).share_memory_()
+                self.next_state_share = torch.tensor([[[self._data_example[1][0]]*self.stack_frames]*self.batch_size]*2, device=torch.device(0)).share_memory_()
                 self.done_share = torch.tensor([[self._data_example[3]]*self.batch_size]*2, device=torch.device(0)).share_memory_()
             self.send(self.SAMPLE, (self.state_share, self.action_share, self.reward_share, self.next_state_share, self.done_share))
             self.receive()

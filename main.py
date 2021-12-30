@@ -13,45 +13,41 @@ if __name__ == '__main__':
     kwargs['train_start_step'] = 50000
     kwargs['env_name'] = 'SpaceInvadersNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
     kwargs['seed']=555 
+    kwargs['project_name'] = 'C51'
     
-
-    # from frameworks.C51_DQN import C51_DQN
-    # kwargs['policy_class']= CatCnnQNetwork #CnnQNetwork CatCnnQNetwork
-    # logger.init(project_name='C51', **kwargs)
-    # C51_DQN(
-    #     make_env_fun = make_atari_env,
-    #     network_fun = kwargs['policy_class'], 
-    #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),  
-    #     **kwargs
-    #     ).train()
-
-    # from frameworks.Nature_DQN import Nature_DQN   
-    # kwargs['policy_class']= CnnQNetwork #CnnQNetwork CatCnnQNetwork
-    # logger.init(project_name='C51', **kwargs)
-    # Nature_DQN(
-    #     make_env_fun = make_atari_env,
-    #     network_fun = kwargs['policy_class'], 
-    #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),  
-    #     **kwargs
-    #     ).train()
-
-    from gym_envs.TicTacToe import make_tic_tac_toe_env
-    from gym_envs.Gomuku import make_gomuku15
-    from frameworks.Nature_DQN_TwoPlayer import Nature_DQN_TwoPlayer  
-    kwargs['policy_class'] = CnnQNetwork_TicTacToe
-    kwargs['stack_frames'] = 1
-    kwargs['train_log_freq'] = 10
-    kwargs['ep_reward_avg_number'] = 10
-    kwargs['train_network_freq'] = 32
-    kwargs['clip_gradient'] = 100000
-    
-    logger.init(project_name='C51', **kwargs)
-    Nature_DQN_TwoPlayer(
-        make_env_fun = make_tic_tac_toe_env, 
-        network_fun = kwargs['policy_class'],  
-        optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']), 
+    from frameworks.C51_DQN import C51_DQN
+    C51_DQN(
+        make_env_fun = make_atari_env,
+        network_fun = CatCnnQNetwork, #CnnQNetwork CatCnnQNetwork
+        optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),  
         **kwargs
         ).train()
+
+    # from frameworks.Nature_DQN import Nature_DQN   
+    # Nature_DQN(
+    #     make_env_fun = make_atari_env,
+    #     network_fun = CnnQNetwork, #CnnQNetwork CatCnnQNetwork
+    #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),  
+    #     **kwargs
+    #     ).train()
+
+    # from gym_envs.TicTacToe import make_tic_tac_toe_env
+    # from gym_envs.Gomuku import make_gomuku15
+    # from frameworks.Nature_DQN_TwoPlayer import Nature_DQN_TwoPlayer  
+    # kwargs['policy_class'] = CnnQNetwork_TicTacToe
+    # kwargs['stack_frames'] = 1
+    # kwargs['train_log_freq'] = 10
+    # kwargs['ep_reward_avg_number'] = 10
+    # kwargs['train_network_freq'] = 32
+    # kwargs['clip_gradient'] = 100000
+    
+    # logger.init(project_name='C51', **kwargs)
+    # Nature_DQN_TwoPlayer(
+    #     make_env_fun = make_tic_tac_toe_env, 
+    #     network_fun = kwargs['policy_class'],  
+    #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']), 
+    #     **kwargs
+    #     ).train()
 
 # # # tic-tac-toe
 # if __name__ == '__main__':
