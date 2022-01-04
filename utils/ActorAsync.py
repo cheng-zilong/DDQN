@@ -402,15 +402,21 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
         for player_idx, network in enumerate(self._network_list):
             torch.save(network.state_dict(), 'save_model/' + logger._run_name + '/' + str(name) +'_player%d.pt'%(player_idx))
 
-    def _eval(self, eval_idx, eval_number, eval_max_steps, *arg, **args):
+    def _eval(self, eval_idx, eval_number, eval_max_steps, *args, **kwargs):
         ep_rewards_list = deque(maxlen=eval_number)
         for ep_idx in range(1, eval_number+1):
             self._unwrapped_reset()
+            is_break = False
             for ep_steps_idx in range(1, eval_max_steps + 1):
-                # TODO 分开评估
-                _, _, _, done, info = self._collect(steps_number = 1, *arg, **args)[-1][-1]
-                if (done) and (info is not None) and (info['episodic_return'] is not None): break
-            ep_rewards_list.append(info['total_rewards'])
+                all_players_data = self._collect(steps_number = 1, *args, **kwargs)[-1]
+                for _, _, _, done, info in all_players_data:
+                    if (done) and (info is not None) and (info['episodic_return'] is not None): 
+                        is_break = True
+                        break
+                if is_break:
+                    break
+            if 'total_rewards' in info:
+                ep_rewards_list.append(info['total_rewards']) 
             ep_rewards_list_mean = np.mean(np.array(ep_rewards_list),axis=0)
             logger.terminal_print(
                 '--------(Evaluator Index: %d)'%(eval_idx), {
@@ -432,14 +438,18 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
         fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
         self._unwrapped_reset()
         for _ in range(1, render_max_steps + 1):
-            # TODO 分开评估
-            _, _, _, done, info = self._collect(steps_number = 1, *args, **kwargs)[-1][-1]
-            ax.clear()
-            ax.imshow(self.env.render(mode = render_mode), vmin=0, vmax=1)
-            ax.axis('off')
-            my_fig.canvas.draw()
-            buf = my_fig.canvas.tostring_rgb()
-            writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(fig_pixel_rows, fig_pixel_cols, 3))
-            if (done) and (info is not None) and (info['episodic_return'] is not None): 
+            is_break = False
+            player_data = self._collect(steps_number = 1, *args, **kwargs)[-1]
+            for _, _, _, done, info in player_data:
+                ax.clear()
+                ax.imshow(self.env.render(mode = render_mode), vmin=0, vmax=1)
+                ax.axis('off')
+                my_fig.canvas.draw()
+                buf = my_fig.canvas.tostring_rgb()
+                writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(fig_pixel_rows, fig_pixel_cols, 3))
+                if (done) and (info is not None) and (info['episodic_return'] is not None): 
+                    is_break=True
+                    break
+            if is_break:
                 break
         writer.close()

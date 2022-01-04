@@ -1,4 +1,5 @@
 #%%
+from typing import overload
 import gym
 import numpy as np
 from gym import spaces
@@ -13,27 +14,32 @@ class TicTacToeEnv(gym.Env):
         self.board_size = board_size
         self.symbols = [' ', 'x', 'o']
         self.action_space = spaces.Discrete(self.board_size * self.board_size)
-        # player0 落子位置
-        # Player1 落子位置
-        # 全0表示现在是player0落子的回合，全1表示player1的回合
+        # player0: 落子位置
+        # Player1: 落子位置
+        # next_player: 全0表示现在是player0落子的回合，全1表示player1的回合
         self.observation_space = spaces.Box(low=0, high=1, shape=(3, self.board_size, self.board_size), dtype=np.int8)
         self.reward_criterion = {'going':0, 'draw':0, 'win':1, 'loss':-1}
         # 用于检测胜负
         self.CONSTANT_A = 1 << np.arange(board_size*2)[::-1]
 
-    def reset(self, init_state=None):
-        if init_state is None:
-            self.state = np.zeros([3,self.board_size,self.board_size], dtype=np.int8)  
-            self.total_steps = 0
-            self.status = 'going'
-        else:
-            self.state = np.array(init_state, dtype=np.int8, copy=True)
-            self.total_steps = np.sum(np.asarray(init_state[0]+init_state[1]).reshape(-1) != 0)
-            self.status = self.check_status() 
+    def reset(self):
+        self.state = np.zeros([3,self.board_size,self.board_size], dtype=np.int8)  
+        self.total_steps = 0
+        self.status = 'going'
+        next_player = 0
+        self._legal_action_mask = np.asarray(np.asarray(self.state[0]+self.state[1]) == 0)
+        self.winner = -1
+        self.next_player = next_player
+        return self.state.copy()
+
+    def reset_with_state(self, init_state):
+        self.state = np.array(init_state, dtype=np.int8, copy=True)
+        self.total_steps = np.sum(np.asarray(init_state[0]+init_state[1]))
+        self.status = self.check_status() 
         next_player = self.state[2,0,0] 
         self._legal_action_mask = np.asarray(np.asarray(self.state[0]+self.state[1]) == 0)
         if self.status == 'win':
-            self.winner = 0 if next_player == 1 else 1
+            self.winner = (next_player + 1)%2
             self.next_player = -1
         elif self.status == 'draw':
             self.winner = -1
@@ -153,9 +159,13 @@ class TicTacToeEnv(gym.Env):
 
     def render(self, mode=None, close=False):
         if mode == "human" or mode == None:
-            print('\nNext Player: %d'%(self.next_player))
+            print('Next Player: %d'%(self.next_player))
+            print("    " ,end='') 
             for i in range(self.board_size):
-                print(" " + "-" * (self.board_size * 4 + 1))
+                print(" %2d "%(i), end='')
+            print('\n', end='')
+            for i in range(self.board_size):
+                print("    " + "-" * (self.board_size * 4 + 1))
                 for j in range(self.board_size):
                     if self.state[0,i,j] == 1:
                         symbol = 'o'
@@ -163,9 +173,12 @@ class TicTacToeEnv(gym.Env):
                         symbol = 'x'
                     else:
                             symbol = ' '
-                    print(" | " + str(symbol), end='')
+                    if (j==0):
+                        print(" %2d | "%(i) + str(symbol), end='')
+                    else:
+                        print(" | " + str(symbol), end='')
                 print(" |")
-            print(" " + "-" * (self.board_size * 4 + 1))
+            print("    " + "-" * (self.board_size * 4 + 1))
         elif mode == "rgb_array":
             return (self.state[0] * 0.5) + (self.state[1] * 1)
 
