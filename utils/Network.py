@@ -294,20 +294,19 @@ class AlphaZeroNetwork(nn.Module):
         self.body_cnn = nn.Sequential(
 			nn.Conv2d(input_shape[0], self._filters_num, 3, padding=1, stride=1),
 			nn.ReLU(),
-            nn.ModuleList([BasicBlock(self._filters_num) for _ in range(residual_num)]),
-		) 
+            *[BasicBlock(self._filters_num) for _ in range(residual_num)],
+		)  
         self.policy_head_cnn = nn.Sequential(
 			nn.Conv2d(self._filters_num, 2, 1),
 			nn.BatchNorm2d(2),
             nn.ReLU()
 		) 
         self.policy_head_fc = nn.Sequential(
-			nn.Linear(2 * input_shape[1] * input_shape[2], num_actions),
-            nn.Softmax()
+			nn.Linear(2 * input_shape[1] * input_shape[2], num_actions)
 		) 
         self.value_head_cnn = nn.Sequential(
 			nn.Conv2d(self._filters_num, 1, 1),
-			nn.BatchNorm2d(2),
+			nn.BatchNorm2d(1),
             nn.ReLU()
 		) 
         self.value_head_fc = nn.Sequential(

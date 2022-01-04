@@ -45,5 +45,25 @@ if __name__ == '__main__':
     #     **kwargs
     #     ).train()
 
-    from frameworks.Vanilla_MCTS import play_with_me, play_with_me2
-    play_with_me2(seed = 1, project_name = 'C51')
+    from frameworks.Vanilla_MCTS import play_with_me 
+    play_with_me(   board_size=5, 
+                    win_size=4, 
+                    is_AI_first=True, 
+                    iter_num=20000, 
+                    seed=1, 
+                    project_name='C51')
+
+    # kwargs = vars(get_default_parser().parse_args())
+    # from frameworks.AlphaZero import AlphaZero
+    # from gym_envs.Gomuku import make_gomuku
+    # from utils.Network import AlphaZeroNetwork
+    # kwargs['train_start_step'] = 50000
+    # kwargs['residual_num'] = 10
+    # kwargs['board_size'] = 19
+    # kwargs['win_size'] = 5
+    # AlphaZero(
+    #     make_env_fun=make_gomuku,
+    #     network_fun = AlphaZeroNetwork,
+    #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),
+    #     **kwargs
+    #     ).train()

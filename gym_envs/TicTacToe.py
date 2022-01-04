@@ -155,7 +155,7 @@ class TicTacToeEnv(gym.Env):
                 self.next_player = 0 if current_player == 1 else 1
                 reward = [self.reward_criterion['going'], self.reward_criterion['going']]
                 done = False
-        return self.state.copy(), reward, done, {'steps':self.total_steps, 'winner':self.winner}
+        return self.state.copy(), reward, done, {'winner':self.winner}
 
     def render(self, mode=None, close=False):
         if mode == "human" or mode == None:
