@@ -29,7 +29,7 @@ if __name__ == '__main__':
     #     **kwargs
     #     ).train()
 
-    # kwargs = vars(get_default_parser().parse_args())
+    # kwargs = vars(get_default_parser().parse_args()) TODO GOMUKU is removed
     # from gym_envs.TicTacToe import make_tic_tac_toe_env
     # from gym_envs.Gomuku import make_gomuku8, make_gomuku15, make_gomuku19
     # from frameworks.Nature_DQN_Board import Nature_DQN_TwoPlayer_Gomuku  
@@ -45,25 +45,40 @@ if __name__ == '__main__':
     #     **kwargs
     #     ).train()
 
-    from frameworks.Vanilla_MCTS import play_with_me 
-    play_with_me(   board_size=5, 
-                    win_size=4, 
-                    is_AI_first=True, 
-                    iter_num=20000, 
-                    seed=1, 
-                    project_name='C51')
+    # from frameworks.Vanilla_MCTS import play_with_me 
+    # play_with_me(   board_size=7, 
+    #                 win_size=5, 
+    #                 is_AI_first=False, 
+    #                 iter_num=100000, 
+    #                 seed=1, 
+    #                 project_name='C51')
+
+    kwargs = vars(get_default_parser().parse_args())
+    from frameworks.AlphaZero import AlphaZero
+    from gym_envs.TicTacToe import make_gomuku
+    from utils.Network import AlphaZeroNetwork # CnnQNetwork #AlphaZeroNetwork
+    kwargs['train_log_freq'] = 100
+    kwargs['mcts_sim_num'] = 800
+    kwargs['residual_num'] = 10
+    kwargs['filters_num'] = 256
+    kwargs['board_size'] = 3
+    kwargs['win_size'] = 3
+    kwargs['lr'] = 0.002
+    kwargs['lr_decay_step_size'] = int(1e5)
+    kwargs['actors_num'] = 1
+    kwargs['stack_frames'] = 1
+    kwargs['train_start_buffer_size'] = int(100)
+    kwargs['buffer_size'] = int(1e4)
+    kwargs['train_steps'] = int(4e5)
+    AlphaZero(
+        make_env_fun = make_gomuku,
+        network_fun = AlphaZeroNetwork, #CnnQNetwork, #AlphaZeroNetwork,
+        optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),
+        **kwargs
+        ).train()
 
     # kwargs = vars(get_default_parser().parse_args())
-    # from frameworks.AlphaZero import AlphaZero
-    # from gym_envs.Gomuku import make_gomuku
-    # from utils.Network import AlphaZeroNetwork
-    # kwargs['train_start_step'] = 50000
     # kwargs['residual_num'] = 10
-    # kwargs['board_size'] = 19
-    # kwargs['win_size'] = 5
-    # AlphaZero(
-    #     make_env_fun=make_gomuku,
-    #     network_fun = AlphaZeroNetwork,
-    #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),
-    #     **kwargs
-    #     ).train()
+    # kwargs['filters_num'] = 256
+    # from frameworks.AlphaZero import play_with_me
+    # play_with_me(3,3,AlphaZeroNetwork,'save_model/AlphaZero(TotalRewardWrapper)_4_20220110-110424/160000.pt', is_AI_first=True, **kwargs)

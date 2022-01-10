@@ -49,9 +49,9 @@ class Nature_DQN:
 
         if type(self) is Nature_DQN:
             self.network_lock = mp.Lock()
-            self.train_actor = NetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
+            self.train_actor = NetworkActorAsync(make_env_fun = make_env_fun, network_lock=self.network_lock, *args, **kwargs)
             self.train_actor.start()
-            self.eval_actor = NetworkActorAsync(env = self.env, network_lock=mp.Lock(), *args, **kwargs)
+            self.eval_actor = NetworkActorAsync(make_env_fun = make_env_fun, network_lock=mp.Lock(), *args, **kwargs)
             self.eval_actor.start()
             self.replay_buffer = ReplayBufferAsync(*args, **kwargs)
             self.replay_buffer.start()
@@ -118,7 +118,6 @@ class Nature_DQN:
         loss = nn.MSELoss()(q_target, q)
         self.optimizer.zero_grad()
         loss.backward()
-        nn.utils.clip_grad_norm_(self.current_network.parameters(), self.kwargs['clip_gradient'])
         gradient_norm = nn.utils.clip_grad_norm_(self.current_network.parameters(), self.kwargs['clip_gradient'])
         logger.add({'gradient_norm': gradient_norm.item(), 'loss': loss.item()})
         with self.network_lock:

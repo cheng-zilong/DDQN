@@ -60,6 +60,7 @@ class LogAsync(mp.Process, metaclass=Singleton):
                 caption, step = data
                 wandb.log(self._log_dict, step=step)
                 print(caption)
+                print('log_idx:  %d'%(step))
                 for key in self._log_dict:
                     if not isinstance(self._log_dict[key], (wandb.Image, wandb.Video)): 
                         print(key +':  ' + str(self._log_dict[key]))

@@ -1,5 +1,5 @@
 '''
-layer_init + 4 step 1 gradient + async buffer
+Two DQN players against each other
 '''
 import torch
 import torch.nn as nn
@@ -40,9 +40,9 @@ class Nature_DQN_TwoPlayer_Gomuku:
         logger.init(*args, **kwargs)
 
         self.network_lock = mp.Lock()
-        self.train_actor = MultiPlayerSequentialGameNetworkActorAsync(env = self.env, network_lock=self.network_lock, *args, **kwargs)
+        self.train_actor = MultiPlayerSequentialGameNetworkActorAsync(make_env_fun = make_env_fun, network_lock=self.network_lock, *args, **kwargs)
         self.train_actor.start()
-        self.eval_actor = MultiPlayerSequentialGameNetworkActorAsync(env = self.env, network_lock=mp.Lock(), *args, **kwargs)
+        self.eval_actor = MultiPlayerSequentialGameNetworkActorAsync(make_env_fun = make_env_fun, network_lock=mp.Lock(), *args, **kwargs)
         self.eval_actor.start()
     
         self.replay_buffer_list = []

@@ -6,10 +6,53 @@ from gym import spaces
 from functools import reduce
 from operator import and_
 from copy import deepcopy
+import torch
+from numba import njit
+
+# @profile
+@njit
+def check_win(state, board_size, win_size, CONSTANT_A):
+    #Vertical
+    state = state.astype(np.float32)
+    CONSTANT_AA = CONSTANT_A[-board_size:]
+    state_h1 = (state[0]@CONSTANT_AA).reshape(-1).astype(np.int32)
+    state_h2 = (state[1]@CONSTANT_AA).reshape(-1).astype(np.int32)
+    state_h = state_h1 + state_h2 * (2**board_size)
+    for i in range(board_size - win_size+1):
+        res = state_h[i]
+        for j in range(1,win_size):
+            res = res & state_h[i+j]
+        if res:
+            return True
+
+    # #Horizon
+    state_v = np.concatenate((state[0], state[1]))
+    state_v = (CONSTANT_A.reshape(-1)@state_v).astype(np.int32)
+    for i in range(board_size - win_size+1):
+        res = state_v[i]
+        for j in range(1,win_size):
+            res = res & state_v[i+j]
+        if res:
+            return True
+
+    #diagnol 
+    for i in range(board_size - win_size+1): #左移右移看对齐
+        res1 = state_h1[i]
+        res2 = state_h1[i]
+        res3 = state_h2[i]
+        res4 = state_h2[i]
+        for j in range(1,win_size):
+            res1 &= state_h1[i+j]>>j
+            res2 &= state_h1[i+j]<<j
+            res3 &= state_h2[i+j]>>j
+            res4 &= state_h2[i+j]<<j
+        if res1 or res2 or res3 or res4:
+            return True
+    return False
 
 class TicTacToeEnv(gym.Env):
     def __init__(self, board_size, win_size):
-        super(TicTacToeEnv, self).__init__()
+        super().__init__()
         self.win_size = win_size
         self.board_size = board_size
         self.symbols = [' ', 'x', 'o']
@@ -18,142 +61,94 @@ class TicTacToeEnv(gym.Env):
         # Player1: 落子位置
         # next_player: 全0表示现在是player0落子的回合，全1表示player1的回合
         self.observation_space = spaces.Box(low=0, high=1, shape=(3, self.board_size, self.board_size), dtype=np.int8)
-        self.reward_criterion = {'going':0, 'draw':0, 'win':1, 'loss':-1}
-        # 用于检测胜负
-        self.CONSTANT_A = 1 << np.arange(board_size*2)[::-1]
-
+        self.reward_criterion = {0:0, 1:0, 2:1, 3:-1}
+        # self.CONSTANT_A = 1 << np.arange(board_size*2)[::-1]
+        self.CONSTANT_A = (1 << np.arange(board_size*2)[::-1]).reshape(-1,1).astype(np.float32)
+        self.status = None #0:going 1:draw 2:win
+    
     def reset(self):
         self.state = np.zeros([3,self.board_size,self.board_size], dtype=np.int8)  
         self.total_steps = 0
-        self.status = 'going'
-        next_player = 0
-        self._legal_action_mask = np.asarray(np.asarray(self.state[0]+self.state[1]) == 0)
+        self.status = 0 # going
+        self._legal_action_mask = (self.state[0]+self.state[1] == 0)
         self.winner = -1
-        self.next_player = next_player
+        self.next_player = 0
         return self.state.copy()
 
+    
     def reset_with_state(self, init_state):
         self.state = np.array(init_state, dtype=np.int8, copy=True)
-        self.total_steps = np.sum(np.asarray(init_state[0]+init_state[1]))
+        self.total_steps = np.sum(self.state[0:2])
         self.status = self.check_status() 
-        next_player = self.state[2,0,0] 
-        self._legal_action_mask = np.asarray(np.asarray(self.state[0]+self.state[1]) == 0)
-        if self.status == 'win':
-            self.winner = (next_player + 1)%2
-            self.next_player = -1
-        elif self.status == 'draw':
+        self._legal_action_mask = (self.state[0]+self.state[1] == 0)
+        if self.status == 2:
+            self.winner = (self.state[2,0,0]  + 1)%2
+        elif self.status == 1:
             self.winner = -1
-            self.next_player = -1
-        elif self.status == 'going':
+        elif self.status == 0:
             self.winner = -1
-            self.next_player = next_player
+        self.next_player = self.state[2,0,0] 
         return self.state.copy()
 
+    def reset_with_state_n_action(self, init_state, action):
+        '''
+        must ensure that the state is not teminal state
+        '''
+        self.state = np.array(init_state, dtype=np.int8, copy=True)
+        self.total_steps = np.sum(self.state[0:2])
+        self.status = 0
+        self._legal_action_mask = (self.state[0]+self.state[1] == 0)
+        self.winner = -1
+        self.next_player = self.state[2,0,0] 
+        state, _, _, _ = self.step(action)
+        return state
+    
     def check_status(self):
-        if self.check_win():
-            return 'win'
+        # if self.check_win():
+        if check_win(self.state[0:2], self.board_size, self.win_size, self.CONSTANT_A):
+            return 2
         if self.total_steps < self.board_size * self.board_size:
-            return 'going'
-        return 'draw'
-
-    def check_win(self):
-        #Vertical
-        state_h = np.hstack(self.state[0:2]).dot(self.CONSTANT_A) #转成二进制
-        for i in range(self.board_size - self.win_size+1):
-            if reduce(and_, [state_h[i+j] for j in range(self.win_size)]):
-                return True
-
-        #Horizon
-        state_v = self.CONSTANT_A.dot(np.vstack(self.state[0:2]))
-        for i in range(self.board_size - self.win_size+1):
-            if reduce(and_, [state_v[i+j] for j in range(self.win_size)]):
-                return True
-
-        # #diagnol 有问题
-        # for i in range(self.board_size - self.win_size+1): #左移右移看对齐
-        #     if reduce(and_, [state_h[i+j]<<j for j in range(self.win_size)]):
-        #         return True
-        #     if reduce(and_, [state_h[i+j]>>j for j in range(self.win_size)]):
-        #         return True
-
-        for p in range(2):
-            for i in range(self.board_size - self.win_size + 1):
-                for j in range(self.board_size - self.win_size + 1):
-                    sub_matrix = self.state[p,i:self.win_size + i, j:self.win_size + j]
-                    sub_matrix_diag1 = [sub_matrix[k][k] for k in range(self.win_size)]
-                    sub_matrix_diag2 = [sub_matrix[self.win_size-1-k][k] for k in range(self.win_size)]
-                    if (all(sub_matrix_diag1)  or all(sub_matrix_diag2)):
-                        return True
-        return False
-
-        # for state in state_list:
-        #     for i in range(self.board_size - self.win_size+1):
-        #         if any(reduce(and_, [state[:, i+j] for j in range(self.win_size)])):
-        #             return True
-
-        # for i in range(0, self.board_size * self.board_size, self.board_size):
-        #     cnt = 0
-        #     k = i
-        #     for j in range(1, self.board_size):
-        #         (cnt, k) = (cnt + 1, k) if (self.state[k] == self.state[i + j] and self.state[k] != 0) else (0, i + j)
-        #         if cnt == self.win_size - 1:
-        #             return True
-
-        # for i in range(0, self.board_size):
-        #     cnt = 0
-        #     k = i
-        #     for j in range(self.board_size, self.board_size * self.board_size, self.board_size):
-        #         (cnt, k) = (cnt + 1, k) if (self.state[k] == self.state[i + j] and self.state[k] != 0) else (0, i + j)
-        #         if cnt == self.win_size - 1:
-        #             return True
-
-        # matrix = self.state.reshape(self.board_size,-1)
-        # for i in range(self.board_size - self.win_size + 1):
-        #     for j in range(self.board_size - self.win_size + 1):
-        #         sub_matrix = matrix[i:self.win_size + i, j:self.win_size + j]
-        #         sub_matrix_diag1 = [sub_matrix[k][k]==sub_matrix[0][0] for k in range(1,self.win_size)]
-        #         sub_matrix_diag2 = [sub_matrix[self.win_size-1-k][k]==sub_matrix[self.win_size-1][0] for k in range(1,self.win_size)]
-        #         if (all(sub_matrix_diag1) and (sub_matrix[0][0] != 0)) or (all(sub_matrix_diag2) and (sub_matrix[self.win_size-1][0] != 0)):
-        #             return True
-        # return False
+            return 0
+        return 1
 
     def step(self, action):
         current_player = self.next_player
-        if self.status!='going':
+        if self.status!=0:
             if self.winner == 0: # if player0 wins
-                reward = [self.reward_criterion['win'], self.reward_criterion['loss']]
+                reward = [self.reward_criterion[2], self.reward_criterion[3]]
             elif self.winner == 1: # if player1 wins
-                reward = [self.reward_criterion['loss'], self.reward_criterion['win']]
+                reward = [self.reward_criterion[3], self.reward_criterion[2]]
             else: # if draws
-                reward = [self.reward_criterion['draw'], self.reward_criterion['draw']]
+                reward = [self.reward_criterion[1], self.reward_criterion[1]]
             done = True
         else:
-            down_position = (int(action/self.board_size), int(action%self.board_size))
-            if (self.state[0] + self.state[1])[down_position[0], down_position[1]] != 0:
+            down_position_x = action//self.board_size
+            down_position_y = action%self.board_size
+            if self.state[0, down_position_x, down_position_y] or self.state[1, down_position_x, down_position_y]:
                 raise Exception('Illegal move')
-            self._legal_action_mask[down_position[0], down_position[1]] = False
-            self.state[current_player, down_position[0], down_position[1]] = 1
-            self.state[2,:,:] = 0 if current_player == 1 else 1
+            self._legal_action_mask[down_position_x, down_position_y] = False
+            self.state[current_player, down_position_x, down_position_y] = 1
+            self.state[2] = (current_player + 1)%2
             self.total_steps+=1
             if self.total_steps >= self.win_size * 2 - 1:
                 # no one wins unless the number of steps is greater than win_size * 2 - 1
                 self.status = self.check_status() 
-            if self.status == 'win':
+            if self.status == 2:
                 self.winner = current_player
-                self.next_player = -1
+                self.next_player = (current_player+1)%2
                 if self.winner == 0: # if player0 wins
-                    reward = [self.reward_criterion['win'], self.reward_criterion['loss']]
+                    reward = [self.reward_criterion[2], self.reward_criterion[3]]
                 elif self.winner == 1: # if player1 wins
-                    reward = [self.reward_criterion['loss'], self.reward_criterion['win']]
+                    reward = [self.reward_criterion[3], self.reward_criterion[2]]
                 done = True
-            elif self.status == 'draw':
-                self.next_player = -1
+            elif self.status == 1:
+                self.next_player = (current_player+1)%2
                 self.winner = -1
-                reward = [self.reward_criterion['draw'], self.reward_criterion['draw']]
+                reward = [self.reward_criterion[1], self.reward_criterion[1]]
                 done = True
             else:
-                self.next_player = 0 if current_player == 1 else 1
-                reward = [self.reward_criterion['going'], self.reward_criterion['going']]
+                self.next_player = (current_player+1)%2
+                reward = [self.reward_criterion[0], self.reward_criterion[0]]
                 done = False
         return self.state.copy(), reward, done, {'winner':self.winner}
 
@@ -186,13 +181,6 @@ class TicTacToeEnv(gym.Env):
     def legal_action_mask(self):
         return self._legal_action_mask.reshape(-1)
 
-def make_tic_tac_toe_env(seed, *args, **kwargs):
-    env = TicTacToeEnv(board_size = 3, win_size = 3)
-    from .AtariWrapper import TotalRewardWrapper
-    env = TotalRewardWrapper(env)
-    env.seed(seed)
-    env.action_space.np_random.seed(seed)
-    return env
 
 # # Test program 1, run 1 episode
 # if __name__ == '__main__':
@@ -210,20 +198,28 @@ def make_tic_tac_toe_env(seed, *args, **kwargs):
 #             env.reset()
 #             break
 
+def make_gomuku(seed, board_size, win_size, *args, **kwargs):
+    from gym_envs.AtariWrapper import TotalRewardWrapper
+    env = TicTacToeEnv(board_size = board_size, win_size = win_size)
+    env = TotalRewardWrapper(env)
+    env.seed(seed)
+    env.action_space.np_random.seed(seed)
+    return env
+
 # Test program 2, run many episodes
 if __name__ == '__main__':
     import numpy as np
     from tqdm import tqdm
+    # board_size = 10
+    # win_size = 5
     board_size = 3
     win_size = 3
-    # board_size = 3
-    # win_size = 3
     env = TicTacToeEnv(board_size=board_size, win_size=win_size) 
     env.reset()
     x_win_cnt = 0
     o_win_cnt = 0
     draw_cnt = 0
-    for i in tqdm(range(1,50001)):
+    for i in tqdm(range(1,500001)):
         action_list = list(np.random.choice(board_size*board_size, board_size*board_size, replace=False))
         while True:
             state, reward, done, infos = env.step(action_list.pop())
@@ -238,5 +234,6 @@ if __name__ == '__main__':
                 break
         if i%1000==0:
             tqdm.write("%d\t%d\t%d\t%d"%(i, x_win_cnt, o_win_cnt, draw_cnt))
+
 
 #%%

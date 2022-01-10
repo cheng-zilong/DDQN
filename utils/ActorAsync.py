@@ -25,11 +25,14 @@ class ActorAsync(Async):
     EVAL=5
     RENDER=6
     UNWRAPPED_RESET=7
-    def __init__(self, env, seed = None, *args, **kwargs):
-        super().__init__(env, seed = None, *args, **kwargs)
-        self.env = env
-        self.seed = random.randint(0,10000) if seed == None else seed
+    def __init__(self, make_env_fun, *args, **kwargs):
+        super().__init__(make_env_fun, *args, **kwargs)
+        self.args = args
+        self.kwargs = kwargs
+        self.env = make_env_fun(*args, **kwargs)
+        self.seed = kwargs['seed']
         self.__actor_state = None # It must be in a tenor format
+        self.__actor_reward = None
         self.__actor_done_flag = True # Assume the initial state is done
 
     def run(self):
@@ -176,6 +179,14 @@ class ActorAsync(Async):
         self.__actor_state = np.asarray(value)
 
     @property
+    def actor_reward(self):
+        return self.__actor_reward
+
+    @actor_reward.setter
+    def actor_reward(self, value):
+        self.__actor_reward = np.asarray(value)
+
+    @property
     def actor_done_flag(self):
         return self.__actor_done_flag
 
@@ -191,8 +202,8 @@ class NetworkActorAsync(ActorAsync):
     Policy 是一个network的agent
     Policy 是从state到action的映射
     '''
-    def __init__(self, env, network_lock, seed = None, *args, **kwargs):
-        super().__init__(env, seed)
+    def __init__(self, make_env_fun, network_lock, *args, **kwargs):
+        super().__init__(make_env_fun, *args, **kwargs)
         self._network_lock = network_lock
         self._network = None
 
@@ -302,8 +313,8 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
             else:
                 raise StopIteration
 
-    def __init__(self, env, network_lock, seed = None, player_number=2, *args, **kwargs):
-        super().__init__(env, seed)
+    def __init__(self, make_env_fun, network_lock, player_number=2, *args, **kwargs):
+        super().__init__(make_env_fun, *args, **kwargs)
         self._player_number = player_number
         self._network_lock = network_lock
         self._network_list = deque(maxlen=player_number)

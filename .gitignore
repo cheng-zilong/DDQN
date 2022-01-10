@@ -144,3 +144,4 @@ save_model/*
 tmp/*
 frames/*
 save_video/*
+*.lprof

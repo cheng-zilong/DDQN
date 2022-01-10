@@ -17,6 +17,7 @@ class ReplayBufferAsync(Async):
     ADD = 0
     SAMPLE = 1
     CLOSE = 2
+    CHECK_SIZE = 3
 
     def __init__(self, buffer_size, batch_size, stack_frames, seed, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,6 +47,9 @@ class ReplayBufferAsync(Async):
             elif cmd == self.SAMPLE:
                 self._sample(msg)
 
+            elif cmd == self.CHECK_SIZE:
+                self._check_size()
+
             elif cmd == self.CLOSE:
                 self._worker_pipe.close()
                 return
@@ -66,6 +70,10 @@ class ReplayBufferAsync(Async):
         if (not hasattr(self, '_data_example')) and data[0] is not None: #如果action不为None，那可以作为data example
             self._data_example = data
         self.send(self.ADD, data)
+
+    def init_data_example(self, action, obs, reward, done):
+        data = (action, obs, reward, done)  
+        self._data_example = data
 
     def sample(self):
         ## return share tensor the first time, the return idx
@@ -91,6 +99,10 @@ class ReplayBufferAsync(Async):
             self.send(self.SAMPLE, None)
             self.receive()
         return self.state_share[self.sample_idx], self.action_share[self.sample_idx], self.reward_share[self.sample_idx], self.next_state_share[self.sample_idx], self.done_share[self.sample_idx]
+
+    def check_size(self) -> int:
+        self.send(self.CHECK_SIZE, None)
+        return self.receive()
 
     def close(self):
         self.send(self.CLOSE, None)
@@ -139,3 +151,6 @@ class ReplayBufferAsync(Async):
                 current_frames = LazyFrames(list(self._frames))
                 self._replay_buffer.add(self._last_frames, action, reward, current_frames, done)
                 self._last_frames = current_frames
+
+    def _check_size(self):
+        self._send(len(self._replay_buffer))

@@ -235,7 +235,6 @@ class CnnQNetwork_TicTacToe(nn.Module):
 class BasicBlock(nn.Module):
 	def __init__(self, filters_num):
 		super().__init__()
-		
 		self.conv_block1 = nn.Sequential(
 			nn.Conv2d(filters_num, filters_num, 3, padding=1, stride=1),
 			nn.BatchNorm2d(filters_num),
@@ -250,52 +249,20 @@ class BasicBlock(nn.Module):
 	def forward(self, x):
 		return self.relu(self.conv_block2(self.conv_block1(x)) + x)
 
-# Define network
-class Net100(nn.Module):
-	def __init__(self):
-		super(Net100, self).__init__()
-		channel_num = 16
-		
-		#TODO: 1x1 convolution -> relu (to convert feature channel number)
-		self.init_block = nn.Sequential(
-			nn.Conv2d(1, channel_num, 1),
-			nn.ReLU(),
-		) 
-		#TODO: stack 100 BasicBlocks
-		self.basic_blocks = nn.ModuleList([BasicBlock(channel_num) for i in range(100)])
-
-		#TODO: 1x1 convolution -> sigmoid (to convert feature channel number)
-		self.final_block = nn.Sequential(
-			nn.Conv2d(channel_num, 1, 1),
-			nn.Sigmoid(),
-		) 
-
-	def forward(self, x):
-		
-		#TODO: forward
-		x = self.init_block(x)
-		for i, _ in enumerate(self.basic_blocks):
-			x = self.basic_blocks[i](x)
-		
-		out = self.final_block(x)
-		return out
-
-
-
 class AlphaZeroNetwork(nn.Module):
     '''
     TODO No layer init
     '''
-    def __init__(self, input_shape, num_actions, residual_num=19, filters_num=256, *args, **kwargs):
+    def __init__(self, input_shape, num_actions, residual_num, filters_num, *args, **kwargs):
         super().__init__()
         self._num_actions = num_actions
         self._input_shape = input_shape
         self._filters_num = filters_num
         self.body_cnn = nn.Sequential(
-			nn.Conv2d(input_shape[0], self._filters_num, 3, padding=1, stride=1),
-			nn.ReLU(),
-            *[BasicBlock(self._filters_num) for _ in range(residual_num)],
+			nn.Conv2d(input_shape[0], self._filters_num, 3, padding=1),
+			nn.ReLU()
 		)  
+        self.residual_blocks = nn.ModuleList([BasicBlock(self._filters_num) for _ in range(residual_num)])
         self.policy_head_cnn = nn.Sequential(
 			nn.Conv2d(self._filters_num, 2, 1),
 			nn.BatchNorm2d(2),
@@ -315,9 +282,12 @@ class AlphaZeroNetwork(nn.Module):
             nn.Linear(256, 1),
             nn.Tanh()
 		) 
-        
+    
     def forward(self, x):
-        x = self.body_cnn(torch.as_tensor(x, device=torch.device(0), dtype=torch.float))
+        x = torch.as_tensor(x, device=torch.device(0), dtype=torch.float)
+        x = self.body_cnn(x)
+        for rb in self.residual_blocks:
+            x = rb(x)
         p = self.policy_head_cnn(x)
         p = p.view(p.size(0), -1)
         p = self.policy_head_fc(p)
