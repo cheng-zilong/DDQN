@@ -51,7 +51,6 @@ class ReplayBufferAsync(Async):
                 self._check_size()
 
             elif cmd == self.CLOSE:
-                self._worker_pipe.close()
                 return
                 
             else:
@@ -106,7 +105,6 @@ class ReplayBufferAsync(Async):
 
     def close(self):
         self.send(self.CLOSE, None)
-        self._pipe.close()
 
     def _sample(self, msg):
         if not self._is_init_cache:

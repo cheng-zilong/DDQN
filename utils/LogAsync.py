@@ -25,8 +25,9 @@ class LogAsync(mp.Process, metaclass=Singleton):
         self._policy_name = policy_class
         self._env_name = env_name
         self._seed = seed
-        self._args = kwargs
-        self.__pipe, self.__worker_pipe = mp.Pipe()
+        self._args = args
+        self._kwargs = kwargs
+        self.__queue = mp.Queue(maxsize=50)
         self._log_dict = dict()
         now = datetime.now()
         self._run_name = self._policy_name + '(' + self._env_name + ')_%d_'%self._seed + now.strftime("%Y%m%d-%H%M%S")
@@ -41,10 +42,9 @@ class LogAsync(mp.Process, metaclass=Singleton):
         return self._project_name
 
     def run(self):
-        
-        wandb.init(name=self._run_name, project=self._project_name, config=self._args)
+        wandb.init(name=self._run_name, project=self._project_name, config=self._kwargs)
         while True:
-            cmd, data = self.__worker_pipe.recv()
+            cmd, data = self.__queue.get()
             if cmd == self.ADD:
                 for key in data:
                     self._log_dict[key] = data[key]
@@ -76,26 +76,25 @@ class LogAsync(mp.Process, metaclass=Singleton):
                 print('-------------------')
                 
             elif cmd == self.EXIT:
-                self.__worker_pipe.close()
                 return 
 
             else:
                 raise NotImplementedError
 
     def add(self, data):
-        self.__pipe.send([self.ADD, data])
+        self.__queue.put([self.ADD, data])
         
     def delete(self, keys):
-        self.__pipe.send([self.DELETE, keys])
+        self.__queue.put([self.DELETE, keys])
 
     def wandb_print(self, caption, step):
-        self.__pipe.send([self.WANDB_PRINT, [caption, step]])
+        self.__queue.put([self.WANDB_PRINT, [caption, step]])
 
     def terminal_print(self, caption = "", log_dict_tmp = None):
-        self.__pipe.send([self.TERMINAL_PRINT, [caption, log_dict_tmp]])
+        self.__queue.put([self.TERMINAL_PRINT, [caption, log_dict_tmp]])
 
     def exit(self):
-        self.__pipe.send([self.EXIT, None])
-        self.__pipe.close()
+        self.__queue.put([self.EXIT, None])
+        self.__queue.close()
 
 logger = LogAsync()

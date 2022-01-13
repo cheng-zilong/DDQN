@@ -29,6 +29,7 @@ class LinearQNetwork(nn.Module):
         super().__init__()
         self._num_actions = num_actions
         self._input_shape = input_shape
+        self.dummy_param = nn.Parameter(torch.empty(0))
         self.layers = nn.Sequential(
             layer_init(nn.Linear(input_shape[0], 128)),
             nn.ReLU(),
@@ -38,7 +39,7 @@ class LinearQNetwork(nn.Module):
         )
         
     def forward(self, x):
-        return self.layers(torch.as_tensor(x, device=torch.device(0), dtype=torch.float))
+        return self.layers(torch.as_tensor(x, device=self.dummy_param.device, dtype=torch.float))
     
     def eps_greedy_act(self, state, eps, network_lock, *args, **kwargs):
         '''
@@ -47,7 +48,7 @@ class LinearQNetwork(nn.Module):
         eps_prob =  random.random()
         if eps_prob > eps:
             with network_lock, torch.no_grad():
-                state = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
+                state = torch.as_tensor(state, device=self.dummy_param.device, dtype=torch.float).unsqueeze(0)
                 q_value = self.forward(state)
                 return q_value.max(1)[1].item()
         else:
@@ -94,6 +95,7 @@ class CatLinearQNetwork(nn.Module):
         self.Vmax         = v_max
         self.atoms_cpu = torch.linspace(self.Vmin, self.Vmax, self.num_atoms)
         self.atoms_gpu = self.atoms_cpu.cuda()
+        self.dummy_param = nn.Parameter(torch.empty(0))
         self.layers = nn.Sequential(
             layer_init(nn.Linear(input_shape[0], 128)),
             nn.ReLU(),
@@ -105,12 +107,12 @@ class CatLinearQNetwork(nn.Module):
         )
 
     def forward(self, x):
-        x = self.layers(torch.as_tensor(x, device=torch.device(0), dtype=torch.float))
+        x = self.layers(torch.as_tensor(x, device=self.dummy_param.device, dtype=torch.float))
         x = F.softmax(x.view(-1, self.num_atoms)).view(-1, self._num_actions, self.num_atoms)
         return x
     
     def forward_log(self, x):
-        x = self.layers(torch.as_tensor(x, device=torch.device(0), dtype=torch.float))
+        x = self.layers(torch.as_tensor(x, device=self.dummy_param.device, dtype=torch.float))
         x = F.log_softmax(x.view(-1, self.num_atoms)).view(-1, self._num_actions, self.num_atoms)
         return x
 
@@ -121,7 +123,7 @@ class CatLinearQNetwork(nn.Module):
         eps_prob =  random.random()
         if eps_prob > eps:
             with network_lock, torch.no_grad():
-                state = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
+                state = torch.as_tensor(state, device=self.dummy_param.device, dtype=torch.float).unsqueeze(0)
                 self.action_prob = self.forward(state)
                 self.action_Q = (self.action_prob * self.atoms_gpu).sum(-1)
             return torch.argmax(self.action_Q, dim=-1).item()
@@ -149,14 +151,14 @@ class CatCnnQNetwork(CatLinearQNetwork):
         )
 
     def forward(self, x):
-        x = self.layers(x / 255.0)
+        x = self.layers(torch.as_tensor(x / 255.0, device=self.dummy_param.device, dtype=torch.float))
         x = x.view(x.size(0), -1)
         x = self.fc(x).view(-1, self._num_actions, self.num_atoms)
         x = F.softmax(x, dim=-1)
         return x
 
     def forward_log(self, x):
-        x = self.layers(x / 255.0)
+        x = self.layers(torch.as_tensor(x / 255.0, device=self.dummy_param.device, dtype=torch.float))
         x = x.view(x.size(0), -1)
         x = self.fc(x).view(-1, self._num_actions, self.num_atoms)
         x = F.log_softmax(x, dim=-1)
@@ -173,6 +175,7 @@ class CnnQNetwork_TicTacToe(nn.Module):
         super().__init__()
         self._num_actions = num_actions
         self._input_shape = input_shape
+        self.dummy_param = nn.Parameter(torch.empty(0))
         self.layers = nn.Sequential(
             layer_init(nn.Conv2d(input_shape[0], 192, kernel_size=5, padding=2, stride=1)),
             nn.ReLU(),
@@ -210,7 +213,7 @@ class CnnQNetwork_TicTacToe(nn.Module):
         )
         
     def forward(self, x):
-        x = self.layers(torch.as_tensor(x, device=torch.device(0), dtype=torch.float))
+        x = self.layers(torch.as_tensor(x, device=self.dummy_param.device, dtype=torch.float))
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
@@ -222,26 +225,24 @@ class CnnQNetwork_TicTacToe(nn.Module):
         eps_prob =  random.random()
         if eps_prob > eps:
             with network_lock, torch.no_grad():
-                state = torch.as_tensor(state, device=torch.device(0), dtype=torch.float).unsqueeze(0)
+                state = torch.as_tensor(state, device=self.dummy_param.device, dtype=torch.float).unsqueeze(0)
                 q_value = self.forward(state)
                 q_value[:,~legal_action_mask] = -inf
             return q_value.max(1)[1].item()
         else:
             return random.choice(np.asarray(range(self._num_actions))[legal_action_mask])
 
-
-
 # Define block
 class BasicBlock(nn.Module):
 	def __init__(self, filters_num):
 		super().__init__()
 		self.conv_block1 = nn.Sequential(
-			nn.Conv2d(filters_num, filters_num, 3, padding=1, stride=1),
+			layer_init(nn.Conv2d(filters_num, filters_num, 3, padding=1, stride=1)),
 			nn.BatchNorm2d(filters_num),
 			nn.ReLU(),
 		) 
 		self.conv_block2 = nn.Sequential(
-			nn.Conv2d(filters_num, filters_num, 3, padding=1, stride=1),
+			layer_init(nn.Conv2d(filters_num, filters_num, 3, padding=1, stride=1)),
 			nn.BatchNorm2d(filters_num),
 		)
 		self.relu = nn.ReLU()
@@ -250,41 +251,39 @@ class BasicBlock(nn.Module):
 		return self.relu(self.conv_block2(self.conv_block1(x)) + x)
 
 class AlphaZeroNetwork(nn.Module):
-    '''
-    TODO No layer init
-    '''
     def __init__(self, input_shape, num_actions, residual_num, filters_num, *args, **kwargs):
         super().__init__()
         self._num_actions = num_actions
         self._input_shape = input_shape
         self._filters_num = filters_num
+        self.dummy_param = nn.Parameter(torch.empty(0))
         self.body_cnn = nn.Sequential(
-			nn.Conv2d(input_shape[0], self._filters_num, 3, padding=1),
+			layer_init(nn.Conv2d(input_shape[0], self._filters_num, 3, padding=1)),
 			nn.ReLU()
 		)  
         self.residual_blocks = nn.ModuleList([BasicBlock(self._filters_num) for _ in range(residual_num)])
         self.policy_head_cnn = nn.Sequential(
-			nn.Conv2d(self._filters_num, 2, 1),
+			layer_init(nn.Conv2d(self._filters_num, 2, 1)),
 			nn.BatchNorm2d(2),
-            nn.ReLU()
+            nn.LeakyReLU() #防止梯度消失
 		) 
         self.policy_head_fc = nn.Sequential(
 			nn.Linear(2 * input_shape[1] * input_shape[2], num_actions)
 		) 
         self.value_head_cnn = nn.Sequential(
-			nn.Conv2d(self._filters_num, 1, 1),
+			layer_init(nn.Conv2d(self._filters_num, 1, 1)),
 			nn.BatchNorm2d(1),
-            nn.ReLU()
+            nn.LeakyReLU() #防止梯度消失
 		) 
         self.value_head_fc = nn.Sequential(
-			nn.Linear(1 * input_shape[1] * input_shape[2], 256),
-            nn.ReLU(),
-            nn.Linear(256, 1),
+			layer_init(nn.Linear(1 * input_shape[1] * input_shape[2], 256)),
+            nn.LeakyReLU(), #防止梯度消失
+            layer_init(nn.Linear(256, 1)),
             nn.Tanh()
 		) 
     
     def forward(self, x):
-        x = torch.as_tensor(x, device=torch.device(0), dtype=torch.float)
+        x = torch.as_tensor(x, device=self.dummy_param.device, dtype=torch.float)
         x = self.body_cnn(x)
         for rb in self.residual_blocks:
             x = rb(x)

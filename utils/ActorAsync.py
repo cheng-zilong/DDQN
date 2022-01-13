@@ -30,6 +30,7 @@ class ActorAsync(Async):
         self.args = args
         self.kwargs = kwargs
         self.env = make_env_fun(*args, **kwargs)
+        self.env.reset()
         self.seed = kwargs['seed']
         self.__actor_state = None # It must be in a tenor format
         self.__actor_reward = None
@@ -70,16 +71,18 @@ class ActorAsync(Async):
                 self._render(*(msg[0]), **(msg[1]))
 
             elif cmd == self.EXIT:
-                self._worker_pipe.close()
                 return
 
             else:
                 raise NotImplementedError
 
-    def collect(self, steps_number, *args, **kwargs):
+    def collect(self, steps_number, is_block = True, *args, **kwargs):
         kwargs['steps_number'] = steps_number
         self.send(self.COLLECT, (args, kwargs))
-        return self.receive()
+        if is_block:
+            return self.receive()
+        else:
+            return None
 
     def reset(self):
         self.send(self.RESET, None)
@@ -91,7 +94,6 @@ class ActorAsync(Async):
 
     def close(self):
         self.send(self.EXIT, None)
-        self._pipe.close()
 
     def update_policy(self, *args, **kwargs):
         self.send(self.UPDATE_POLICY, (args, kwargs))
@@ -127,7 +129,7 @@ class ActorAsync(Async):
         self.actor_state = self.env.reset()
         return self.actor_state
 
-    def _collect(self, steps_number, *args, **kwargs):
+    def _collect(self, steps_number, *args, **kwargs): #TODO 直接加入到dataset，不需要经过framework
         data = []
         for _ in range(steps_number):
             one_step = self._step(*args, **kwargs)
@@ -392,7 +394,6 @@ class MultiPlayerSequentialGameNetworkActorAsync(ActorAsync):
                     self._actor_done_list.append(True)
                     self._actor_info_list.append(None) 
                 self._not_done_number = player_idx + 1
-            # TODO some efficiency prblem with slicing with deque
         reward_array = np.asarray(self._actor_reward_list)
         return list(zip(self._actor_action_list[0:self._player_number], 
                         self._actor_state_list[0:self._player_number], 
