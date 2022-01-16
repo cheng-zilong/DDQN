@@ -65,21 +65,24 @@ if __name__ == '__main__':
     kwargs['filters_num'] = 256
     kwargs['board_size'] = 7
     kwargs['win_size'] = 4
-    kwargs['lr'] = 0.02
-    kwargs['lr_decay_step_size'] = int(3e5)
+    kwargs['SGD_weight_decay'] = 1e-4
+    kwargs['SGD_momentum'] = 0.9
+    kwargs['lr'] = 0.002
+    kwargs['lr_decay_step_size'] = int(5e4)
     kwargs['actors_num'] = 3
     kwargs['stack_frames'] = 1
     kwargs['train_start_buffer_size'] = int(10000)
-    kwargs['buffer_size'] = int(5e4)
+    kwargs['buffer_size'] = int(1e5)
     kwargs['train_steps'] = int(9e5)
     kwargs['batch_size'] = 256
     AlphaZero(
         make_env_fun = make_gomuku,
         network_fun = AlphaZeroNetwork, #CnnQNetwork, #AlphaZeroNetwork,
-        optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),
+        # optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),
+        optimizer_fun = lambda params: torch.optim.SGD(params, lr=kwargs['lr'], weight_decay=kwargs['SGD_weight_decay'], momentum=kwargs['SGD_momentum']),
         **kwargs
     ).train()
-    # play_with_me(make_gomuku,AlphaZeroNetwork,'save_model/AlphaZero(TotalRewardWrapper)_4_20220113-111615/50000.pt', False, **kwargs)
-    # AI_play_again_AI(make_gomuku,AlphaZeroNetwork,'save_model/AlphaZero(TotalRewardWrapper)_4_20220112-121138/380000.pt', **kwargs)
+    # play_with_me(make_gomuku,AlphaZeroNetwork,'save_model/AlphaZero(TotalRewardWrapper)_4_20220114-063557/70000.pt', False, **kwargs) # TODO start with 4, 3 has error
+    # AI_play_again_AI(make_gomuku,AlphaZeroNetwork,'save_model/AlphaZero(TotalRewardWrapper)_4_20220114-063557/60000.pt', **kwargs)
 
 

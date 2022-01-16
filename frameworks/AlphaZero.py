@@ -105,12 +105,12 @@ class AlphaZero:
                 })
                 logger.wandb_print('(Main Thread)', step=train_idx)
 
-            if train_idx % 10000 == 0:
+            if train_idx % 10000 == 0: # TODO add config
                 if not os.path.exists('save_model/' + logger._run_name + '/'):
                     os.makedirs('save_model/' + logger._run_name + '/')
                 torch.save(self.network.state_dict(), 'save_model/' + logger._run_name + '/' + str(train_idx) +'.pt')
 
-            time.sleep(1)
+            time.sleep(2)
 
 class Node:
     def __init__(self,  current_player: int, action: int, prior_prob: float, parent_node: Node):
@@ -236,9 +236,8 @@ class AlphaZeroActorAsync(ActorAsync):
                     for rot in [0,1,2,3]:
                         for idx, (current_player, action_prob, state) in enumerate(game_line):
                             flip_and_rotate_action = action_prob.reshape(int(np.sqrt(len(action_prob))), -1) if action_prob is not None else None
-                            flip_and_rotate_state = state
                             flip_and_rotate_action = np.rot90(flip_and_rotate_action, k = rot, axes=(0,1)) if action_prob is not None else None
-                            flip_and_rotate_state = np.rot90(flip_and_rotate_state, k = rot, axes=(1,2))
+                            flip_and_rotate_state = np.rot90(state, k = rot, axes=(1,2))
                             if is_flip:
                                 flip_and_rotate_action = np.flip(flip_and_rotate_action, 0) if action_prob is not None else None
                                 flip_and_rotate_state = np.flip(flip_and_rotate_state, 1)
@@ -378,7 +377,7 @@ class AlphaZeroActorAsync(ActorAsync):
                     self.root_node.action = None
                     self.root_node.prior_prob_P = None
                 return
-        print("ohohohoh")
+        self.init_root_node(env, network)
 
     def init_root_node(self, env:gym.Env, network:nn.Module):
         with torch.no_grad():
@@ -444,18 +443,18 @@ def AI_play_again_AI(make_env_fun, network_fun, network_path, *args, **kwargs):
     # logger.init(*args, **kwargs)
     network = network_fun(env.observation_space.shape, env.action_space.n, *args, **kwargs).cuda()
     network.load_state_dict(torch.load(network_path))
-    AI_player = AlphaZeroActorAsync(make_env_fun, None, None, *args, **kwargs )
-    AI_player.init_root_node(env, network)
+    # AI_player = AlphaZeroActorAsync(make_env_fun, None, None, *args, **kwargs )
+    # AI_player.init_root_node(env, network)
     current_player = 0
     while not done:
         p, v = network([state])
         print(p.reshape(int(np.sqrt(env.action_space.n)), -1))
         print(v)
-        # action = torch.argmax(p).item()
-        action, _ = AI_player.mcts(network, 0)
+        action = torch.argmax(p).item()
+        # action, _ = AI_player.mcts(network, 0)
         print(f'AI turn:{action}')
         state, _, done, infos = env.step(action)
-        AI_player.change_root_node(action, env, network)
+        # AI_player.change_root_node(action, env, network)
         env.render()
         print(infos)
         current_player = (current_player+1)%2
