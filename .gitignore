@@ -145,3 +145,4 @@ tmp/*
 frames/*
 save_video/*
 *.lprof
+tree.txt

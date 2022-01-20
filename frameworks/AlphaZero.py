@@ -1,3 +1,4 @@
+# 现在这个问题：样本产生速度太慢，batch size太小
 from __future__ import annotations
 from logging import root
 from multiprocessing import Value
@@ -24,15 +25,17 @@ from torch import optim
 from torch.multiprocessing import Value
 import os
 import gym
+from collections import namedtuple
+import itertools
 class AlphaZero:
     def __init__(self, make_env_fun, network_fun, optimizer_fun, *args, **kwargs):
         self.args = args 
         self.kwargs = kwargs 
         self._init_seed()
-        self.env = make_env_fun(*args, **kwargs)
+        self.dummy_env = make_env_fun(*args, **kwargs)
 
         kwargs['policy_class'] = 'AlphaZero'
-        kwargs['env_name'] = self.env.__class__.__name__
+        kwargs['env_name'] = self.dummy_env.__class__.__name__
         kwargs['project_name'] = 'AlphaZero'
         logger.init(*args, **kwargs)
 
@@ -52,9 +55,9 @@ class AlphaZero:
             self.mcts_actors_list[-1].start()
         self.replay_buffer.start()
 
-        self.network = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda().share_memory() 
+        self.network = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda().share_memory() 
         self.optimizer = optimizer_fun(self.network.parameters()) 
-        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=100000, gamma=0.1) #TODO add to config
+        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=self.kwargs['lr_decay_step_size'], gamma=self.kwargs['lr_decay_gamma']) #TODO add to config
 
     def _init_seed(self):
         torch.manual_seed(self.kwargs['seed'])
@@ -65,13 +68,14 @@ class AlphaZero:
     def train(self):
         self.network.train()
         self.replay_buffer.init_data_example(
-            action=np.ones(self.env.action_space.n, dtype=np.float32), 
-            obs=self.env.reset(),
+            action=np.ones(self.dummy_env.action_space.n, dtype=np.float32), 
+            obs=self.dummy_env.reset(),
             reward=1,
             done=True
         )
         for i in range(self.actors_num):
             self.mcts_actors_list[i].collect(self.network)
+            time.sleep(60)
         
         while self.replay_buffer.check_size() < self.kwargs['train_start_buffer_size']:
             logger.add({
@@ -109,11 +113,12 @@ class AlphaZero:
                 if not os.path.exists('save_model/' + logger._run_name + '/'):
                     os.makedirs('save_model/' + logger._run_name + '/')
                 torch.save(self.network.state_dict(), 'save_model/' + logger._run_name + '/' + str(train_idx) +'.pt')
+            
+            time.sleep(1)
 
-            time.sleep(2)
 
 class Node:
-    def __init__(self,  current_player: int, action: int, prior_prob: float, parent_node: Node):
+    def __init__(self,  current_player: int, action: int, prior_prob: float, parent_node: Node, worker_id:int):
         # current_player执行了action，得到了state
         self.current_player = current_player
         self.action = action
@@ -127,6 +132,7 @@ class Node:
         self.prior_prob_P = prior_prob
 
         self.is_terminal = False
+        self.worker_id = worker_id
 
     def choose_and_update(
             self,  
@@ -151,7 +157,8 @@ class Node:
             current_player=current_player, 
             action=action, 
             prior_prob=prior_prob, 
-            parent_node=self
+            parent_node=self,
+            worker_id=self.worker_id
         )
         self.child_list.append(new_node)
         return new_node
@@ -182,220 +189,290 @@ def puct(p_visit_num:int, visit_num:int, prior_p:float, mean_win_num_Q:float) ->
 class AlphaZeroActorAsync(ActorAsync):
     TotalActorNumber=0
     game_counter = Value('i', 0)
-    def __init__(self, make_env_fun, replay_buffer:ReplayBufferAsync, network_lock, *args, **kwargs):
+    def __init__(self, make_env_fun, replay_buffer:ReplayBufferAsync, network_lock, workers_num = 64, *args, **kwargs):
         super().__init__(make_env_fun=make_env_fun, *args, **kwargs)
+        self.envs_list = [make_env_fun(*args, **kwargs) for _ in range(workers_num)]
         self._network_lock = network_lock
         self.replay_buffer = replay_buffer
         self.simulator_env:TicTacToeEnv = deepcopy(self.env)
         self.actor_id = AlphaZeroActorAsync.TotalActorNumber
         AlphaZeroActorAsync.TotalActorNumber+=1
-        self.softmax = nn.Softmax(dim=0)
 
     def collect(self, network:AlphaZeroNetwork, *args, **kwargs):
         kwargs['network'] = network
         self.send(self.COLLECT, (args, kwargs))
 
+    # @profile
     def _collect(self, network:AlphaZeroNetwork):
-        game_line = []
-        #[(current_player, action, state]), ... ]
+        _game_lines_dict = dict()
+        GameData = namedtuple('GameData', 'player action state')
+        # {0: (current_player, action, state]), ... 
+        #  1: (current_player, action, state]), ... }
         self.shared_network = network 
         self.network = deepcopy(self.shared_network)
         self.network.eval()
-        mcts_time_list = [0]
-        game_idx = 0
-        game_tic = time.time()
-        self.epi_step_idx = 0
+        _info_dict = dict()
         while True:
             if self.actor_done_flag:
+                try:
+                    logger.add({
+                        'game_count': AlphaZeroActorAsync.game_counter.value,
+                        'mcts_time':mean(_mcts_time_list),
+                        'game_time':time.time() - _game_tic,
+                        'game_steps':_ep_step_idx/len(self.envs_list),
+                        # 'replay_buffer_size':    str(self.replay_buffer.check_size()),
+                    })
+                except:
+                    logger.add({
+                        'game_count': 0,
+                        'mcts_time':-1,
+                        'game_time':-1,
+                        'game_steps':-1,
+                        # 'replay_buffer_size':    str(self.replay_buffer.check_size()),
+                    })
+                # logger.wandb_print('(Single Process Test)', 0)
+
+                _ep_step_idx, _mcts_step_idx, _mcts_time_list, _game_tic = 0, 0, [], time.time()
+                self.actor_done_flag = False 
                 self.update_network()
-                game_time = time.time() - game_tic
-                game_tic = time.time()
-                with AlphaZeroActorAsync.game_counter.get_lock():
-                    AlphaZeroActorAsync.game_counter.value += 1
-                    game_idx = AlphaZeroActorAsync.game_counter.value 
-                logger.add({
-                    'game_count': game_idx,
-                    'mcts_time':mean(mcts_time_list),
-                    'game_time':game_time,
-                    'game_steps':self.epi_step_idx
-                })
-
-                # logger.terminal_print(  caption = '------------(Actor Thread %d)'%self.actor_id, 
-                #                         log_dict_tmp={
-                #                             '------------game_idx': str(game_idx),
-                #                             '------------network_mode': str(self.network.training),
-                #                             '------------mcts_time': str(mean(mcts_time_list)),
-                #                             '------------game_time': str(game_time),
-                #                             '------------game_steps': str(self.epi_step_idx)
-                #                         })
-
-                game_idx+=1
-                self.epi_step_idx = 0
-                game_line_size = len(game_line)
-                for is_flip in [False, True]:# 利用棋盘旋转对称性
-                    for rot in [0,1,2,3]:
+                with AlphaZeroActorAsync.game_counter.get_lock(): AlphaZeroActorAsync.game_counter.value += len(self.envs_list)
+                for woker_idx, game_line in _game_lines_dict.items():
+                    for is_flip, rot in itertools.product([False, True],[0,1,2,3]):# 利用棋盘旋转对称性
                         for idx, (current_player, action_prob, state) in enumerate(game_line):
-                            flip_and_rotate_action = action_prob.reshape(int(np.sqrt(len(action_prob))), -1) if action_prob is not None else None
-                            flip_and_rotate_action = np.rot90(flip_and_rotate_action, k = rot, axes=(0,1)) if action_prob is not None else None
+                            if action_prob is None:
+                                flip_and_rotate_state = np.flip(np.rot90(state, k = rot, axes=(1,2)), 1) if is_flip else np.rot90(state, k = rot, axes=(1,2))
+                                self.replay_buffer.add(
+                                    action=None, 
+                                    obs=flip_and_rotate_state, 
+                                    reward=0, 
+                                    done=False
+                                )
+                                continue
+                            flip_and_rotate_action = np.rot90(action_prob.reshape(int(np.sqrt(len(action_prob))), -1), k = rot, axes=(0,1))
                             flip_and_rotate_state = np.rot90(state, k = rot, axes=(1,2))
                             if is_flip:
-                                flip_and_rotate_action = np.flip(flip_and_rotate_action, 0) if action_prob is not None else None
+                                flip_and_rotate_action = np.flip(flip_and_rotate_action, 0)
                                 flip_and_rotate_state = np.flip(flip_and_rotate_state, 1)
-                            if info['winner'] == -1 or action_prob is None:
+                            if _info_dict[woker_idx]['winner'] == -1 or action_prob is None:
                                 reward = 0
-                            elif info['winner'] == current_player:
+                            elif _info_dict[woker_idx]['winner'] == current_player:
                                 reward = 1
                             else:
                                 reward = -1
-                            self.replay_buffer.add(flip_and_rotate_action.reshape(-1) if action_prob is not None else None, flip_and_rotate_state, reward, False if idx!=game_line_size-1 else True)
-                self.actor_state = self.env.reset()
-                self.init_root_node(self.env, self.network)
-                self.actor_done_flag = False 
-                game_line = [(self.root_node.current_player, None, self.actor_state)]
-                mcts_time_list = []
-            mcts_tic = time.time()
-            action, action_prob = self.mcts(self.network, 0 if self.epi_step_idx >= 2 else 1) # TODO add 2 config
-            mcts_time_list.append(time.time()-mcts_tic)
-            self.actor_state, _, self.actor_done_flag, info = self.env.step(action)
-            game_line.append(((self.env.next_player+1)%2, action_prob, self.actor_state)) # next_player convert to current player
-            self.change_root_node(action, self.env, self.network)
-            self.epi_step_idx+=1
+                            self.replay_buffer.add(
+                                action=flip_and_rotate_action.reshape(-1), 
+                                obs=flip_and_rotate_state, 
+                                reward=reward, 
+                                done=False if idx!= len(game_line)-1 else True
+                            )
+                states_list = [env.reset() for env in self.envs_list]
+                root_node_list = [self.init_root_node(env, self.network, idx) for idx, env in enumerate(self.envs_list)]
+                for idx in range(len(self.envs_list)):
+                    _game_lines_dict[idx] = [GameData(root_node_list[idx].current_player, None, states_list[idx])]
+            _mcts_tic = time.time()
+            actions, actions_prob = self.mcts(
+                network=self.network, 
+                temperature=0.1 if _mcts_step_idx >= 2 else 1, 
+                root_node_list=root_node_list
+            ) # TODO add 2 config
+            _mcts_time_list.append(time.time()-_mcts_tic)
+            done_list = [False] * len(root_node_list)
+            for root_node_idx, (root_node, action) in enumerate(zip(root_node_list[:], actions[:])):
+                _ep_step_idx+=1
+                state, _, done_list[root_node_idx], _info_dict[root_node.worker_id] = self.envs_list[root_node.worker_id].step(action)
+                _game_lines_dict[root_node.worker_id].append(GameData(
+                    (self.envs_list[root_node.worker_id].next_player+1)%2, 
+                    actions_prob[root_node_idx], 
+                    state
+                ))
+            for root_node_idx, root_node in enumerate(root_node_list[:]):
+                if done_list[root_node_idx]:
+                    root_node_list.remove(root_node)
+            actions = np.delete(actions, np.where(done_list))
+            if len(root_node_list)==0:
+                self.actor_done_flag = True
+            self.update_root_node_list(
+                root_node_list=root_node_list, 
+                actions= actions, 
+                envs=self.envs_list, 
+                network=self.network
+            )
+            _mcts_step_idx+=1
 
     def update_network(self):
         with self._network_lock:
             self.network.load_state_dict(self.shared_network.state_dict())
     
     # @profile
-    def mcts(self, network, temperature):
+    def mcts(self, network, temperature:int, root_node_list:list[Node]):
         # for i in tqdm(range(self.kwargs['mcts_sim_num'])):
         network.eval()
         for i in range(self.kwargs['mcts_sim_num']):
-            leaf_node = self._select(network = network, root_node = self.root_node)
-            self._expand_and_envaluate(leaf_node)
-            self._backup(leaf_node)
-        # logger.terminal_print(caption = '------------(Actor Thread %d)'%self.actor_id, 
-        #         log_dict_tmp={'------------ep_step': str(self.epi_step_idx)}
-        #     )
+            _leaf_node_list = self._select(network, root_node_list, self.simulator_env) 
+            # now the root_node_list is the list of leaf nodes
+            self._expand_and_envaluate_(_leaf_node_list) 
+            # now the root_node_list is the list of initialized leaf nodes
+            _root_node_list = self._backup(_leaf_node_list)
+             # now the root_node_list is the list of root nodes
+        actions_prob = np.zeros((len(_root_node_list), self.env.action_space.n), dtype=np.float32)
+        actions = np.zeros(len(_root_node_list), dtype=np.int32)
+        for idx, root_node in enumerate(_root_node_list):
+            _child_visit_num = np.asarray([child.visit_num_N for child in root_node.child_list])
+            _temp_den = np.sum(_child_visit_num**(1/temperature))
+            for child in root_node.child_list:
+                actions_prob[idx, child.action] = (child.visit_num_N**(1/temperature))/_temp_den
+            assert (np.sum(actions_prob[idx]) > 0.99 and np.sum(actions_prob[idx]) < 1.01), "Probability Error"
+            actions[idx] = np.random.choice(np.arange(self.env.action_space.n), p = actions_prob[idx])
+        return actions, actions_prob
 
-        action_prob = np.zeros(self.simulator_env.action_space.n, dtype=np.float32)
-        if temperature == 1: #
-            for child in self.root_node.child_list:
-                action_prob[child.action] = child.visit_num_N/(self.root_node.visit_num_N-1) # because the root node is chosen one more time
-        elif temperature == 0:
-            visit_list = [child.visit_num_N for child in self.root_node.child_list]
-            action_prob[self.root_node.child_list[np.argmax(visit_list)].action] = 1
-        else:
-            raise Exception('temperature must be 0 or 1')
-        action = np.random.choice(list(range(self.simulator_env.action_space.n)), p = action_prob)
-        return action, action_prob
-
+    
+    @staticmethod
     # @profile
-    def _select(self, network, root_node:Node):
-        current_node = root_node
-        while len(current_node.child_list) != 0: # Not a leaf node 
-            temp_list = [puct(child.parent_node.visit_num_N, child.visit_num_N, child.prior_prob_P, child.mean_win_num_Q) for child in current_node.child_list]
-            current_node = current_node.child_list[np.argmax(temp_list)]
-        # if this is the init state, it has been chosen and update
-        if current_node.is_terminal or current_node.parent_node is None:
-            return current_node
-        
-        # Now a leaf node is chosen, because the leaf node is initlized with only the player, action, and prior prob, generate its state firstly
-        new_state = self.simulator_env.reset_with_state_n_action(current_node.parent_node.state, current_node.action)
-        
-        if self.simulator_env.status != 0: #if this is the terminal leaf
-            if self.simulator_env.winner == -1: # draw
-                value = 0
-            else: # if current player wins
-                value = 1
+    def _select(network:AlphaZeroNetwork, root_node_list:list[Node], simulator_env:gym.Env):
+        current_node_list = root_node_list[:]
+        _new_state_list = []
+        _legal_action_mask_list = []
+        _softmax = nn.Softmax(dim=1)
+        for idx in range(len(current_node_list)):
+            while len(current_node_list[idx].child_list) != 0:
+                 # if len==0, then it is a leaf node or terminal node 
+                temp_list = [puct(current_node_list[idx].visit_num_N, child.visit_num_N, child.prior_prob_P, child.mean_win_num_Q) 
+                    for child in current_node_list[idx].child_list
+                ]
+                current_node_list[idx] = current_node_list[idx].child_list[np.argmax(temp_list)]
+            # if this is the init state, it has been chosen and update
+            if current_node_list[idx].is_terminal or current_node_list[idx].parent_node is None:
+                continue
+            # Now a leaf node is chosen, because the leaf node is initlized with only the player, action, and prior prob, generate its state firstly
+            _new_state = simulator_env.reset_with_state_n_action(
+                current_node_list[idx].parent_node.state, 
+                current_node_list[idx].action
+            )
+            # if this is a terminal leaf, update immediately
+            if simulator_env.status != 0: 
+                current_node_list[idx].choose_and_update(
+                    state=_new_state, 
+                    value=0 if simulator_env.winner == -1 else 1, # draw=0, win=1
+                    legal_action_list=None,
+                    legal_action_prior_list=None,
+                    is_terminal=True
+                ) 
+            # if this is not a terminal leaf, store and update it later
+            else: 
+                _new_state_list.append(_new_state)
+                _legal_action_mask_list.append(simulator_env.legal_action_mask)
+        if len(_new_state_list)==0:
+            return current_node_list
+        with torch.no_grad():
+            p, v = network(_new_state_list)
+            p.masked_fill_(mask = ~torch.tensor(_legal_action_mask_list, device='cuda:0'), value=-inf)# the illegal moves cannot be chosen
+            p = _softmax(p).cpu().numpy()
+            v = v.cpu().numpy().squeeze(-1)
+        # Update the remaining leaf nodes
+        _not_init_idx=0
+        for current_node in current_node_list:
+            if current_node.is_terminal or current_node.parent_node is None:
+                continue
             current_node.choose_and_update(
-                state=new_state, 
-                value=value,
-                legal_action_list=None,
-                legal_action_prior_list=None,
-                is_terminal=True
-            ) 
-        else:
-            # Evaluate the leaf node
-            with torch.no_grad():
-                p, v = network([new_state])
-                p = p.view(-1)
-                p[~self.simulator_env.legal_action_mask] = -inf # the illegal moves cannot be chosen
-                p = self.softmax(p).cpu().numpy()
-                v = v.item()
-            # Update the leaf node
-            legal_action_list = list(np.asarray(range(self.simulator_env.action_space.n))[self.simulator_env.legal_action_mask])
-            current_node.choose_and_update(
-                state=new_state, 
-                value=v,
-                legal_action_list=legal_action_list,
-                legal_action_prior_list=p,
+                state=_new_state_list[_not_init_idx], 
+                value=v[_not_init_idx],
+                legal_action_list=list(np.arange(simulator_env.action_space.n)[_legal_action_mask_list[_not_init_idx]]),
+                legal_action_prior_list=p[_not_init_idx],
                 is_terminal=False
             ) 
-        return current_node
+            assert (np.sum(p[_not_init_idx])>0.99 and np.sum(p[_not_init_idx]) < 1.01), "Probability Error"
+            _not_init_idx+=1
+        assert _not_init_idx==len(_new_state_list), "Algorithm Error"
+        return current_node_list
 
+    
+    @staticmethod
     # @profile
-    def _expand_and_envaluate(self, leaf_node:Node):
-        if leaf_node.is_terminal:
-            return 
-        if leaf_node.parent_node is None: # if this is the root node, add dirichlet noise
-            dirichlet_array = np.random.dirichlet(np.ones(len(leaf_node.legal_action_list))*0.3).astype(np.float32) #TODO add 0.3 config
-            for action_idx, action in enumerate(leaf_node.legal_action_list):
-                leaf_node.generate_child(   
-                    current_player=(leaf_node.current_player+1)%2, 
-                    action=action,
-                    prior_prob=0.75 * leaf_node.legal_action_prior_list[action] + 0.25*dirichlet_array[action_idx]# TODO add 0.75 and 0.25 config
-                )
-        else:
-            for action in leaf_node.legal_action_list:
-                leaf_node.generate_child(   
-                    current_player=(leaf_node.current_player+1)%2, 
-                    action=action,
-                    prior_prob=leaf_node.legal_action_prior_list[action]
-                )
+    def _expand_and_envaluate_(leaf_node_list:list[Node]):
+        for leaf_node in leaf_node_list:
+            if leaf_node.is_terminal:
+                continue 
+            if __debug__: _total_prob=0
+            if leaf_node.parent_node is None: 
+                # if this is the root node, add dirichlet noise
+                dirichlet_array = np.random.dirichlet(np.ones(len(leaf_node.legal_action_list))*0.3).astype(np.float32) #TODO add 0.3 config
+                for action_idx, action in enumerate(leaf_node.legal_action_list):
+                    _prior_prob = 0.75 * leaf_node.legal_action_prior_list[action] + 0.25*dirichlet_array[action_idx]# TODO add 0.75 and 0.25 config
+                    if __debug__: _total_prob += _prior_prob
+                    leaf_node.generate_child(   
+                        current_player=(leaf_node.current_player+1)%2, 
+                        action=action,
+                        prior_prob=_prior_prob
+                    )
+                assert (_total_prob>0.99 and _total_prob<1.01), "Probability Error"
 
-    # @profile
-    def _backup(self, leaf_node:Node):
-        current_node = leaf_node
-        while current_node is not None:
-            current_node.visit_num_N += 1
-            if current_node.current_player == leaf_node.current_player:
-                current_node.win_num_W += leaf_node.value
             else:
-                current_node.win_num_W -= leaf_node.value
-            current_node.mean_win_num_Q = current_node.win_num_W/current_node.visit_num_N
-            current_node = current_node.parent_node
-
+                for action in leaf_node.legal_action_list:
+                    if __debug__: _total_prob += leaf_node.legal_action_prior_list[action]
+                    leaf_node.generate_child(   
+                        current_player=(leaf_node.current_player+1)%2, 
+                        action=action,
+                        prior_prob=leaf_node.legal_action_prior_list[action]
+                    )
+                assert (_total_prob>0.99 and _total_prob<1.01), "Probability Error"
     # @profile
-    def change_root_node(self, action:int, env:gym.Env, network:nn.Module):
-        for child in self.root_node.child_list:
-            if child.action == action:
-                if not hasattr(child, 'legal_action_list'):
-                    self.init_root_node(env, network)
+    @staticmethod
+    def _backup(leaf_node_list:list[Node]):
+        current_node_list:list[Node] = [None]*len(leaf_node_list)
+        for idx, current_node in enumerate(leaf_node_list):
+            leaf_node = current_node
+            while current_node is not None:
+                current_node.visit_num_N += 1
+                if current_node.current_player == leaf_node.current_player:
+                    current_node.win_num_W += leaf_node.value
                 else:
-                    self.root_node = child 
-                    self.root_node.parent_node = None
-                    self.root_node.action = None
-                    self.root_node.prior_prob_P = None
-                return
-        self.init_root_node(env, network)
+                    current_node.win_num_W -= leaf_node.value
+                current_node.mean_win_num_Q = current_node.win_num_W/current_node.visit_num_N
+                if current_node.parent_node is None: 
+                    # this is the root node
+                    current_node_list[idx] = current_node
+                    break
+                current_node = current_node.parent_node
+        return current_node_list
+        
+    # @profile
+    @staticmethod
+    def update_root_node_list(root_node_list:list[Node], actions:list[int], envs:list[gym.Env], network:nn.Module):
+        for idx, root_node in enumerate(root_node_list[:]):
+            for child in root_node.child_list:
+                if child.action == actions[idx]:
+                    if not hasattr(child, 'legal_action_list'):
+                        root_node_list[idx] = AlphaZeroActorAsync.init_root_node(envs[root_node.worker_id], network, root_node.worker_id)
+                    else:
+                        root_node_list[idx] = child 
+                        root_node_list[idx].parent_node = None
+                        root_node_list[idx].action = None
+                        root_node_list[idx].prior_prob_P = None
+        return root_node_list
 
-    def init_root_node(self, env:gym.Env, network:nn.Module):
+    @staticmethod
+    def init_root_node(env:gym.Env, network:nn.Module, worker_id:int):
+        assert env.status == 0, "Env Status Error" 
         with torch.no_grad():
             p, v = network([env.state])
-            p = self.softmax(p.squeeze()).cpu().numpy()
+            p:torch.Tensor
+            p.masked_fill_(mask = ~torch.tensor(env.legal_action_mask, device='cuda:0'), value=-inf)
+            p = nn.Softmax(dim=1)(p).cpu().numpy()
             v = v.item()
-        self.root_node = Node(  
+        root_node = Node(  
             current_player=(env.next_player+1)%2, 
             action=None, 
             prior_prob=None, 
-            parent_node=None
+            parent_node=None,
+            worker_id = worker_id
         )
-        self.root_node.choose_and_update(
+        root_node.choose_and_update(
             state=env.state, 
             value=v,
-            legal_action_list=list(np.asarray(range(env.action_space.n))[env.legal_action_mask]),
-            legal_action_prior_list=p
+            legal_action_list=list(np.arange(env.action_space.n)[env.legal_action_mask]),
+            legal_action_prior_list=p[0]
         )
+        return root_node
 
 def play_with_me(make_env_fun, network_fun, network_path, is_AI_first=False, *args, **kwargs):
     env = make_env_fun(*args, **kwargs) 
@@ -428,7 +505,7 @@ def play_with_me(make_env_fun, network_fun, network_path, is_AI_first=False, *ar
                     print('Illegal Input! Please indicate "row" and "column".')
             action = (int(x))*kwargs['board_size']+(int(y))
         state, _, done, infos = env.step(action)
-        AI_player.change_root_node(action, env, network)
+        AI_player.update_root_node_list(action, env, network)
         env.render()
         print(infos)
         current_player = (current_player+1)%2

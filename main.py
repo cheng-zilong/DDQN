@@ -68,13 +68,14 @@ if __name__ == '__main__':
     kwargs['SGD_weight_decay'] = 1e-4
     kwargs['SGD_momentum'] = 0.9
     kwargs['lr'] = 0.002
-    kwargs['lr_decay_step_size'] = int(5e4)
-    kwargs['actors_num'] = 3
+    kwargs['lr_decay_step_size'] = int(1e5)
+    kwargs['lr_decay_gamma'] = 0.1
+    kwargs['actors_num'] = 4
     kwargs['stack_frames'] = 1
-    kwargs['train_start_buffer_size'] = int(10000)
-    kwargs['buffer_size'] = int(1e5)
+    kwargs['train_start_buffer_size'] = int(1e5)
+    kwargs['buffer_size'] = int(1e6)
     kwargs['train_steps'] = int(9e5)
-    kwargs['batch_size'] = 256
+    kwargs['batch_size'] = 128
     AlphaZero(
         make_env_fun = make_gomuku,
         network_fun = AlphaZeroNetwork, #CnnQNetwork, #AlphaZeroNetwork,
