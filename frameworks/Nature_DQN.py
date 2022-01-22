@@ -12,7 +12,7 @@ from statistics import mean
 from utils.ReplayBufferProcess import ReplayBufferProcess
 from utils.LogProcess import logger
 import torch.multiprocessing as mp
-from utils.ActorProcess import NetworkActorAsync
+from utils.ActorProcess import NetworkActorProcess
 from copy import deepcopy
 import random
 import numpy as np
@@ -51,14 +51,14 @@ class Nature_DQN_Sync:
             self.network_lock = mp.Lock()
             self.replay_buffer = ReplayBufferProcess(*args, **kwargs)
             self.replay_buffer.start()
-            self.train_actor = NetworkActorAsync(
+            self.train_actor = NetworkActorProcess(
                 make_env_fun = make_env_fun, 
                 replay_buffer=self.replay_buffer, 
                 network_lock=self.network_lock, 
                 *args, **kwargs
             )
             self.train_actor.start()
-            self.eval_actor = NetworkActorAsync(
+            self.eval_actor = NetworkActorProcess(
                 make_env_fun = make_env_fun, 
                 replay_buffer=None, 
                 network_lock=mp.Lock(), 
@@ -143,7 +143,7 @@ class Nature_DQN_Async(Nature_DQN_Sync):
             self.replay_buffer = ReplayBufferProcess(*args, **kwargs)
             self.replay_buffer.start()
             self.train_actor_list = [
-                NetworkActorAsync(
+                NetworkActorProcess(
                     make_env_fun = make_env_fun, 
                     replay_buffer=self.replay_buffer, 
                     network_lock=self.network_lock, 
@@ -152,7 +152,7 @@ class Nature_DQN_Async(Nature_DQN_Sync):
             ]
             for actor in self.train_actor_list:
                 actor.start()
-            self.eval_actor = NetworkActorAsync(
+            self.eval_actor = NetworkActorProcess(
                 make_env_fun = make_env_fun, 
                 replay_buffer=None, 
                 network_lock=mp.Lock(), 

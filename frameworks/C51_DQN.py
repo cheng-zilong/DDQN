@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 from utils.Network import *
 from utils.LogProcess import logger
-from frameworks.Nature_DQN import Nature_DQN_Sync
-from utils.ActorProcess import NetworkActorAsync
+from frameworks.Nature_DQN import Nature_DQN_Sync, Nature_DQN_Async
+from utils.ActorProcess import NetworkActorProcess
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -17,7 +17,7 @@ import imageio
 import numpy as np
 import torch.multiprocessing as mp
 from utils.ReplayBufferProcess import ReplayBufferProcess
-class C51_DQN(Nature_DQN_Sync):
+class C51_DQN_Sync(Nature_DQN_Sync):
     def __init__(self, make_env_fun, network_fun, optimizer_fun, *args, **kwargs):
         super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
         '''
@@ -25,18 +25,18 @@ class C51_DQN(Nature_DQN_Sync):
         v_max
         num_atoms
         '''
-        if type(self) is C51_DQN:
+        if type(self) is C51_DQN_Sync:
             self.replay_buffer = ReplayBufferProcess(*args, **kwargs)
             self.replay_buffer.start()
             self.network_lock = mp.Lock()
-            self.train_actor = C51_NetworkActorAsync(
+            self.train_actor = C51_NetworkActorProcess(
                 make_env_fun = make_env_fun, 
                 replay_buffer=self.replay_buffer,
                 network_lock=self.network_lock, 
                 *args, **kwargs
             )
             self.train_actor.start()
-            self.eval_actor = C51_NetworkActorAsync(
+            self.eval_actor = C51_NetworkActorProcess(
                 make_env_fun = make_env_fun, 
                 replay_buffer=None,
                 network_lock=mp.Lock(), 
@@ -81,7 +81,46 @@ class C51_DQN(Nature_DQN_Sync):
             self.optimizer.step()
         return loss
 
-class C51_NetworkActorAsync(NetworkActorAsync):
+class C51_DQN_Async(C51_DQN_Sync, Nature_DQN_Async):
+    def __init__(self, make_env_fun, network_fun, optimizer_fun, actor_num=1, *args, **kwargs):
+        super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
+        '''
+        v_min
+        v_max
+        num_atoms
+        '''
+        if type(self) is C51_DQN_Async:
+            self.network_lock = mp.Lock()
+            self.replay_buffer = ReplayBufferProcess(*args, **kwargs)
+            self.replay_buffer.start()
+            self.train_actor_list = [
+                NetworkActorProcess(
+                    make_env_fun = make_env_fun, 
+                    replay_buffer=self.replay_buffer, 
+                    network_lock=self.network_lock, 
+                    *args, **kwargs
+                ) for _ in range(actor_num)
+            ]
+            for actor in self.train_actor_list:
+                actor.start()
+            self.eval_actor = C51_NetworkActorProcess(
+                make_env_fun = make_env_fun, 
+                replay_buffer=None,
+                network_lock=mp.Lock(), 
+                *args, **kwargs
+            )
+            self.eval_actor.start()
+
+            self.delta_z = float(self.kwargs['v_max'] - self.kwargs['v_min']) / (kwargs['num_atoms'] - 1)
+            self.offset = torch.linspace(0, (kwargs['batch_size'] - 1) * kwargs['num_atoms'], kwargs['batch_size']).long().unsqueeze(1).expand(kwargs['batch_size'], kwargs['num_atoms']).cuda()
+            self.torch_range = torch.arange(kwargs['batch_size']).long().cuda()
+
+            self.current_network = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda().share_memory()
+            self.target_network  = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda()
+            self.optimizer = optimizer_fun(self.current_network.parameters())
+            self.update_target()
+
+class C51_NetworkActorProcess(NetworkActorProcess):
     def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *args, **kwargs):
         if not is_show: matplotlib.use('Agg')
         if not os.path.exists('save_video/' + logger._run_name + '/'):

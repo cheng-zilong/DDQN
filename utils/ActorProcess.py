@@ -240,7 +240,7 @@ class BaseActorProcess(BaseProcess):
         else:
             raise Exception('Done flag must be bool')
 
-class NetworkActorAsync(BaseActorProcess):
+class NetworkActorProcess(BaseActorProcess):
     '''
     Policy 是一个network的agent
     Policy 是从state到action的映射

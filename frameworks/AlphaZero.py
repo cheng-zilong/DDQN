@@ -14,7 +14,7 @@ from statistics import mean
 from utils.ReplayBufferProcess import ReplayBufferProcess
 from utils.LogProcess import logger
 import torch.multiprocessing as mp
-from utils.ActorProcess import NetworkActorAsync
+from utils.ActorProcess import NetworkActorProcess
 from copy import deepcopy
 import random
 import numpy as np
@@ -45,7 +45,6 @@ class AlphaZero:
         self.actors_num = kwargs['actors_num']
         
         for i in range(self.actors_num):
-            kwargs['seed']+=i
             self.mcts_actors_list.append(AlphaZeroActorAsync(  
                 make_env_fun=make_env_fun, 
                 network_lock=self.network_lock, 
@@ -208,7 +207,7 @@ class AlphaZeroActorAsync(BaseActorProcess):
         _info_dict = dict()
         while True:
             if self.actor_done_flag:
-                try:
+                try: #TODO 不要用try except
                     logger.add({
                         'game_count': AlphaZeroActorAsync.game_counter.value,
                         'mcts_time':mean(_mcts_time_list),
@@ -239,7 +238,8 @@ class AlphaZeroActorAsync(BaseActorProcess):
                                     action=None, 
                                     obs=flip_and_rotate_state, 
                                     reward=0, 
-                                    done=False
+                                    done=False,
+                                    player_idx=self.actor_id
                                 )
                                 continue
                             flip_and_rotate_action = np.rot90(action_prob.reshape(int(np.sqrt(len(action_prob))), -1), k = rot, axes=(0,1))
@@ -257,7 +257,8 @@ class AlphaZeroActorAsync(BaseActorProcess):
                                 action=flip_and_rotate_action.reshape(-1), 
                                 obs=flip_and_rotate_state, 
                                 reward=reward, 
-                                done=False if idx!= len(game_line)-1 else True
+                                done=False if idx!= len(game_line)-1 else True,
+                                player_idx=self.actor_id
                             )
                 states_list = [env.reset() for env in self.envs_list]
                 root_node_list = [self.init_root_node(env, self.network, idx) for idx, env in enumerate(self.envs_list)]
