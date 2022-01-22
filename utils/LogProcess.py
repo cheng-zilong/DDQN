@@ -9,7 +9,7 @@ class Singleton(type):
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
-class LogAsync(mp.Process, metaclass=Singleton):
+class LogProcess(mp.Process, metaclass=Singleton):
     ADD = 0
     DELETE = 1
     WANDB_PRINT = 2
@@ -97,4 +97,4 @@ class LogAsync(mp.Process, metaclass=Singleton):
         self.__queue.put([self.EXIT, None])
         self.__queue.close()
 
-logger = LogAsync()
+logger = LogProcess()

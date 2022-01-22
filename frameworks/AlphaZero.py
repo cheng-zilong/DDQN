@@ -11,15 +11,15 @@ from utils.Network import *
 from collections import deque
 import time
 from statistics import mean
-from utils.ReplayBufferAsync import ReplayBufferAsync
-from utils.LogAsync import logger
+from utils.ReplayBufferProcess import ReplayBufferProcess
+from utils.LogProcess import logger
 import torch.multiprocessing as mp
-from utils.ActorAsync import NetworkActorAsync
+from utils.ActorProcess import NetworkActorAsync
 from copy import deepcopy
 import random
 import numpy as np
 from tqdm import tqdm
-from utils.ActorAsync import ActorAsync
+from utils.ActorProcess import BaseActorProcess
 from numba import njit
 from torch import optim
 from torch.multiprocessing import Value
@@ -40,7 +40,7 @@ class AlphaZero:
         logger.init(*args, **kwargs)
 
         self.network_lock = mp.Lock()
-        self.replay_buffer = ReplayBufferAsync(*args, **kwargs)
+        self.replay_buffer = ReplayBufferProcess(*args, **kwargs)
         self.mcts_actors_list:list[AlphaZeroActorAsync] = []
         self.actors_num = kwargs['actors_num']
         
@@ -67,12 +67,6 @@ class AlphaZero:
 
     def train(self):
         self.network.train()
-        self.replay_buffer.init_data_example(
-            action=np.ones(self.dummy_env.action_space.n, dtype=np.float32), 
-            obs=self.dummy_env.reset(),
-            reward=1,
-            done=True
-        )
         for i in range(self.actors_num):
             self.mcts_actors_list[i].collect(self.network)
             time.sleep(60)
@@ -186,10 +180,10 @@ def puct(p_visit_num:int, visit_num:int, prior_p:float, mean_win_num_Q:float) ->
     U_s_a = weighting_C_s*prior_p*np.sqrt(p_visit_num)/(1+visit_num)
     return mean_win_num_Q + U_s_a
 
-class AlphaZeroActorAsync(ActorAsync):
+class AlphaZeroActorAsync(BaseActorProcess):
     TotalActorNumber=0
     game_counter = Value('i', 0)
-    def __init__(self, make_env_fun, replay_buffer:ReplayBufferAsync, network_lock, workers_num = 64, *args, **kwargs):
+    def __init__(self, make_env_fun, replay_buffer:ReplayBufferProcess, network_lock, workers_num = 64, *args, **kwargs):
         super().__init__(make_env_fun=make_env_fun, *args, **kwargs)
         self.envs_list = [make_env_fun(*args, **kwargs) for _ in range(workers_num)]
         self._network_lock = network_lock
@@ -200,10 +194,10 @@ class AlphaZeroActorAsync(ActorAsync):
 
     def collect(self, network:AlphaZeroNetwork, *args, **kwargs):
         kwargs['network'] = network
-        self.send(self.COLLECT, (args, kwargs))
+        self.send(self.ASYNC_COLLECT, (args, kwargs))
 
     # @profile
-    def _collect(self, network:AlphaZeroNetwork):
+    def _async_collect(self, network:AlphaZeroNetwork):
         _game_lines_dict = dict()
         GameData = namedtuple('GameData', 'player action state')
         # {0: (current_player, action, state]), ... 

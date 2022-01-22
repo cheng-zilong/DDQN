@@ -18,6 +18,7 @@ def get_default_parser():
     parser.add_argument('--env_name', type=str, default='BreakoutNoFrameskip-v4', help="Gym environment name.")
     parser.add_argument('--stack_frames', type=int, default=4, help="The number of frames stacked and used for prediction.")
     parser.add_argument('--sim_steps', type=int, default=int(5e7))
+    parser.add_argument('--train_steps', type=int, default=int(1e7))
     parser.add_argument('--train_start_step', type=int, default=50000)
     parser.add_argument('--train_network_freq', type=int, default=4)
     parser.add_argument('--train_update_target_freq', type=int, default=40000)

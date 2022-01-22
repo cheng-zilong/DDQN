@@ -7,9 +7,9 @@ import random
 from gym_envs.AtariWrapper import LazyFrames
 
 from baselines.deepq.replay_buffer import ReplayBuffer
-from .Async import Async
+from .BaseProcess import BaseProcess
 
-class ReplayBufferAsync(Async):
+class ReplayBufferProcess(BaseProcess):
     '''
     add numpy
     sample torch.tensor.cuda()
@@ -27,6 +27,7 @@ class ReplayBufferAsync(Async):
         self.seed = seed
         self.is_init_cache = False
         self.in_pointer = 0 # update pointer 0 when first update
+        self._data_example = mp.Manager().list()
 
     def init_seed(self):
         torch.manual_seed(self.seed)
@@ -56,7 +57,7 @@ class ReplayBufferAsync(Async):
             else:
                 raise Exception('Unknown command')
 
-    def add(self, action, obs, reward, done):
+    def add(self, action, obs, reward, done, player_idx=0):
         '''
         如果stack_frame != 1，就假设数据已经堆叠好了,所以取最后一个数据
         如果stack_frame == 1，就假设数据是单个产生的,没有堆叠维度
@@ -65,14 +66,11 @@ class ReplayBufferAsync(Async):
         if action is none, it is the reset frame
         '''
         obs = np.asarray(obs[None, -1]) if self.stack_frames!=1 else np.asarray(obs)
-        data = (action, obs, reward, done)  
-        if (not hasattr(self, '_data_example')) and data[0] is not None: #如果action不为None，那可以作为data example
-            self._data_example = data
+        data = (action, obs, reward, done, player_idx)
+        if not hasattr(self, '_init_data_example') and (data[0] is not None):
+            self._init_data_example=True
+            for i in data: self._data_example.append(i)
         self.send(self.ADD, data)
-
-    def init_data_example(self, action, obs, reward, done):
-        data = (action, obs, reward, done)  
-        self._data_example = data
 
     def sample(self):
         ## return share tensor the first time, the return idx
@@ -94,7 +92,7 @@ class ReplayBufferAsync(Async):
             self.receive()
             self.sample_idx = 0
         else:
-            self.sample_idx  = 0 if self.sample_idx == 1 else 1
+            self.sample_idx  = (self.sample_idx + 1)%2
             self.send(self.SAMPLE, None)
             self.receive()
         return self.state_share[self.sample_idx], self.action_share[self.sample_idx], self.reward_share[self.sample_idx], self.next_state_share[self.sample_idx], self.done_share[self.sample_idx]
@@ -128,27 +126,30 @@ class ReplayBufferAsync(Async):
             self._done_share[self.in_pointer] = torch.tensor(done, device=torch.device(0))
             self.in_pointer = 0 if self.in_pointer == 1 else 1
 
-    def _add(self, action, obs, reward, done):
-        if action is None: #if reset
+    def _add(self, action, obs, reward, done, player_idx):
+        if not hasattr(self, '_last_frames_dict'):
+            self._last_frames_dict = dict()
+        if action is None: 
+            #if reset
             if self.stack_frames == 1:
-                self._last_frames = obs
+                self._last_frames_dict[player_idx] = obs
             else:
                 for _ in range(self.stack_frames):
                     self._frames.append(obs)
-                self._last_frames = LazyFrames(list(self._frames))
+                self._last_frames_dict[player_idx] = LazyFrames(list(self._frames))
         else:
             if self.stack_frames == 1:
-                self._replay_buffer.add(np.array(self._last_frames,copy=True), 
+                self._replay_buffer.add(np.array(self._last_frames_dict[player_idx],copy=True), 
                                         np.array(action,copy=True), 
                                         np.array(reward, dtype=np.float32,copy=True), 
                                         np.array(obs,copy=True), 
                                         np.array(done,copy=True))
-                self._last_frames = obs
+                self._last_frames_dict[player_idx] = obs
             else:
                 self._frames.append(obs)
                 current_frames = LazyFrames(list(self._frames))
-                self._replay_buffer.add(self._last_frames, action, reward, current_frames, done)
-                self._last_frames = current_frames
+                self._replay_buffer.add(self._last_frames_dict[player_idx], action, reward, current_frames, done)
+                self._last_frames_dict[player_idx] = current_frames
 
     def _check_size(self):
         self._send(len(self._replay_buffer))

@@ -9,15 +9,15 @@ from utils.Network import *
 from collections import deque
 import time
 from statistics import mean
-from utils.ReplayBufferAsync import ReplayBufferAsync
-from utils.LogAsync import logger
+from utils.ReplayBufferProcess import ReplayBufferProcess
+from utils.LogProcess import logger
 import torch.multiprocessing as mp
-from utils.ActorAsync import NetworkActorAsync
+from utils.ActorProcess import NetworkActorAsync
 from copy import deepcopy
 import random
 import numpy as np
 
-class Nature_DQN:
+class Nature_DQN_Sync:
     def __init__(self, make_env_fun, network_fun, optimizer_fun, *args, **kwargs):
         '''
         seed
@@ -41,23 +41,33 @@ class Nature_DQN:
         self.args = args 
         self.kwargs = kwargs 
         self._init_seed()
-        self.env = make_env_fun(*args, **kwargs)
+        self.dummy_env = make_env_fun(*args, **kwargs)
 
         kwargs['policy_class'] = network_fun.__name__
-        kwargs['env_name'] = self.env.unwrapped.spec.id
+        kwargs['env_name'] = self.dummy_env.unwrapped.spec.id
         logger.init(*args, **kwargs)
 
-        if type(self) is Nature_DQN:
+        if type(self) is Nature_DQN_Sync:
             self.network_lock = mp.Lock()
-            self.train_actor = NetworkActorAsync(make_env_fun = make_env_fun, network_lock=self.network_lock, *args, **kwargs)
-            self.train_actor.start()
-            self.eval_actor = NetworkActorAsync(make_env_fun = make_env_fun, network_lock=mp.Lock(), *args, **kwargs)
-            self.eval_actor.start()
-            self.replay_buffer = ReplayBufferAsync(*args, **kwargs)
+            self.replay_buffer = ReplayBufferProcess(*args, **kwargs)
             self.replay_buffer.start()
+            self.train_actor = NetworkActorAsync(
+                make_env_fun = make_env_fun, 
+                replay_buffer=self.replay_buffer, 
+                network_lock=self.network_lock, 
+                *args, **kwargs
+            )
+            self.train_actor.start()
+            self.eval_actor = NetworkActorAsync(
+                make_env_fun = make_env_fun, 
+                replay_buffer=None, 
+                network_lock=mp.Lock(), 
+                *args, **kwargs
+            )
+            self.eval_actor.start()
 
-            self.current_network = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda().share_memory() 
-            self.target_network  = network_fun(self.env.observation_space.shape, self.env.action_space.n, *args, **kwargs).cuda() 
+            self.current_network = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda().share_memory() 
+            self.target_network  = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda() 
             self.optimizer = optimizer_fun(self.current_network.parameters()) 
             self.update_target()
 
@@ -74,7 +84,7 @@ class Nature_DQN:
         eps = self.kwargs['eps_end'] + (self.kwargs['eps_start'] - self.kwargs['eps_end']) * (1 - min(steps_idx,self.kwargs['eps_decay_steps']) / self.kwargs['eps_decay_steps'])
         return eps
     
-    def train(self):
+    def sync_train(self):
         last_sim_steps_idx, ep_idx = 1, 1
         ep_reward_list = deque(maxlen=self.kwargs['ep_reward_avg_number'])
         tic   = time.time()
@@ -123,5 +133,58 @@ class Nature_DQN:
         with self.network_lock:
             self.optimizer.step()
         return loss
+
+class Nature_DQN_Async(Nature_DQN_Sync):
+    def __init__(self, make_env_fun, network_fun, optimizer_fun, actor_num=1, *args, **kwargs):
+        super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
+
+        if type(self) is Nature_DQN_Async:
+            self.network_lock = mp.Lock()
+            self.replay_buffer = ReplayBufferProcess(*args, **kwargs)
+            self.replay_buffer.start()
+            self.train_actor_list = [
+                NetworkActorAsync(
+                    make_env_fun = make_env_fun, 
+                    replay_buffer=self.replay_buffer, 
+                    network_lock=self.network_lock, 
+                    *args, **kwargs
+                ) for _ in range(actor_num)
+            ]
+            for actor in self.train_actor_list:
+                actor.start()
+            self.eval_actor = NetworkActorAsync(
+                make_env_fun = make_env_fun, 
+                replay_buffer=None, 
+                network_lock=mp.Lock(), 
+                *args, **kwargs
+            )
+            self.eval_actor.start()
+
+            self.current_network = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda().share_memory() 
+            self.target_network  = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda() 
+            self.optimizer = optimizer_fun(self.current_network.parameters()) 
+            self.update_target()
+
+    def async_train(self):
+        for actor in self.train_actor_list:
+            actor.update_policy(network = self.current_network)
+
+        while self.replay_buffer.check_size() < self.kwargs['train_start_step']:
+            for actor in self.train_actor_list:
+                actor.collect(steps_number = self.kwargs['train_network_freq'], sync=False, eps=1)
+
+        for train_idx in range(1, self.kwargs['train_steps'] + 1):
+            for actor in self.train_actor_list:
+                actor.collect(steps_number = self.kwargs['train_network_freq'], sync=False, eps=self.line_schedule(train_idx), train_idx=train_idx)
+            self.compute_td_loss()
+
+            if (train_idx-1) % self.kwargs['train_update_target_freq'] == 0:
+                self.update_target()
+
+            if (train_idx-1) % self.kwargs['eval_freq'] == 0:
+                self.eval_actor.update_policy(network = deepcopy(self.current_network))
+                self.eval_actor.eval(eval_idx = train_idx, eval_number = self.kwargs['eval_number'], eval_max_steps = self.kwargs['eval_max_steps'], eps = self.kwargs['eval_eps'])
+                self.eval_actor.save_policy(name = train_idx)
+                self.eval_actor.render(name=train_idx, render_max_steps=self.kwargs['eval_max_steps'], render_mode='rgb_array',fps=self.kwargs['eval_video_fps'], is_show=self.kwargs['eval_display'], eps = self.kwargs['eval_eps'])
 
 # %%

@@ -3,7 +3,7 @@
 layer_init + 4 step 1 gradient + async buffer
 '''
 from __future__ import annotations
-from utils.LogAsync import logger
+from utils.LogProcess import logger
 from copy import deepcopy
 import random
 import numpy as np
