@@ -21,47 +21,31 @@ class C51_DQN_Sync(Nature_DQN_Sync):
     def __init__(self, make_env_fun, network_fun, optimizer_fun, *args, **kwargs):
         super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
         '''
-        v_min
-        v_max
-        num_atoms
+        v_min, v_max, num_atoms
         '''
-        if type(self) is C51_DQN_Sync:
-            self.replay_buffer = ReplayBufferProcess(*args, **kwargs)
-            self.replay_buffer.start()
-            self.network_lock = mp.Lock()
-            self.train_actor = C51_NetworkActorProcess(
-                make_env_fun = make_env_fun, 
-                replay_buffer=self.replay_buffer,
-                network_lock=self.network_lock, 
-                *args, **kwargs
-            )
-            self.train_actor.start()
-            self.eval_actor = C51_NetworkActorProcess(
-                make_env_fun = make_env_fun, 
-                replay_buffer=None,
-                network_lock=mp.Lock(), 
-                *args, **kwargs
-            )
-            self.eval_actor.start()
+        self.process_dict['train_actor'] = C51_NetworkActorProcess(
+            make_env_fun = self.make_env_fun, 
+            network_lock=self.network_lock, 
+            *self.args, **self.kwargs
+        )
+        self.process_dict['eval_actor'] = C51_NetworkActorProcess(
+            make_env_fun = self.make_env_fun, 
+            network_lock=mp.Lock(), 
+            *self.args, **self.kwargs
+        )
 
-            self.delta_z = float(self.kwargs['v_max'] - self.kwargs['v_min']) / (kwargs['num_atoms'] - 1)
-            self.offset = torch.linspace(0, (kwargs['batch_size'] - 1) * kwargs['num_atoms'], kwargs['batch_size']).long().unsqueeze(1).expand(kwargs['batch_size'], kwargs['num_atoms']).cuda()
-            self.torch_range = torch.arange(kwargs['batch_size']).long().cuda()
 
-            self.current_network = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda().share_memory()
-            self.target_network  = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda()
-            self.optimizer = optimizer_fun(self.current_network.parameters())
-            self.update_target()
 
     def compute_td_loss(self):
-        state, action, reward, next_state, done = self.replay_buffer.sample()
-
+        if not hasattr(self, 'delta_z'):
+            self.delta_z = float(self.kwargs['v_max'] - self.kwargs['v_min']) / (self.kwargs['num_atoms'] - 1)
+            self.torch_range = torch.arange(self.kwargs['batch_size'], dtype=torch.long, device='cuda:0')
+        state, action, reward, next_state, done = self.process_dict['replay_buffer'].sample()
         with torch.no_grad():
             prob_next = self.target_network(next_state)
             q_next = (prob_next * self.current_network.atoms_gpu).sum(-1)
             a_next = torch.argmax(q_next, dim=-1)
             prob_next = prob_next[self.torch_range, a_next, :]
-
         rewards = reward.unsqueeze(-1)
         atoms_target = rewards + self.kwargs['gamma'] * (~done).unsqueeze(-1) * self.current_network.atoms_gpu.view(1, -1)
         atoms_target.clamp_(self.kwargs['v_min'], self.kwargs['v_max']).unsqueeze_(1)
@@ -81,44 +65,17 @@ class C51_DQN_Sync(Nature_DQN_Sync):
             self.optimizer.step()
         return loss
 
-class C51_DQN_Async(C51_DQN_Sync, Nature_DQN_Async):
+class C51_DQN_Async(Nature_DQN_Async, C51_DQN_Sync):
     def __init__(self, make_env_fun, network_fun, optimizer_fun, actor_num=1, *args, **kwargs):
         super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
-        '''
-        v_min
-        v_max
-        num_atoms
-        '''
-        if type(self) is C51_DQN_Async:
-            self.network_lock = mp.Lock()
-            self.replay_buffer = ReplayBufferProcess(*args, **kwargs)
-            self.replay_buffer.start()
-            self.train_actor_list = [
-                NetworkActorProcess(
-                    make_env_fun = make_env_fun, 
-                    replay_buffer=self.replay_buffer, 
-                    network_lock=self.network_lock, 
-                    *args, **kwargs
-                ) for _ in range(actor_num)
-            ]
-            for actor in self.train_actor_list:
-                actor.start()
-            self.eval_actor = C51_NetworkActorProcess(
-                make_env_fun = make_env_fun, 
-                replay_buffer=None,
-                network_lock=mp.Lock(), 
-                *args, **kwargs
-            )
-            self.eval_actor.start()
-
-            self.delta_z = float(self.kwargs['v_max'] - self.kwargs['v_min']) / (kwargs['num_atoms'] - 1)
-            self.offset = torch.linspace(0, (kwargs['batch_size'] - 1) * kwargs['num_atoms'], kwargs['batch_size']).long().unsqueeze(1).expand(kwargs['batch_size'], kwargs['num_atoms']).cuda()
-            self.torch_range = torch.arange(kwargs['batch_size']).long().cuda()
-
-            self.current_network = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda().share_memory()
-            self.target_network  = network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.n, *args, **kwargs).cuda()
-            self.optimizer = optimizer_fun(self.current_network.parameters())
-            self.update_target()
+        self.process_dict['train_actor'] = [
+            C51_NetworkActorProcess(
+                make_env_fun = self.make_env_fun, 
+                replay_buffer=self.process_dict['replay_buffer'], 
+                network_lock=self.network_lock, 
+                *self.args, **self.kwargs
+            ) for _ in range(actor_num)
+        ]
 
 class C51_NetworkActorProcess(NetworkActorProcess):
     def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *args, **kwargs):

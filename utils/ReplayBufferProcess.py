@@ -18,7 +18,6 @@ class ReplayBufferProcess(BaseProcess):
     SAMPLE = 1
     CLOSE = 2
     CHECK_SIZE = 3
-
     def __init__(self, buffer_size, batch_size, stack_frames, seed, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.buffer_size = buffer_size

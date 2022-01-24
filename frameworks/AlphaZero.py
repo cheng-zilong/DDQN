@@ -68,7 +68,6 @@ class AlphaZero:
         self.network.train()
         for i in range(self.actors_num):
             self.mcts_actors_list[i].collect(self.network)
-            time.sleep(60)
         
         while self.replay_buffer.check_size() < self.kwargs['train_start_buffer_size']:
             logger.add({
@@ -228,7 +227,7 @@ class AlphaZeroActorAsync(BaseActorProcess):
                 _ep_step_idx, _mcts_step_idx, _mcts_time_list, _game_tic = 0, 0, [], time.time()
                 self.actor_done_flag = False 
                 self.update_network()
-                with AlphaZeroActorAsync.game_counter.get_lock(): AlphaZeroActorAsync.game_counter.value += len(self.envs_list)
+                AlphaZeroActorAsync.game_counter.value += len(self.envs_list)
                 for woker_idx, game_line in _game_lines_dict.items():
                     for is_flip, rot in itertools.product([False, True],[0,1,2,3]):# 利用棋盘旋转对称性
                         for idx, (current_player, action_prob, state) in enumerate(game_line):
@@ -242,12 +241,13 @@ class AlphaZeroActorAsync(BaseActorProcess):
                                     player_idx=self.actor_id
                                 )
                                 continue
-                            flip_and_rotate_action = np.rot90(action_prob.reshape(int(np.sqrt(len(action_prob))), -1), k = rot, axes=(0,1))
+                            
+                            flip_and_rotate_action = np.rot90(action_prob.reshape(state.shape[1], state.shape[2]), k = rot, axes=(0,1))
                             flip_and_rotate_state = np.rot90(state, k = rot, axes=(1,2))
                             if is_flip:
                                 flip_and_rotate_action = np.flip(flip_and_rotate_action, 0)
                                 flip_and_rotate_state = np.flip(flip_and_rotate_state, 1)
-                            if _info_dict[woker_idx]['winner'] == -1 or action_prob is None:
+                            if _info_dict[woker_idx]['winner'] == -1:
                                 reward = 0
                             elif _info_dict[woker_idx]['winner'] == current_player:
                                 reward = 1
@@ -265,7 +265,7 @@ class AlphaZeroActorAsync(BaseActorProcess):
                 for idx in range(len(self.envs_list)):
                     _game_lines_dict[idx] = [GameData(root_node_list[idx].current_player, None, states_list[idx])]
             _mcts_tic = time.time()
-            actions, actions_prob = self.mcts(
+            actions, actions_prob, _ = self.mcts(
                 network=self.network, 
                 temperature=0.1 if _mcts_step_idx >= 2 else 1, 
                 root_node_list=root_node_list
@@ -318,7 +318,7 @@ class AlphaZeroActorAsync(BaseActorProcess):
                 actions_prob[idx, child.action] = (child.visit_num_N**(1/temperature))/_temp_den
             assert (np.sum(actions_prob[idx]) > 0.99 and np.sum(actions_prob[idx]) < 1.01), "Probability Error"
             actions[idx] = np.random.choice(np.arange(self.env.action_space.n), p = actions_prob[idx])
-        return actions, actions_prob
+        return actions, actions_prob, _root_node_list
 
     
     @staticmethod
@@ -474,22 +474,23 @@ def play_with_me(make_env_fun, network_fun, network_path, is_AI_first=False, *ar
     state = env.reset()
     env.render()
     done = False
-    kwargs['policy_class'] = 'Vanilla_MCTS'
+    kwargs['policy_class'] = 'AlphaZero'
     kwargs['env_name'] = env.__class__.__name__
     # logger.init(*args, **kwargs)
     network = network_fun(env.observation_space.shape, env.action_space.n, *args, **kwargs).cuda()
     network.load_state_dict(torch.load(network_path))
     AI_player = AlphaZeroActorAsync(make_env_fun, None, None, *args, **kwargs )
-    AI_player.init_root_node(env, network)
+    root_node_list = [AI_player.init_root_node(env, network, 0)]
     AI_player_idx = 0 if is_AI_first else 1
     current_player = 0
     while not done:
         p, v = network([state])
-        print(p.reshape(int(np.sqrt(env.action_space.n)), -1))
+        print(p.reshape(state.shape[1], state.shape[2]))
         print(v)
         if current_player == AI_player_idx:
             # action = torch.argmax(p).item()
-            action, _ = AI_player.mcts(network, 0)
+            action, action_prob, root_node_list = AI_player.mcts(network, 0.1, root_node_list)
+            print(action_prob)
             print(f'AI turn:{action}')
         else:
             while True:
@@ -500,7 +501,7 @@ def play_with_me(make_env_fun, network_fun, network_path, is_AI_first=False, *ar
                     print('Illegal Input! Please indicate "row" and "column".')
             action = (int(x))*kwargs['board_size']+(int(y))
         state, _, done, infos = env.step(action)
-        AI_player.update_root_node_list(action, env, network)
+        root_node_list = AI_player.update_root_node_list(root_node_list, [action], [env], network)
         env.render()
         print(infos)
         current_player = (current_player+1)%2
@@ -515,18 +516,18 @@ def AI_play_again_AI(make_env_fun, network_fun, network_path, *args, **kwargs):
     # logger.init(*args, **kwargs)
     network = network_fun(env.observation_space.shape, env.action_space.n, *args, **kwargs).cuda()
     network.load_state_dict(torch.load(network_path))
-    # AI_player = AlphaZeroActorAsync(make_env_fun, None, None, *args, **kwargs )
-    # AI_player.init_root_node(env, network)
+    AI_player = AlphaZeroActorAsync(make_env_fun, None, None, *args, **kwargs )
+    root_node_list = [AI_player.init_root_node(env, network, 0)]
     current_player = 0
     while not done:
         p, v = network([state])
-        print(p.reshape(int(np.sqrt(env.action_space.n)), -1))
+        print(p.reshape(state.shape[1], state.shape[2]))
         print(v)
-        action = torch.argmax(p).item()
-        # action, _ = AI_player.mcts(network, 0)
+        action, action_prob, root_node_list = AI_player.mcts(network, 0.1, root_node_list)
+        print(action_prob.reshape(state.shape[1], state.shape[2]))
         print(f'AI turn:{action}')
         state, _, done, infos = env.step(action)
-        # AI_player.change_root_node(action, env, network)
+        root_node_list = AI_player.update_root_node_list(root_node_list, [action], [env], network)
         env.render()
         print(infos)
         current_player = (current_player+1)%2

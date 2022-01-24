@@ -29,6 +29,7 @@ class BaseActorProcess(BaseProcess):
     ASYNC_COLLECT=8
     total_sim_steps = Value('i', 0)
     total_ep_num = Value('i', 0)
+    actor_id = Value('i', 0)
     def __init__(self, make_env_fun, replay_buffer=None, *args, **kwargs):
         super().__init__(make_env_fun, *args, **kwargs)
         self.args = args
@@ -43,6 +44,9 @@ class BaseActorProcess(BaseProcess):
 
     def run(self):
         self._init_seed()
+        with BaseActorProcess.actor_id.get_lock():
+            self.__actor_id = BaseActorProcess.actor_id.value
+            BaseActorProcess.actor_id.value+=1
         while True:
             (cmd, msg) = self._receive()
             if cmd == self.SYNC_COLLECT:
@@ -109,13 +113,12 @@ class BaseActorProcess(BaseProcess):
         self.send(self.RENDER, (args, kwargs))
 
     def _init_seed(self):
-        __id = self._get_id()
-        torch.manual_seed(self.seed+__id)
-        torch.cuda.manual_seed(self.seed+__id)
-        random.seed(self.seed+__id)
-        np.random.seed(self.seed+__id)
-        self.env.seed(self.seed+__id)
-        self.env.action_space.np_random.seed(self.seed+__id)
+        torch.manual_seed(self.seed+self.__actor_id)
+        torch.cuda.manual_seed(self.seed+self.__actor_id)
+        random.seed(self.seed+self.__actor_id)
+        np.random.seed(self.seed+self.__actor_id)
+        self.env.seed(self.seed+self.__actor_id)
+        self.env.action_space.np_random.seed(self.seed+self.__actor_id)
 
     def _reset(self):
         self.actor_state = self.env.reset()
@@ -134,7 +137,7 @@ class BaseActorProcess(BaseProcess):
             del self._cache
         return self.actor_state
 
-    def _sync_collect_helper(self, steps_number, *args, **kwargs): #TODO 直接加入到dataset，不需要经过framework
+    def _sync_collect_helper(self, steps_number, *args, **kwargs):
         data_list = []
         for _ in range(steps_number):
             one_step_data = self._step(*args, **kwargs)
@@ -157,7 +160,7 @@ class BaseActorProcess(BaseProcess):
             self._ep_tic = time.time()
         for frames_idx in range(steps_number):
             action, obs, reward, done, info = self._step(*args, **kwargs)
-            self.replay_buffer.add(action, obs, reward, done, self._get_id())
+            self.replay_buffer.add(action, obs, reward, done, self.__actor_id)
             self._sim_steps_idx += 1
             BaseActorProcess.total_sim_steps.value += 1
             if info is not None and info['episodic_return'] is not None:
@@ -174,7 +177,7 @@ class BaseActorProcess(BaseProcess):
                 }
                 self._ep_tic = time.time()
                 logger.add({**logger_dict, **kwargs})
-                logger.wandb_print('(Training Agent %d) '%(self._get_id()), step=BaseActorProcess.total_sim_steps.value)
+                logger.wandb_print('(Training Agent %d)'%(self.__actor_id), step=BaseActorProcess.total_sim_steps.value)
                 self._last_sim_steps_idx = self._sim_steps_idx + frames_idx
     
     def _eval(self, eval_idx, *args, **kwargs):
@@ -245,7 +248,7 @@ class NetworkActorProcess(BaseActorProcess):
     Policy 是一个network的agent
     Policy 是从state到action的映射
     '''
-    def __init__(self, make_env_fun, replay_buffer, network_lock, *args, **kwargs):
+    def __init__(self, make_env_fun, network_lock, replay_buffer = None, *args, **kwargs):
         super().__init__(make_env_fun, replay_buffer, *args, **kwargs)
         self._network_lock = network_lock
         self._network = None
