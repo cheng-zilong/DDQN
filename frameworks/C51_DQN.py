@@ -1,22 +1,10 @@
-
-#%%
-'''
-layer_init + 4 step 1 gradient + async buffer
-'''
 import torch
 import torch.nn as nn
 from utils.Network import *
 from utils.LogProcess import logger
 from frameworks.Nature_DQN import Nature_DQN_Sync, Nature_DQN_Async
-from utils.ActorProcess import NetworkActorProcess
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib import gridspec
-import os
-import imageio
-import numpy as np
 import torch.multiprocessing as mp
-from utils.ReplayBufferProcess import ReplayBufferProcess
+from utils.ActorProcess import C51_NetworkActorProcess
 class C51_DQN_Sync(Nature_DQN_Sync):
     def __init__(self, make_env_fun, network_fun, optimizer_fun, *args, **kwargs):
         super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
@@ -33,8 +21,6 @@ class C51_DQN_Sync(Nature_DQN_Sync):
             network_lock=mp.Lock(), 
             *self.args, **self.kwargs
         )
-
-
 
     def compute_td_loss(self):
         if not hasattr(self, 'delta_z'):
@@ -77,36 +63,3 @@ class C51_DQN_Async(Nature_DQN_Async, C51_DQN_Sync):
             ) for _ in range(actor_num)
         ]
 
-class C51_NetworkActorProcess(NetworkActorProcess):
-    def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *args, **kwargs):
-        if not is_show: matplotlib.use('Agg')
-        if not os.path.exists('save_video/' + logger._run_name + '/'):
-            os.makedirs('save_video/' + logger._run_name + '/')
-        writer = imageio.get_writer('save_video/' + logger._run_name + '/' + str(name) +'.mp4', fps = fps)
-        my_fig = plt.figure(figsize=figsize, dpi=dpi)
-        gs = gridspec.GridSpec(1, 2)
-        ax_left, ax_right = my_fig.add_subplot(gs[0]), my_fig.add_subplot(gs[1])
-        my_fig.tight_layout()
-        fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
-        self._unwrapped_reset()
-        for _ in range(1, render_max_steps + 1):
-            action, _, _, done, info = self._sync_collect_helper(steps_number = 1, *args, **kwargs)[-1] 
-            action_prob = np.swapaxes(self._network.action_prob[0].cpu().numpy(),0, 1)
-            legends = []
-            for i, action_meaning in enumerate(self.env.unwrapped.get_action_meanings()):
-                legend_text = ' (Q=%+.2e)'%(self._network.action_Q[0,i]) if i == action else ' (Q=%+.2e)*'%(self._network.action_Q[0,i])
-                legends.append(action_meaning + legend_text) 
-            ax_left.clear()
-            ax_left.imshow(self.env.render(mode = render_mode))
-            ax_left.axis('off')
-            ax_right.clear()
-            ax_right.plot(self._network.atoms_cpu, action_prob)
-            ax_right.legend(legends)
-            ax_right.grid(True)
-            my_fig.canvas.draw()
-            buf = my_fig.canvas.tostring_rgb()
-            writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(fig_pixel_rows, fig_pixel_cols, 3))
-            if done:
-                if info['episodic_return'] is not None: break
-        writer.close()
-# %%

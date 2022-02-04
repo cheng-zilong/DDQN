@@ -1,8 +1,3 @@
-
-#%%
-'''
-layer_init + 4 step 1 gradient + async buffer
-'''
 import torch
 import torch.nn as nn
 from utils.Network import *
@@ -19,8 +14,6 @@ import numpy as np
 
 class Nature_DQN_Sync:
     def __init__(self, make_env_fun, network_fun, optimizer_fun, *args, **kwargs):
-        '''
-        '''
         self.args = args 
         self.kwargs = kwargs 
         self.make_env_fun = make_env_fun
@@ -87,7 +80,7 @@ class Nature_DQN_Sync:
             data = self.process_dict['train_actor'].collect(steps_number = self.kwargs['train_network_freq'], eps=eps)
             for frames_idx, (action, obs, reward, done, info) in enumerate(data):
                 self.process_dict['replay_buffer'].add(action, obs, reward, done)
-                if info is not None and info['episodic_return'] is not None:
+                if self.process_dict['train_actor'].is_env_done(done, info):
                     episodic_steps = sim_steps_idx + frames_idx - last_sim_steps_idx
                     ep_reward_list.append(info['episodic_return'])
                     toc = time.time()

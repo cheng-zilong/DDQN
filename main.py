@@ -6,32 +6,31 @@ from utils.LogProcess import logger
 
 # # Atari
 if __name__ == '__main__':
-    # torch.multiprocessing.set_start_method('forkserver')
-    # torch.multiprocessing.set_forkserver_preload(['utils.LogProcess'])
-    # kwargs = vars(get_default_parser().parse_args())
-    # from frameworks.C51_DQN import C51_DQN_Sync
-    # kwargs['train_start_step'] = 50000
-    # kwargs['env_name'] = 'SpaceInvadersNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
-    # C51_DQN(
-    #     make_env_fun = make_atari_env,
-    #     network_fun = CatCnnQNetwork, #CnnQNetwork CatCnnQNetwork
-    #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),  
-    #     **kwargs
-    # ).train()
 
     kwargs = vars(get_default_parser().parse_args())
-    from frameworks.C51_DQN import C51_DQN_Async
-    kwargs['env_name'] = 'SpaceInvadersNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
-    kwargs['train_update_target_freq']=10000
+    from frameworks.C51_DQN import C51_DQN_Sync
     kwargs['train_start_step'] = 50000
-    kwargs['actor_num']=2
-    kwargs['eps_decay_steps']=250000/kwargs['actor_num']
-    C51_DQN_Async(
+    kwargs['env_name'] = 'SpaceInvadersNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
+    C51_DQN_Sync(
         make_env_fun = make_atari_env,
         network_fun = CatCnnQNetwork, #CnnQNetwork CatCnnQNetwork
-        optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),
+        optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),  
         **kwargs
     ).train()
+
+    # kwargs = vars(get_default_parser().parse_args())
+    # from frameworks.C51_DQN import C51_DQN_Async
+    # kwargs['env_name'] = 'SpaceInvadersNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
+    # kwargs['train_update_target_freq']=10000
+    # kwargs['train_start_step'] = 50000
+    # kwargs['actor_num']=2
+    # kwargs['eps_decay_steps']=250000/kwargs['actor_num']
+    # C51_DQN_Async(
+    #     make_env_fun = make_atari_env,
+    #     network_fun = CatCnnQNetwork, #CnnQNetwork CatCnnQNetwork
+    #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),
+    #     **kwargs
+    # ).train()
 
     # kwargs = vars(get_default_parser().parse_args())
     # from frameworks.Nature_DQN import Nature_DQN_Sync
@@ -63,7 +62,7 @@ if __name__ == '__main__':
     #     board_size=7, 
     #     win_size=5, 
     #     is_AI_first=False, 
-    #     iter_num=100000, 
+    #     iter_num=10000, 
     #     seed=1, 
     #     project_name='C51'
     # )
@@ -97,7 +96,7 @@ if __name__ == '__main__':
     #     optimizer_fun = lambda params: torch.optim.SGD(params, lr=kwargs['lr'], weight_decay=kwargs['SGD_weight_decay'], momentum=kwargs['SGD_momentum']),
     #     **kwargs
     # ).train()
-    # play_with_me(make_gomuku,AlphaZeroNetwork,'save_model/AlphaZero(TotalRewardWrapper)_4_20220122-203908/40000.pt', True, **kwargs) # TODO start with 4, 3 has error
+    # play_with_me(make_gomuku,AlphaZeroNetwork,'save_model/AlphaZero(TotalRewardWrapper)_4_20220122-203908/40000.pt', True, **kwargs)
     # AI_play_again_AI(make_gomuku,AlphaZeroNetwork,'save_model/AlphaZero(TotalRewardWrapper)_4_20220122-203908/40000.pt', **kwargs)
 
 

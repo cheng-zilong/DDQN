@@ -199,9 +199,7 @@ class TicTacToeEnv(gym.Env):
 #             break
 
 def make_gomuku(seed, board_size, win_size, *args, **kwargs):
-    from gym_envs.AtariWrapper import TotalRewardWrapper
     env = TicTacToeEnv(board_size = board_size, win_size = win_size)
-    env = TotalRewardWrapper(env)
     env.seed(seed)
     env.action_space.np_random.seed(seed)
     return env

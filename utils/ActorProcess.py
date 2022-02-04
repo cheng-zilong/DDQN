@@ -7,12 +7,14 @@ from collections import deque
 from utils.LogProcess import logger
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 from .BaseProcess import BaseProcess
 from utils.Network import *
 import os
 import imageio
 import time
 from torch.multiprocessing import Value
+from gym_envs.AtariWrapper import TotalRewardWrapper
 class BaseActorProcess(BaseProcess):
     '''
     State must be np array
@@ -43,10 +45,10 @@ class BaseActorProcess(BaseProcess):
         self.__actor_done_flag = True # Assume the initial state is done
 
     def run(self):
-        self._init_seed()
         with BaseActorProcess.actor_id.get_lock():
             self.__actor_id = BaseActorProcess.actor_id.value
             BaseActorProcess.actor_id.value+=1
+        self._init_seed()
         while True:
             (cmd, msg) = self._receive()
             if cmd == self.SYNC_COLLECT:
@@ -78,6 +80,12 @@ class BaseActorProcess(BaseProcess):
 
             else:
                 raise NotImplementedError
+
+    def is_env_done(self, done:bool, info):
+        if hasattr(self.env, 'total_rewards'):
+            return (info is not None) and (info['episodic_return'] is not None)
+        else:
+            return done
 
     def collect(self, steps_number, sync = True, *args, **kwargs):
         kwargs['steps_number'] = steps_number
@@ -163,7 +171,7 @@ class BaseActorProcess(BaseProcess):
             self.replay_buffer.add(action, obs, reward, done, self.__actor_id)
             self._sim_steps_idx += 1
             BaseActorProcess.total_sim_steps.value += 1
-            if info is not None and info['episodic_return'] is not None:
+            if self.is_env_done(done, info): 
                 _episodic_steps = self._sim_steps_idx + frames_idx - self._last_sim_steps_idx
                 self._ep_reward_list.append(info['episodic_return'])
                 BaseActorProcess.total_ep_num.value += 1
@@ -177,9 +185,10 @@ class BaseActorProcess(BaseProcess):
                 }
                 self._ep_tic = time.time()
                 logger.add({**logger_dict, **kwargs})
+                # 每个agent 完成一个scenario后print，不通过算法控制print
                 logger.wandb_print('(Training Agent %d)'%(self.__actor_id), step=BaseActorProcess.total_sim_steps.value)
                 self._last_sim_steps_idx = self._sim_steps_idx + frames_idx
-    
+
     def _eval(self, eval_idx, *args, **kwargs):
         '''
         This is a template for the _eval method
@@ -286,7 +295,7 @@ class NetworkActorProcess(BaseActorProcess):
             self._unwrapped_reset()
             for ep_steps_idx in range(1, eval_max_steps + 1):
                 _, _, _, done, info = self._sync_collect_helper(steps_number = 1, *args, **kwargs)[-1] 
-                if (done) and (info is not None) and (info['episodic_return'] is not None): 
+                if self.is_env_done(done, info):
                     break
             ep_rewards_list.append(info['total_rewards'])
             ep_rewards_list_mean = mean(ep_rewards_list)
@@ -317,6 +326,39 @@ class NetworkActorProcess(BaseActorProcess):
             my_fig.canvas.draw()
             buf = my_fig.canvas.tostring_rgb()
             writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(fig_pixel_rows, fig_pixel_cols, 3))
-            if (done) and (info is not None) and (info['episodic_return'] is not None): 
+            if self.is_env_done(done, info):
+                break
+        writer.close()
+
+class C51_NetworkActorProcess(NetworkActorProcess):
+    def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *args, **kwargs):
+        if not is_show: matplotlib.use('Agg')
+        if not os.path.exists('save_video/' + logger._run_name + '/'):
+            os.makedirs('save_video/' + logger._run_name + '/')
+        writer = imageio.get_writer('save_video/' + logger._run_name + '/' + str(name) +'.mp4', fps = fps)
+        my_fig = plt.figure(figsize=figsize, dpi=dpi)
+        gs = gridspec.GridSpec(1, 2)
+        ax_left, ax_right = my_fig.add_subplot(gs[0]), my_fig.add_subplot(gs[1])
+        my_fig.tight_layout()
+        fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
+        self._unwrapped_reset()
+        for _ in range(1, render_max_steps + 1):
+            action, _, _, done, info = self._sync_collect_helper(steps_number = 1, *args, **kwargs)[-1] 
+            action_prob = np.swapaxes(self._network.action_prob[0].cpu().numpy(),0, 1)
+            legends = []
+            for i, action_meaning in enumerate(self.env.unwrapped.get_action_meanings()):
+                legend_text = ' (Q=%+.2e)'%(self._network.action_Q[0,i]) if i == action else ' (Q=%+.2e)*'%(self._network.action_Q[0,i])
+                legends.append(action_meaning + legend_text) 
+            ax_left.clear()
+            ax_left.imshow(self.env.render(mode = render_mode))
+            ax_left.axis('off')
+            ax_right.clear()
+            ax_right.plot(self._network.atoms_cpu, action_prob)
+            ax_right.legend(legends)
+            ax_right.grid(True)
+            my_fig.canvas.draw()
+            buf = my_fig.canvas.tostring_rgb()
+            writer.append_data(np.fromstring(buf, dtype=np.uint8).reshape(fig_pixel_rows, fig_pixel_cols, 3))
+            if self.is_env_done(done, info): 
                 break
         writer.close()
