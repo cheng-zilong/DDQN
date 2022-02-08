@@ -6,25 +6,14 @@ from utils.LogProcess import logger
 
 # # Atari
 if __name__ == '__main__':
-
-    # kwargs = vars(get_default_parser().parse_args())
-    # from frameworks.C51_DQN import C51_DQN_Sync
-    # kwargs['train_start_step'] = 50000
-    # kwargs['env_name'] = 'SpaceInvadersNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
-    # C51_DQN_Sync(
-    #     make_env_fun = make_atari_env,
-    #     network_fun = CatCnnQNetwork, #CnnQNetwork CatCnnQNetwork
-    #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),  
-    #     **kwargs
-    # ).train()
-
     # kwargs = vars(get_default_parser().parse_args())
     # from frameworks.C51_DQN import C51_DQN_Async
     # kwargs['env_name'] = 'SpaceInvadersNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
     # kwargs['train_update_target_freq']=10000
     # kwargs['train_start_step'] = 50000
-    # kwargs['actor_num']=2
+    # kwargs['actor_num']=1
     # kwargs['eps_decay_steps']=250000/kwargs['actor_num']
+    # kwargs['actor_queue_buffer_size'] = 10
     # C51_DQN_Async(
     #     make_env_fun = make_atari_env,
     #     network_fun = CatCnnQNetwork, #CnnQNetwork CatCnnQNetwork
@@ -33,23 +22,13 @@ if __name__ == '__main__':
     # ).train()
 
     # kwargs = vars(get_default_parser().parse_args())
-    # from frameworks.Vanilla_DQN import Vanilla_DQN_Sync
-    # kwargs['train_start_step'] = 50000
-    # kwargs['env_name'] = 'SpaceInvadersNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
-    # Vanilla_DQN_Sync(
-    #     make_env_fun = make_atari_env,
-    #     network_fun = CnnQNetwork, #CnnQNetwork CatCnnQNetwork
-    #     optimizer_fun = lambda params: torch.optim.Adam(params, lr=kwargs['lr'], eps=kwargs['optimizer_eps']),  
-    #     **kwargs
-    # ).train()
-
-    # kwargs = vars(get_default_parser().parse_args())
     # from frameworks.Vanilla_DQN import Vanilla_DQN_Async   
     # kwargs['env_name'] = 'SpaceInvadersNoFrameskip-v4' #BreakoutNoFrameskip SpaceInvadersNoFrameskip PongNoFrameskip
     # kwargs['train_update_target_freq']=10000
     # kwargs['train_start_step'] = 50000
-    # kwargs['actor_num']=2
+    # kwargs['actor_num']=1
     # kwargs['eps_decay_steps']=250000/kwargs['actor_num']
+    # kwargs['actor_queue_buffer_size'] = 10
     # Vanilla_DQN_Async(
     #     make_env_fun = make_atari_env,
     #     network_fun = CnnQNetwork, #CnnQNetwork CatCnnQNetwork
@@ -100,7 +79,7 @@ if __name__ == '__main__':
     # AI_play_again_AI(make_gomuku,AlphaZeroNetwork,'save_model/AlphaZero(TotalRewardWrapper)_4_20220122-203908/40000.pt', **kwargs)
 
     # kwargs = vars(get_default_parser().parse_args())
-    # from frameworks.Vanilla_DDPG import Vanilla_DDPG_Sync
+    # from frameworks.Vanilla_DDPG import Vanilla_DDPG_Async
     # from gym_envs.Mujoco import make_mujoco
     # kwargs['train_start_step'] = 10000
     # kwargs['train_update_tau'] = 0.005
@@ -110,12 +89,14 @@ if __name__ == '__main__':
     # kwargs['sigma_end'] = 0.1
     # kwargs['sigma_decay_steps'] = 1000000
     # kwargs['eval_sigma'] = 0.0
-    # kwargs['env_name'] = 'HalfCheetah-v3'
+    # kwargs['env_name'] = 'Walker2d-v3' # Walker2d-v3 HalfCheetah-v3
     # kwargs['stack_frames'] = 1
     # kwargs['lr_actor'] = 1e-3
     # kwargs['lr_critic'] = 1e-3
-    # kwargs['train_network_freq'] = 50
-    # Vanilla_DDPG_Sync(
+    # kwargs['train_network_freq'] = 25
+    # kwargs['actor_num'] = 2
+    # kwargs['eval_freq'] = 20000
+    # Vanilla_DDPG_Async(
     #     make_env_fun = make_mujoco,
     #     network_fun = LinearDDPGNetwork, 
     #     optimizer_fun = [
@@ -126,7 +107,7 @@ if __name__ == '__main__':
     # ).train()
 
     kwargs = vars(get_default_parser().parse_args())
-    from frameworks.Vanilla_TD3 import Vanilla_TD3_Sync
+    from frameworks.Vanilla_TD3 import Vanilla_TD3_Async
     from gym_envs.Mujoco import make_mujoco
     kwargs['train_start_step'] = 10000
     kwargs['train_update_tau'] = 0.005
@@ -138,13 +119,15 @@ if __name__ == '__main__':
     kwargs['actor_noise'] = 0.2
     kwargs['noise_clip'] = 0.5
     kwargs['train_actor_freq'] = 2
-    kwargs['train_network_freq'] = 50
     kwargs['eval_sigma'] = 0.0
     kwargs['env_name'] = 'Walker2d-v3'
     kwargs['stack_frames'] = 1
-    kwargs['lr_actor'] = 0.001
-    kwargs['lr_critic'] = 0.001
-    Vanilla_TD3_Sync(
+    kwargs['lr_actor'] = 1e-3
+    kwargs['lr_critic'] = 1e-3
+    kwargs['train_network_freq'] = 25
+    kwargs['actor_num'] = 2
+    kwargs['eval_freq'] = 20000
+    Vanilla_TD3_Async(
         make_env_fun = make_mujoco,
         network_fun = LinearTD3Network, 
         optimizer_fun = [

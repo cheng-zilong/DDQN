@@ -21,7 +21,7 @@ def get_default_parser():
     parser.add_argument('--train_steps', type=int, default=int(1e7))
     parser.add_argument('--train_start_step', type=int, default=50000)
     parser.add_argument('--train_network_freq', type=int, default=4)
-    parser.add_argument('--train_update_target_freq', type=int, default=40000)
+    parser.add_argument('--train_update_target_freq', type=int, default=10000)
     parser.add_argument('--mode', type=str, default='train') # eval
     parser.add_argument('--model_path', type=str, default = None)
     parser.add_argument('--ep_reward_avg_number', type=int, default = 10)
@@ -29,7 +29,7 @@ def get_default_parser():
     
     # Evaluation
     parser.add_argument('--eval_max_steps', type=int, default=18000, help="The maximum steps for each episode in evaluation.")
-    parser.add_argument('--eval_freq', type=int, default=int(1e6), help="Every *eval_freq* training steps, Evaluate the model.")
+    parser.add_argument('--eval_freq', type=int, default=int(2e5), help="Every *eval_freq* training steps, Evaluate the model.")
     parser.add_argument('--eval_display', type=bool, default=False, help="Whether the evaluation procedure is displayed.")
     parser.add_argument('--eval_number', type=int, default=30, help="In each evaluation, *eval_number* episodes will be implemented.")
     parser.add_argument('--eval_eps', type=float, default=0.001, help="*eval_eps* probability to choose a random action in evaluation.")

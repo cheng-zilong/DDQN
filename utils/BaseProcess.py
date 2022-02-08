@@ -5,8 +5,12 @@ class BaseProcess(mp.Process):
     ProcessDict = dict()
     def __init__(self, *args, **kwargs):
         mp.Process.__init__(self)
-        self._queue = mp.Queue(maxsize=10)
-        self._worker_queue = mp.Queue(maxsize=10)
+        if 'queue_buffer_size' in kwargs:
+            self._queue = mp.Queue(maxsize=kwargs['queue_buffer_size'])
+            self._worker_queue = mp.Queue(maxsize=kwargs['queue_buffer_size'])
+        else:
+            self._queue = mp.Queue(maxsize=10)
+            self._worker_queue = mp.Queue(maxsize=10)
         self.__process_id = BaseProcess.__ProcessID
         BaseProcess.ProcessDict[self.__process_id] = self
         BaseProcess.__ProcessID+=1

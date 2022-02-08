@@ -7,13 +7,13 @@ from statistics import mean
 from utils.ReplayBufferProcess import ReplayBufferProcess
 from utils.LogProcess import logger
 import torch.multiprocessing as mp
-from utils.ActorProcess import AC_NetworkActorProcess
+from utils.ActorProcess import DDPG_NetworkActorProcess
 from copy import deepcopy
 import random
 import numpy as np
-from frameworks.Vanilla_DDPG import Vanilla_DDPG_Sync
+from frameworks.Vanilla_DDPG import Vanilla_DDPG_Async
 
-class Vanilla_TD3_Sync(Vanilla_DDPG_Sync):
+class Vanilla_TD3_Async(Vanilla_DDPG_Async):
     def compute_td_loss(self):
         state, action, reward, next_state, done = self.process_dict['replay_buffer'].sample()
         with torch.no_grad():

@@ -2,20 +2,20 @@ import torch
 import torch.nn as nn
 from utils.Network import *
 from utils.LogProcess import logger
-from frameworks.Vanilla_DQN import Vanilla_DQN_Sync, Vanilla_DQN_Async
+from frameworks.Vanilla_DQN import Vanilla_DQN_Async
 import torch.multiprocessing as mp
 from utils.ActorProcess import C51_NetworkActorProcess
-class C51_DQN_Sync(Vanilla_DQN_Sync):
-    def __init__(self, make_env_fun, network_fun, optimizer_fun, *args, **kwargs):
-        super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
-        '''
-        v_min, v_max, num_atoms
-        '''
-        self.process_dict['train_actor'] = C51_NetworkActorProcess(
-            make_env_fun = self.make_env_fun, 
-            network_lock=self.network_lock, 
-            *self.args, **self.kwargs
-        )
+class C51_DQN_Async(Vanilla_DQN_Async):
+    def __init__(self, make_env_fun, network_fun, optimizer_fun, actor_num, *args, **kwargs):
+        super().__init__(make_env_fun, network_fun, optimizer_fun, actor_num, *args, **kwargs)
+        self.process_dict['train_actor'] = [
+            C51_NetworkActorProcess(
+                make_env_fun = self.make_env_fun, 
+                replay_buffer=self.process_dict['replay_buffer'], 
+                network_lock=self.network_lock, 
+                *self.args, **self.kwargs
+            ) for _ in range(actor_num)
+        ]
         self.process_dict['eval_actor'] = C51_NetworkActorProcess(
             make_env_fun = self.make_env_fun, 
             network_lock=mp.Lock(), 
@@ -50,16 +50,3 @@ class C51_DQN_Sync(Vanilla_DQN_Sync):
         with self.network_lock:
             self.optimizer.step()
         return loss
-
-class C51_DQN_Async(Vanilla_DQN_Async, C51_DQN_Sync):
-    def __init__(self, make_env_fun, network_fun, optimizer_fun, actor_num=1, *args, **kwargs):
-        super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
-        self.process_dict['train_actor'] = [
-            C51_NetworkActorProcess(
-                make_env_fun = self.make_env_fun, 
-                replay_buffer=self.process_dict['replay_buffer'], 
-                network_lock=self.network_lock, 
-                *self.args, **self.kwargs
-            ) for _ in range(actor_num)
-        ]
-

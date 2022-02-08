@@ -20,7 +20,6 @@ class BaseActorProcess(BaseProcess):
     State must be np array
     done must be bool
     '''
-    SYNC_COLLECT = 0
     EXIT = 1
     RESET = 2
     UPDATE_POLICY=3
@@ -28,7 +27,7 @@ class BaseActorProcess(BaseProcess):
     EVAL=5
     RENDER=6
     UNWRAPPED_RESET=7
-    ASYNC_COLLECT=8
+    COLLECT=8
     total_sim_steps = Value('i', 0)
     total_ep_num = Value('i', 0)
     actor_id = Value('i', 0)
@@ -51,11 +50,8 @@ class BaseActorProcess(BaseProcess):
         self._init_seed()
         while True:
             (cmd, msg) = self._receive()
-            if cmd == self.SYNC_COLLECT:
-                self._sync_collect(*(msg[0]), **(msg[1]))
-
-            elif cmd == self.ASYNC_COLLECT:
-                self._async_collect(*(msg[0]), **(msg[1]))
+            if cmd == self.COLLECT:
+                self._collect(*(msg[0]), **(msg[1]))
 
             elif cmd == self.RESET:
                 self._send(self._reset())
@@ -87,14 +83,9 @@ class BaseActorProcess(BaseProcess):
         else:
             return done
 
-    def collect(self, steps_number, sync = True, *args, **kwargs):
+    def collect(self, steps_number, *args, **kwargs):
         kwargs['steps_number'] = steps_number
-        if sync:
-            self.send(self.SYNC_COLLECT, (args, kwargs))
-            return self.receive()
-        else:
-            self.send(self.ASYNC_COLLECT, (args, kwargs))
-            return None
+        self.send(self.COLLECT, (args, kwargs))
 
     def reset(self):
         self.send(self.RESET, None)
@@ -130,8 +121,6 @@ class BaseActorProcess(BaseProcess):
 
     def _reset(self):
         self.actor_state = self.env.reset()
-        if hasattr(self, '_cache'):
-            del self._cache
         return self.actor_state
 
     def _unwrapped_reset(self):
@@ -141,26 +130,16 @@ class BaseActorProcess(BaseProcess):
         '''
         self.env.unwrapped.reset()
         self.actor_state = self.env.reset()
-        if hasattr(self, '_cache'):
-            del self._cache
         return self.actor_state
 
-    def _sync_collect_helper(self, steps_number, *args, **kwargs):
+    def _sync_collect(self, steps_number, *args, **kwargs):
         data_list = []
         for _ in range(steps_number):
             one_step_data = self._step(*args, **kwargs)
             data_list.append(one_step_data) 
         return data_list
-
-    def _sync_collect(self, steps_number, *args, **kwargs):
-        if not hasattr(self, '_cache'):
-            self._send(self._sync_collect_helper(steps_number, *args, **kwargs))
-            self._cache = self._sync_collect_helper(steps_number, *args, **kwargs)
-        else:
-            self._send(self._cache)
-            self._cache = self._sync_collect_helper(steps_number, *args, **kwargs)
         
-    def _async_collect(self, steps_number, *args, **kwargs):
+    def _collect(self, steps_number, *args, **kwargs):
         if not hasattr(self, '_ep_reward_list'):
             self._ep_reward_list = deque(maxlen=self.kwargs['ep_reward_avg_number'])
             self._sim_steps_idx = 0
@@ -181,20 +160,32 @@ class BaseActorProcess(BaseProcess):
                     'ep_reward': info['episodic_return'], 
                     'ep_reward_avg': mean(self._ep_reward_list), 
                     'fps': _episodic_steps / (time.time()-self._ep_tic), 
-                    'queue_buffer_size': self._queue.qsize()
+                    'actor_queue_buffer_size': self._queue.qsize()
                 }
                 self._ep_tic = time.time()
                 logger.add({**logger_dict, **kwargs})
-                # 每个agent 完成一个scenario后print，不通过算法控制print
+                # 每个agent 完成一个scenario后print
                 logger.wandb_print('(Training Agent %d)'%(self.__actor_id), step=BaseActorProcess.total_sim_steps.value)
                 self._last_sim_steps_idx = self._sim_steps_idx + frames_idx
 
-    def _eval(self, eval_idx, *args, **kwargs):
-        '''
-        This is a template for the _eval method
-        Overwrite this method to implement your own _eval method
-        '''
-        pass 
+    def _eval(self, eval_idx, eval_number, eval_max_steps, *args, **kwargs):
+        ep_rewards_list = deque(maxlen=eval_number)
+        for ep_idx in range(1, eval_number+1):
+            self._unwrapped_reset()
+            for ep_steps_idx in range(1, eval_max_steps + 1): 
+                _, _, _, done, info = self._sync_collect(steps_number = 1, *args, **kwargs)[-1] 
+                if self.is_env_done(done, info):
+                    break
+            ep_rewards_list.append(info['total_rewards']) # episodic_return 不一定存在
+            ep_rewards_list_mean = mean(ep_rewards_list)
+            logger.terminal_print(
+                '--------(Evaluator Index: %d)'%(eval_idx), {
+                '--------ep': ep_idx, 
+                '--------ep_steps':  ep_steps_idx, 
+                '--------ep_reward': info['total_rewards'], 
+                '--------ep_reward_mean': ep_rewards_list_mean
+            })
+            logger.add({'eval_reward': info['total_rewards'], 'eval_reward_mean': ep_rewards_list_mean})
 
     def _step(self, *args, **kwargs):
         '''
@@ -290,24 +281,6 @@ class NetworkActorProcess(BaseActorProcess):
             os.makedirs('save_model/' + logger._run_name + '/')
         torch.save(self._network.state_dict(), 'save_model/' + logger._run_name + '/' + str(name) +'.pt')
 
-    def _eval(self, eval_idx, eval_number, eval_max_steps, *args, **kwargs):
-        ep_rewards_list = deque(maxlen=eval_number)
-        for ep_idx in range(1, eval_number+1):
-            self._unwrapped_reset()
-            for ep_steps_idx in range(1, eval_max_steps + 1):
-                _, _, _, done, info = self._sync_collect_helper(steps_number = 1, *args, **kwargs)[-1] 
-                if self.is_env_done(done, info):
-                    break
-            ep_rewards_list.append(info['total_rewards'])
-            ep_rewards_list_mean = mean(ep_rewards_list)
-            logger.terminal_print(
-                '--------(Evaluator Index: %d)'%(eval_idx), {
-                '--------ep': ep_idx, 
-                '--------ep_steps':  ep_steps_idx, 
-                '--------ep_reward': info['total_rewards'], 
-                '--------ep_reward_mean': ep_rewards_list_mean})
-        logger.add({'eval_last': ep_rewards_list_mean})
-
     def _render(self, name, render_max_steps, render_mode, fps, is_show, figsize=(10, 5), dpi=160, *args, **kwargs):
         if not is_show: matplotlib.use('Agg')
         if not os.path.exists('save_video/' + logger._run_name + '/'):
@@ -320,7 +293,7 @@ class NetworkActorProcess(BaseActorProcess):
         fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
         self._unwrapped_reset()
         for _ in range(1, render_max_steps + 1):
-            _, _, _, done, info = self._sync_collect_helper(steps_number = 1, *args, **kwargs)[-1] 
+            _, _, _, done, info = self._sync_collect(steps_number = 1, *args, **kwargs)[-1] 
             ax.clear()
             ax.imshow(self.env.render(mode = render_mode))
             ax.axis('off')
@@ -344,7 +317,7 @@ class C51_NetworkActorProcess(NetworkActorProcess):
         fig_pixel_cols, fig_pixel_rows = my_fig.canvas.get_width_height()
         self._unwrapped_reset()
         for _ in range(1, render_max_steps + 1):
-            action, _, _, done, info = self._sync_collect_helper(steps_number = 1, *args, **kwargs)[-1] 
+            action, _, _, done, info = self._sync_collect(steps_number = 1, *args, **kwargs)[-1] 
             action_prob = np.swapaxes(self._network.action_prob[0].cpu().numpy(),0, 1)
             legends = []
             for i, action_meaning in enumerate(self.env.unwrapped.get_action_meanings()):
@@ -364,7 +337,7 @@ class C51_NetworkActorProcess(NetworkActorProcess):
                 break
         writer.close()
 
-class AC_NetworkActorProcess(NetworkActorProcess):
+class DDPG_NetworkActorProcess(NetworkActorProcess):
     def _step(self, sigma, *args, **kwargs):
         '''
         epsilon greedy step

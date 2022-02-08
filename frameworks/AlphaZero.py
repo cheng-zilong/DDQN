@@ -192,10 +192,10 @@ class AlphaZeroActorAsync(BaseActorProcess):
 
     def collect(self, network:AlphaZeroNetwork, *args, **kwargs):
         kwargs['network'] = network
-        self.send(self.ASYNC_COLLECT, (args, kwargs))
+        self.send(self.COLLECT, (args, kwargs))
 
     # @profile
-    def _async_collect(self, network:AlphaZeroNetwork):
+    def _collect(self, network:AlphaZeroNetwork):
         _game_lines_dict = dict()
         GameData = namedtuple('GameData', 'player action state')
         # {0: (current_player, action, state]), ... 
