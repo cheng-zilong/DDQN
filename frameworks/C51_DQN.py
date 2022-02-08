@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 from utils.Network import *
 from utils.LogProcess import logger
-from frameworks.Nature_DQN import Nature_DQN_Sync, Nature_DQN_Async
+from frameworks.Vanilla_DQN import Vanilla_DQN_Sync, Vanilla_DQN_Async
 import torch.multiprocessing as mp
 from utils.ActorProcess import C51_NetworkActorProcess
-class C51_DQN_Sync(Nature_DQN_Sync):
+class C51_DQN_Sync(Vanilla_DQN_Sync):
     def __init__(self, make_env_fun, network_fun, optimizer_fun, *args, **kwargs):
         super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
         '''
@@ -51,7 +51,7 @@ class C51_DQN_Sync(Nature_DQN_Sync):
             self.optimizer.step()
         return loss
 
-class C51_DQN_Async(Nature_DQN_Async, C51_DQN_Sync):
+class C51_DQN_Async(Vanilla_DQN_Async, C51_DQN_Sync):
     def __init__(self, make_env_fun, network_fun, optimizer_fun, actor_num=1, *args, **kwargs):
         super().__init__(make_env_fun, network_fun, optimizer_fun, *args, **kwargs)
         self.process_dict['train_actor'] = [
