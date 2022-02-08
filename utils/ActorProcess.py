@@ -81,7 +81,7 @@ class BaseActorProcess(BaseProcess):
             else:
                 raise NotImplementedError
 
-    def is_env_done(self, done:bool, info):
+    def is_env_done(self, done:bool, info:dict):
         if hasattr(self.env, 'total_rewards'):
             return (info is not None) and (info['episodic_return'] is not None)
         else:
@@ -280,6 +280,7 @@ class NetworkActorProcess(BaseActorProcess):
 
     def _update_policy(self, network):
         self._network = network
+        self._network.eval()
 
     def _save_policy(self, name):
         '''
@@ -362,3 +363,20 @@ class C51_NetworkActorProcess(NetworkActorProcess):
             if self.is_env_done(done, info): 
                 break
         writer.close()
+
+class AC_NetworkActorProcess(NetworkActorProcess):
+    def _step(self, sigma, *args, **kwargs):
+        '''
+        epsilon greedy step
+        '''
+        if self._network is None:
+            raise Exception("Network has not been initialized!")
+        if self.actor_done_flag:
+            # auto reset
+            self.actor_state = self._reset()
+            self.actor_done_flag = False
+            return None, self.actor_state, None, None, None
+        mu = self._network.actor_forward([self.actor_state]).detach().cpu().numpy()
+        action = np.clip(np.asarray(np.random.normal(mu.reshape(-1), sigma), dtype=np.float32), self.env.action_space.low, self.env.action_space.high)
+        self.actor_state, reward, self.actor_done_flag, info = self.env.step(action)
+        return action, self.actor_state, reward, self.actor_done_flag, info

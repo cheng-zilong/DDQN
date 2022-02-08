@@ -1,4 +1,6 @@
+from cmath import tanh
 from math import inf
+from turtle import forward
 import torch
 import torch.nn as nn
 import torch.autograd as autograd 
@@ -167,71 +169,6 @@ class CatCnnQNetwork(CatLinearQNetwork):
     def feature_size(self):
         return self.layers(autograd.Variable(torch.zeros(1, *self.input_shape))).view(1, -1).size(1)
 
-class CnnQNetwork_TicTacToe(nn.Module):
-    '''
-    CNN Q network for tic tac toe
-    '''
-    def __init__(self, input_shape, num_actions, *args, **kwargs):
-        super().__init__()
-        self._num_actions = num_actions
-        self._input_shape = input_shape
-        self.dummy_param = nn.Parameter(torch.empty(0))
-        self.layers = nn.Sequential(
-            layer_init(nn.Conv2d(input_shape[0], 192, kernel_size=5, padding=2, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 192, kernel_size=3, padding=1, stride=1)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(192, 1, kernel_size=1, stride=1))
-        )
-        self.fc = nn.Sequential(
-            layer_init(nn.Linear(self.feature_size(), 256)),
-            nn.ReLU(),
-            layer_init(nn.Linear(256, num_actions)),
-            nn.Tanh()
-        )
-        
-    def forward(self, x):
-        x = self.layers(torch.as_tensor(x, device=self.dummy_param.device, dtype=torch.float))
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        return x
-
-    def feature_size(self):
-        return self.layers(autograd.Variable(torch.zeros(1, *self._input_shape))).view(1, -1).size(1)
-
-    def eps_greedy_act(self, state, eps, network_lock, legal_action_mask, *args, **kwargs):
-        eps_prob =  random.random()
-        if eps_prob > eps:
-            with network_lock, torch.no_grad():
-                state = torch.as_tensor(state, device=self.dummy_param.device, dtype=torch.float).unsqueeze(0)
-                q_value = self.forward(state)
-                q_value[:,~legal_action_mask] = -inf
-            return q_value.max(1)[1].item()
-        else:
-            return random.choice(np.asarray(range(self._num_actions))[legal_action_mask])
-
 # Define block
 class BasicBlock(nn.Module):
 	def __init__(self, filters_num):
@@ -294,3 +231,77 @@ class AlphaZeroNetwork(nn.Module):
         v = v.view(v.size(0), -1)
         v = self.value_head_fc(v) 
         return p, v
+
+class LinearDDPGNetwork(nn.Module):
+    def __init__(self, input_shape, num_actions, *args, **kwargs):
+        super().__init__()
+        self._num_actions = num_actions
+        self._input_shape = input_shape
+        self.dummy_param = nn.Parameter(torch.empty(0))
+
+        self.policy_fc = nn.Sequential(
+            layer_init(nn.Linear(input_shape[0], 256)),
+            nn.ReLU(),
+            layer_init(nn.Linear(256, 256)),
+            nn.ReLU(),
+			layer_init(nn.Linear(256, num_actions)),
+            nn.Tanh()
+		) 
+
+        self.value_fc = nn.Sequential(
+            layer_init(nn.Linear(input_shape[0]+num_actions, 256)),
+            nn.ReLU(),
+            layer_init(nn.Linear(256, 256)),
+            nn.ReLU(),
+			layer_init(nn.Linear(256, 1))
+		) 
+
+    def forward(self):
+        raise Exception('Use actor_forward or critic_forward instead!')
+
+    def actor_forward(self, state):
+        x = torch.as_tensor(state, device=self.dummy_param.device, dtype=torch.float)
+        return self.policy_fc(x)
+
+    def critic_forward(self, state, actions):
+        x = torch.as_tensor(torch.cat((state,actions),dim=1), device=self.dummy_param.device, dtype=torch.float)
+        return self.value_fc(x).view(-1)
+
+class LinearTD3Network(nn.Module):
+    def __init__(self, input_shape, num_actions, num_critic = 2, *args, **kwargs):
+        super().__init__()
+        self._num_actions = num_actions
+        self._input_shape = input_shape
+        self.dummy_param = nn.Parameter(torch.empty(0))
+
+        self.policy_fc = nn.Sequential(
+            layer_init(nn.Linear(input_shape[0], 256)),
+            nn.ReLU(),
+            layer_init(nn.Linear(256, 256)),
+            nn.ReLU(),
+			layer_init(nn.Linear(256, num_actions)),
+            nn.Tanh()
+		) 
+        self.value_fc = nn.ModuleList()
+        for _ in range(num_critic):
+            self.value_fc.append(nn.Sequential(
+                layer_init(nn.Linear(input_shape[0]+num_actions, 256)),
+                nn.ReLU(),
+                layer_init(nn.Linear(256, 256)),
+                nn.ReLU(),
+                layer_init(nn.Linear(256, 1))
+            ))
+
+    def forward(self):
+        raise Exception('Use actor_forward or critic_forward instead!')
+
+    def actor_forward(self, state):
+        x = torch.as_tensor(state, device=self.dummy_param.device, dtype=torch.float)
+        return self.policy_fc(x)
+
+    def critic_forward(self, state, actions):
+        x = torch.as_tensor(torch.cat((state,actions),dim=1), device=self.dummy_param.device, dtype=torch.float)
+        res = []
+        for value_fc in self.value_fc:
+            res.append(value_fc(x).view(-1))
+        return torch.stack(res, dim=1)
