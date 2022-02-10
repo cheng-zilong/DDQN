@@ -1,21 +1,20 @@
 import torch
 import torch.nn as nn
 from utils.Network import *
-from collections import deque
-import time
-from statistics import mean
-from utils.ReplayBufferProcess import ReplayBufferProcess
 from utils.LogProcess import logger
-import torch.multiprocessing as mp
-from utils.ActorProcess import DDPG_NetworkActorProcess
-from copy import deepcopy
-import random
-import numpy as np
 from frameworks.Vanilla_DDPG import Vanilla_DDPG_Async
 
 class Vanilla_TD3_Async(Vanilla_DDPG_Async):
+    def init_network(self):
+        self.current_network = self.network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.shape[0], num_critic=self.kwargs['network_critic_num']).cuda().share_memory() 
+        self.target_network  = self.network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.shape[0], num_critic=self.kwargs['network_critic_num']).cuda() 
+        self.optimizer_actor = self.optimizer_fun[0](self.current_network.policy_fc.parameters()) 
+        self.optimizer_critic = self.optimizer_fun[1](self.current_network.value_fc.parameters()) 
+        self.update_target(tau=1)
+
     def compute_td_loss(self):
         state, action, reward, next_state, done = self.process_dict['replay_buffer'].sample()
+        action = torch.multiply(action, self._action_multiplier.broadcast_to(action.shape))
         with torch.no_grad():
             a_next = self.target_network.actor_forward(next_state).cpu()
             if not hasattr(self, 'train_idx'):

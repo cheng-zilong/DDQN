@@ -1,3 +1,4 @@
+from copy import deepcopy
 import torch
 import numpy as np
 import random 
@@ -151,7 +152,7 @@ class BaseActorProcess(BaseProcess):
             self._sim_steps_idx += 1
             BaseActorProcess.total_sim_steps.value += 1
             if self.is_env_done(done, info): 
-                _episodic_steps = self._sim_steps_idx + frames_idx - self._last_sim_steps_idx
+                _episodic_steps = self._sim_steps_idx - self._last_sim_steps_idx
                 self._ep_reward_list.append(info['episodic_return'])
                 BaseActorProcess.total_ep_num.value += 1
                 logger_dict = {
@@ -166,7 +167,7 @@ class BaseActorProcess(BaseProcess):
                 logger.add({**logger_dict, **kwargs})
                 # 每个agent 完成一个scenario后print
                 logger.wandb_print('(Training Agent %d)'%(self.__actor_id), step=BaseActorProcess.total_sim_steps.value)
-                self._last_sim_steps_idx = self._sim_steps_idx + frames_idx
+                self._last_sim_steps_idx = self._sim_steps_idx
 
     def _eval(self, eval_idx, eval_number, eval_max_steps, *args, **kwargs):
         ep_rewards_list = deque(maxlen=eval_number)
@@ -263,14 +264,17 @@ class NetworkActorProcess(BaseActorProcess):
             # auto reset
             self.actor_state = self._reset()
             self.actor_done_flag = False
+            with self._network_lock:
+                self._network.load_state_dict(self._training_network.state_dict())
             return None, self.actor_state, None, None, None
-        action = self._network.eps_greedy_act(self.actor_state, eps, self._network_lock)
+        action = self._network.eps_greedy_act(self.actor_state, eps)
 
         self.actor_state, reward, self.actor_done_flag, info = self.env.step(action)
         return action, self.actor_state, reward, self.actor_done_flag, info
 
     def _update_policy(self, network):
-        self._network = network
+        self._training_network = network
+        self._network = deepcopy(self._training_network)
         self._network.eval()
 
     def _save_policy(self, name):
@@ -340,7 +344,7 @@ class C51_NetworkActorProcess(NetworkActorProcess):
 class DDPG_NetworkActorProcess(NetworkActorProcess):
     def _step(self, sigma, *args, **kwargs):
         '''
-        epsilon greedy step
+        sigma=None means random action
         '''
         if self._network is None:
             raise Exception("Network has not been initialized!")
@@ -348,8 +352,54 @@ class DDPG_NetworkActorProcess(NetworkActorProcess):
             # auto reset
             self.actor_state = self._reset()
             self.actor_done_flag = False
+            with self._network_lock:
+                self._network.load_state_dict(self._training_network.state_dict())
             return None, self.actor_state, None, None, None
-        mu = self._network.actor_forward([self.actor_state]).detach().cpu().numpy()
-        action = np.clip(np.asarray(np.random.normal(mu.reshape(-1), sigma), dtype=np.float32), self.env.action_space.low, self.env.action_space.high)
+        if not hasattr(self, '_action_multiplier'):
+            self._action_divider = (np.array(self.env.action_space.high) - np.array(self.env.action_space.low))/2
+        if sigma is None:
+            action = self.env.action_space.sample().astype(np.float32)
+        else:
+            with torch.no_grad():
+                mu = self._network.actor_forward([self.actor_state])
+            mu = mu.cpu().numpy()
+            action = np.clip(np.random.normal(mu.reshape(-1), sigma), -1, 1)
+            action = np.multiply(action, self._action_divider).astype(np.float32)
+        
+        self.actor_state, reward, self.actor_done_flag, info = self.env.step(action)
+        return action, self.actor_state, reward, self.actor_done_flag, info
+
+class NoisyDDPG_NetworkActorProcess(NetworkActorProcess):
+    def _update_policy(self, network, with_noise):
+        self._training_network = network
+        self._network = deepcopy(self._training_network)
+        self._network.eval()
+        self._network.set_with_noise(with_noise)
+        
+    def _step(self, sigma, *args, **kwargs):
+        '''
+        sigma=None means random action
+        '''
+        if self._network is None:
+            raise Exception("Network has not been initialized!")
+        if self.actor_done_flag:
+            # auto reset
+            self.actor_state = self._reset()
+            self.actor_done_flag = False
+            with self._network_lock:
+                self._network.load_state_dict(self._training_network.state_dict())
+                self._network.reset_noise()
+            return None, self.actor_state, None, None, None
+        if not hasattr(self, '_action_multiplier'):
+            self._action_divider = (np.array(self.env.action_space.high) - np.array(self.env.action_space.low))/2
+        if sigma is None:
+            action = self.env.action_space.sample().astype(np.float32)
+        elif sigma==0:
+            with torch.no_grad():
+                mu = self._network.actor_forward([self.actor_state])
+            mu = mu.cpu().numpy().reshape(-1)
+            action = np.multiply(mu, self._action_divider).astype(np.float32)
+        else:
+            raise Exception('Sigma must be zero for the NoisyDDPG_NetworkActorProcess')
         self.actor_state, reward, self.actor_done_flag, info = self.env.step(action)
         return action, self.actor_state, reward, self.actor_done_flag, info

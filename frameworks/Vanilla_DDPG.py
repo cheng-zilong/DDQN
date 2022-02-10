@@ -30,8 +30,8 @@ class Vanilla_DDPG_Async(Vanilla_DQN_Async):
         )
 
     def init_network(self):
-        self.current_network = self.network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.shape[0], *self.args, **self.kwargs).cuda().share_memory() 
-        self.target_network  = self.network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.shape[0], *self.args, **self.kwargs).cuda() 
+        self.current_network = self.network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.shape[0]).cuda().share_memory() 
+        self.target_network  = self.network_fun(self.dummy_env.observation_space.shape, self.dummy_env.action_space.shape[0]).cuda() 
         self.optimizer_actor = self.optimizer_fun[0](self.current_network.policy_fc.parameters()) 
         self.optimizer_critic = self.optimizer_fun[1](self.current_network.value_fc.parameters()) 
         self.update_target(tau=1)
@@ -43,13 +43,16 @@ class Vanilla_DDPG_Async(Vanilla_DQN_Async):
     def train(self):
         self.start_process()
         self.init_network()
-
+        
+        # 把action映射到-1到1之间
+        self._action_multiplier = (2/(torch.tensor(self.dummy_env.action_space.high) - torch.tensor(self.dummy_env.action_space.low))).cuda()
+        assert all(torch.isreal(self._action_multiplier)), 'some action_space range is illegal, the action_space must be finite'
         for actor in self.process_dict['train_actor']:
             actor.update_policy(network = self.current_network)
 
         while self.process_dict['replay_buffer'].check_size() < self.kwargs['train_start_step']:
             for actor in self.process_dict['train_actor']:
-                actor.collect(steps_number=self.kwargs['train_network_freq'], sigma=1)
+                actor.collect(steps_number=self.kwargs['train_network_freq'], sigma=None)
 
         for train_idx in range(1, self.kwargs['train_steps'] + 1):
             for actor in self.process_dict['train_actor']:
@@ -59,7 +62,7 @@ class Vanilla_DDPG_Async(Vanilla_DQN_Async):
             self.update_target(tau=self.kwargs['train_update_tau'])
 
             if (train_idx-1) % self.kwargs['eval_freq'] == 0:
-                self.process_dict['eval_actor'].update_policy(network = deepcopy(self.current_network))
+                self.process_dict['eval_actor'].update_policy(network = self.current_network)
                 self.process_dict['eval_actor'].eval(eval_idx = train_idx, eval_number = self.kwargs['eval_number'], eval_max_steps = self.kwargs['eval_max_steps'], sigma = self.kwargs['eval_sigma'])
                 self.process_dict['eval_actor'].save_policy(name = train_idx)
                 self.process_dict['eval_actor'].render(name=train_idx, render_max_steps=self.kwargs['eval_max_steps'], render_mode='rgb_array',fps=self.kwargs['eval_video_fps'], is_show=self.kwargs['eval_display'], sigma = self.kwargs['eval_sigma'])
@@ -72,6 +75,7 @@ class Vanilla_DDPG_Async(Vanilla_DQN_Async):
 
     def compute_td_loss(self):
         state, action, reward, next_state, done = self.process_dict['replay_buffer'].sample()
+        action = torch.multiply(action, self._action_multiplier.broadcast_to(action.shape))
         with torch.no_grad():
             a_next = self.target_network.actor_forward(next_state)
             q_next = self.target_network.critic_forward(next_state, a_next)

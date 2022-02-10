@@ -90,7 +90,7 @@ class Vanilla_DQN_Async():
                 self.update_target()
 
             if (train_idx-1) % self.kwargs['eval_freq'] == 0:
-                self.process_dict['eval_actor'].update_policy(network = deepcopy(self.current_network))
+                self.process_dict['eval_actor'].update_policy(network = self.current_network)
                 self.process_dict['eval_actor'].eval(eval_idx = train_idx, eval_number = self.kwargs['eval_number'], eval_max_steps = self.kwargs['eval_max_steps'], eps = self.kwargs['eval_eps'])
                 self.process_dict['eval_actor'].save_policy(name = train_idx)
                 self.process_dict['eval_actor'].render(name=train_idx, render_max_steps=self.kwargs['eval_max_steps'], render_mode='rgb_array',fps=self.kwargs['eval_video_fps'], is_show=self.kwargs['eval_display'], eps = self.kwargs['eval_eps'])

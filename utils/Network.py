@@ -1,5 +1,6 @@
 from cmath import tanh
 from math import inf
+from operator import mod
 from turtle import forward
 import torch
 import torch.nn as nn
@@ -43,13 +44,13 @@ class LinearQNetwork(nn.Module):
     def forward(self, x):
         return self.layers(torch.as_tensor(x, device=self.dummy_param.device, dtype=torch.float))
     
-    def eps_greedy_act(self, state, eps, network_lock, *args, **kwargs):
+    def eps_greedy_act(self, state, eps, *args, **kwargs):
         '''
         state format [X]
         '''
         eps_prob =  random.random()
         if eps_prob > eps:
-            with network_lock, torch.no_grad():
+            with torch.no_grad():
                 state = torch.as_tensor(state, device=self.dummy_param.device, dtype=torch.float).unsqueeze(0)
                 q_value = self.forward(state)
                 return q_value.max(1)[1].item()
@@ -118,13 +119,13 @@ class CatLinearQNetwork(nn.Module):
         x = F.log_softmax(x.view(-1, self.num_atoms)).view(-1, self._num_actions, self.num_atoms)
         return x
 
-    def eps_greedy_act(self, state, eps, network_lock):
+    def eps_greedy_act(self, state, eps, *args, **kwargs):
         '''
         State format [X,Y]
         '''
         eps_prob =  random.random()
         if eps_prob > eps:
-            with network_lock, torch.no_grad():
+            with torch.no_grad():
                 state = torch.as_tensor(state, device=self.dummy_param.device, dtype=torch.float).unsqueeze(0)
                 self.action_prob = self.forward(state)
                 self.action_Q = (self.action_prob * self.atoms_gpu).sum(-1)
@@ -268,7 +269,7 @@ class LinearDDPGNetwork(nn.Module):
         return self.value_fc(x).view(-1)
 
 class LinearTD3Network(nn.Module):
-    def __init__(self, input_shape, num_actions, num_critic = 2, *args, **kwargs):
+    def __init__(self, input_shape, num_actions, num_critic, *args, **kwargs):
         super().__init__()
         self._num_actions = num_actions
         self._input_shape = input_shape
@@ -305,3 +306,104 @@ class LinearTD3Network(nn.Module):
         for value_fc in self.value_fc:
             res.append(value_fc(x).view(-1))
         return torch.stack(res, dim=1)
+
+class NoisyLinear(nn.Module):
+    def __init__(self, in_features, out_features, noise_std):
+        super(NoisyLinear, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.noise_std = noise_std
+        self.weight_mu = nn.Parameter(torch.empty(out_features, in_features))
+        self.weight_sigma = nn.Parameter(torch.empty(out_features, in_features))
+        self.register_buffer('weight_epsilon', torch.empty(out_features, in_features))
+        self.bias_mu = nn.Parameter(torch.empty(out_features))
+        self.bias_sigma = nn.Parameter(torch.empty(out_features))
+        self.register_buffer('bias_epsilon', torch.empty(out_features))
+        self.reset_parameters()
+        self.reset_noise()
+        
+    def set_with_noise(self,with_noise):
+        self.with_noise = with_noise
+
+    def reset_parameters(self):
+        mu_range = 1 / np.sqrt(self.in_features)
+        self.weight_mu.data.uniform_(-mu_range, mu_range)
+        self.weight_sigma.data.fill_(self.noise_std / np.sqrt(self.in_features))
+        self.bias_mu.data.uniform_(-mu_range, mu_range)
+        self.bias_sigma.data.fill_(self.noise_std / np.sqrt(self.out_features))
+
+    def _scale_noise(self, size):
+        x = torch.randn(size, device=self.weight_mu.device)
+        return x.sign().mul_(x.abs().sqrt_())
+
+    def reset_noise(self):
+        epsilon_in = self._scale_noise(self.in_features)
+        epsilon_out = self._scale_noise(self.out_features)
+        self.weight_epsilon.copy_(epsilon_out.ger(epsilon_in))
+        self.bias_epsilon.copy_(epsilon_out)
+
+    def forward(self, input):
+        if self.with_noise:
+            return F.linear(input, self.weight_mu + self.weight_sigma * self.weight_epsilon, self.bias_mu + self.bias_sigma * self.bias_epsilon)
+        else:
+            return F.linear(input, self.weight_mu, self.bias_mu)
+
+class NoisyLinearTD3Network(nn.Module):
+    def __init__(self, input_shape, num_actions, num_critic, noise_std, *args, **kwargs):
+        super().__init__()
+        self._num_actions = num_actions
+        self._input_shape = input_shape
+        self.dummy_param = nn.Parameter(torch.empty(0))
+
+        self.policy_fc = nn.Sequential(
+            NoisyLinear(input_shape[0], 256, noise_std),
+            nn.ReLU(),
+            NoisyLinear(256, 256, noise_std),
+            nn.ReLU(),
+			NoisyLinear(256, num_actions, noise_std),
+            nn.Tanh()
+		) 
+        self.value_fc = nn.ModuleList()
+        for _ in range(num_critic):
+            self.value_fc.append(nn.Sequential(
+                NoisyLinear(input_shape[0]+num_actions, 256, noise_std),
+                nn.ReLU(),
+                NoisyLinear(256, 256, noise_std),
+                nn.ReLU(),
+                NoisyLinear(256, 1, noise_std)
+            ))
+
+    def set_with_noise(self, with_noise):
+        self.with_noise = with_noise
+        for module in self.value_fc:
+            for layer in module:
+                if isinstance(layer, NoisyLinear):
+                    layer.set_with_noise(with_noise)
+        for layer in self.policy_fc:
+            if isinstance(layer, NoisyLinear):
+                layer.set_with_noise(with_noise)
+
+    def forward(self, *args, **kwargs):
+        raise Exception('Use actor_forward or critic_forward instead!')
+
+    def actor_forward(self, state):
+        x = torch.as_tensor(state, device=self.dummy_param.device, dtype=torch.float)
+        return self.policy_fc(x)
+
+    def critic_forward(self, state, actions):
+        x = torch.as_tensor(torch.cat((state,actions),dim=1), device=self.dummy_param.device, dtype=torch.float)
+        res = []
+        for value_fc in self.value_fc:
+            res.append(value_fc(x).view(-1))
+        return torch.stack(res, dim=1)
+
+    def reset_noise(self):
+        if self.with_noise is False:
+            return
+        for module in self.value_fc:
+            for layer in module:
+                if isinstance(layer, NoisyLinear):
+                    layer.reset_noise()
+        for layer in self.policy_fc:
+            if isinstance(layer, NoisyLinear):
+                layer.reset_noise()

@@ -89,7 +89,7 @@ if __name__ == '__main__':
     # kwargs['sigma_end'] = 0.1
     # kwargs['sigma_decay_steps'] = 1000000
     # kwargs['eval_sigma'] = 0.0
-    # kwargs['env_name'] = 'Walker2d-v3' # Walker2d-v3 HalfCheetah-v3
+    # kwargs['env_name'] = 'Humanoid-v2' # Walker2d-v3 HalfCheetah-v3 Hopper-v3
     # kwargs['stack_frames'] = 1
     # kwargs['lr_actor'] = 1e-3
     # kwargs['lr_critic'] = 1e-3
@@ -106,34 +106,64 @@ if __name__ == '__main__':
     #     **kwargs
     # ).train()
 
+    # kwargs = vars(get_default_parser().parse_args())
+    # from frameworks.Vanilla_TD3 import Vanilla_TD3_Async
+    # from gym_envs.Mujoco import make_mujoco
+    # kwargs['train_start_step'] = 50000
+    # kwargs['train_update_tau'] = 0.005
+    # kwargs['buffer_size'] = 1000000
+    # kwargs['batch_size'] = 128 
+    # kwargs['sigma_start'] = 0.1
+    # kwargs['sigma_end'] = 0.1
+    # kwargs['sigma_decay_steps'] = 50000
+    # kwargs['actor_noise'] = 0.2
+    # kwargs['noise_clip'] = 0.5
+    # kwargs['train_actor_freq'] = 2
+    # kwargs['eval_sigma'] = 0.0
+    # kwargs['env_name'] = 'Hopper-v3'
+    # kwargs['stack_frames'] = 1
+    # kwargs['lr_actor'] = 1e-3
+    # kwargs['lr_critic'] = 1e-3
+    # kwargs['train_network_freq'] = 25
+    # kwargs['actor_num'] = 2
+    # kwargs['eval_freq'] = 20000
+    # kwargs['network_critic_num'] = 2
+    # Vanilla_TD3_Async(
+    #     make_env_fun = make_mujoco,
+    #     network_fun = LinearTD3Network, 
+    #     optimizer_fun = [
+    #         lambda params: torch.optim.Adam(params, lr=kwargs['lr_actor'], eps=kwargs['optimizer_eps']),  
+    #         lambda params: torch.optim.Adam(params, lr=kwargs['lr_critic'], eps=kwargs['optimizer_eps'])
+    #     ],
+    #     **kwargs
+    # ).train()
+
+#TODO 搞掉那个warnning
+
+
     kwargs = vars(get_default_parser().parse_args())
-    from frameworks.Vanilla_TD3 import Vanilla_TD3_Async
+    from frameworks.NoisyNetwork_TD3 import NoisyNetwork_TD3_Async
     from gym_envs.Mujoco import make_mujoco
-    kwargs['train_start_step'] = 10000
+    kwargs['train_start_step'] = 50000
     kwargs['train_update_tau'] = 0.005
     kwargs['buffer_size'] = 1000000
     kwargs['batch_size'] = 128 
-    kwargs['sigma_start'] = 0.1
-    kwargs['sigma_end'] = 0.1
-    kwargs['sigma_decay_steps'] = 1000000
-    kwargs['actor_noise'] = 0.2
-    kwargs['noise_clip'] = 0.5
     kwargs['train_actor_freq'] = 2
-    kwargs['eval_sigma'] = 0.0
-    kwargs['env_name'] = 'Walker2d-v3'
+    kwargs['env_name'] = 'Hopper-v3'
     kwargs['stack_frames'] = 1
     kwargs['lr_actor'] = 1e-3
     kwargs['lr_critic'] = 1e-3
     kwargs['train_network_freq'] = 25
     kwargs['actor_num'] = 2
     kwargs['eval_freq'] = 20000
-    Vanilla_TD3_Async(
+    kwargs['network_noise_std'] = 0.5
+    kwargs['network_critic_num'] = 2
+    NoisyNetwork_TD3_Async(
         make_env_fun = make_mujoco,
-        network_fun = LinearTD3Network, 
+        network_fun = NoisyLinearTD3Network, 
         optimizer_fun = [
             lambda params: torch.optim.Adam(params, lr=kwargs['lr_actor'], eps=kwargs['optimizer_eps']),  
             lambda params: torch.optim.Adam(params, lr=kwargs['lr_critic'], eps=kwargs['optimizer_eps'])
         ],
         **kwargs
     ).train()
-
